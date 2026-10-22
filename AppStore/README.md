@@ -3,7 +3,9 @@
 The app is prepared as a standalone tvOS application. This repository and its
 original artwork are MIT-licensed. No upload, TestFlight invitation, App Store
 submission, pricing decision or legal account declaration is performed by these
-tools. Sustained 1080p60 physical qualification is still pending.
+tools. Sustained 1080p60 physical qualification is still pending. See
+[recorded preparation evidence](VALIDATION.md) for completed local checks and
+artifact locations.
 
 ## Source and local checks
 
@@ -95,9 +97,9 @@ without external browsing or an OMT source.
 ## Public site and screenshots
 
 The support and privacy pages are published only from docs/, with no application
-source, private hardware captures or signing files in the Pages payload. Expected
-URLs are https://sukujgrg.github.io/OMTReceiver/ and its support.html/privacy.html.
-Confirm that the pages return successfully before supplying them to Apple.
+source, private hardware captures or signing files in the Pages payload. The site is live at
+https://sukujgrg.github.io/OMTReceiver/ with support.html and privacy.html. Recheck
+those public URLs before supplying them to Apple.
 
 App Store screenshots must come from the current app, use 1920×1080 or 3840×2160,
 and have no alpha channel. The source-picker, full-screen reception and About UI
@@ -110,7 +112,7 @@ See [Apple's screenshot specifications](https://developer.apple.com/help/app-sto
 - Finish short 30 fps/59.94 regression and sustained 1080p60 hardware checks when
   the TV is available, including audio/picture spot checks. Keep claims aligned
   with docs/performance.md; no physical end-to-end latency is established.
-- Confirm current screenshots and a physical demo video needed for App Review.
+- Review the captured draft screenshots and obtain a physical demo video for App Review.
 - Complete publisher-owned account declarations and private review contact.
 - Validate distribution signing, create/select the App Store Connect record,
   and explicitly authorise any TestFlight upload or App Review submission.

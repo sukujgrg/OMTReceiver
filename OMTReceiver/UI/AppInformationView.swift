@@ -40,8 +40,7 @@ struct AppInformationView: View {
                 }
             }
             .navigationTitle("About OMT Receiver")
-            .toolbarBackground(.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -49,26 +48,7 @@ struct AppInformationView: View {
                 }
             }
             .navigationDestination(for: AppInformationPage.self) { page in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
-                        ForEach(Array(document(page).components(separatedBy: "\n\n").enumerated()), id: \.offset) { index, paragraph in
-                            Text(paragraph)
-                                .font(page == .licences ? .body.monospaced() : .body)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .focusable()
-                                .focusEffectDisabled()
-                                .accessibilityIdentifier(page.accessibilityID + "-paragraph-\(index)")
-                        }
-                    }
-                    .padding(60)
-                    .frame(maxWidth: 1400)
-                    .accessibilityElement(children: .contain)
-                    .accessibilityIdentifier(page.accessibilityID + "-document")
-                }
-                .background(Color.black.ignoresSafeArea())
-                .navigationTitle(page.rawValue)
-                .toolbarBackground(.black, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
+                InformationDocumentView(page: page, text: document(page))
             }
         }
         .background(Color.black.ignoresSafeArea())
@@ -87,5 +67,37 @@ struct AppInformationView: View {
             return "This document is unavailable. Visit https://sukujgrg.github.io/OMTReceiver/ for support."
         }
         return text
+    }
+}
+
+private struct InformationDocumentView: View {
+    let page: AppInformationPage
+    let text: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text(page.rawValue)
+                .font(.title2.weight(.semibold))
+                .padding(.vertical, 28)
+                .frame(maxWidth: .infinity)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 32) {
+                    ForEach(Array(text.components(separatedBy: "\n\n").enumerated()), id: \.offset) { index, paragraph in
+                        Text(paragraph)
+                            .font(page == .licences ? .body.monospaced() : .body)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .focusable()
+                            .focusEffectDisabled()
+                            .accessibilityIdentifier(page.accessibilityID + "-paragraph-\(index)")
+                    }
+                }
+                .padding(60)
+                .frame(maxWidth: 1400)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier(page.accessibilityID + "-document")
+            }
+        }
+        .background(Color.black.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
