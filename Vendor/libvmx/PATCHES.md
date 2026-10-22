@@ -1,0 +1,45 @@
+# Local portability and worker-lifetime patches
+
+`src/vmxcodec_arm.h`, Apple branch, replaces direct `__builtin_clzll`,
+`__builtin_clz` and `__builtin_ctzll` macros with helpers defining zero as
+64, 32 and 64 respectively. These match the zero-input results already
+provided by the upstream Windows ARM implementation in the same header.
+
+The VMX DC entropy reader legitimately counts leading zero bits across a
+64-bit word boundary. A deterministic native corpus of 100 official-encoder
+random frames and 5,000 mutated compressed frames, compiled with Clang
+AddressSanitizer and UndefinedBehaviorSanitizer, reported a zero-input builtin
+at `src/vmxcodec_arm.cpp:1605` through `GETZEROS` in `vmxcodec_common.h`.
+Clang's count-zero builtins have undefined behavior on zero even though the
+AArch64 CLZ instruction returns the expected bit width. The helpers evaluate
+their input once and preserve nonzero behavior. No wire format or codec
+algorithm changes are made.
+
+Validation: repeat the same native corpus with
+`-fsanitize=address,undefined -fno-sanitize=shift`; shift instrumentation is
+excluded because the upstream SIMD bitstream implementation uses signed and
+word-width shifts beyond this narrowly scoped count-zero repair. This check
+must not be described as exhaustive undefined-behavior qualification.
+
+`src/thread_tasks.h` confines `running`, queue and in-flight state to the
+worker mutex. The worker waits on `!running || !queue.empty()` and drains
+already admitted work before retiring. `Join` waits on both an empty queue
+and no in-flight task, so a spurious condition-variable wake cannot return
+while a slice still writes destination memory. Work executes outside the
+admission mutex; `Push` rejects new tasks after Stop, and `Destroy` can close
+admission while an admitted task finishes. The per-pool task-pointer array
+is also released during destruction (the upstream implementation leaked it).
+
+The original loop read `running` outside the mutex and could wait after
+Destroy's final notification, permanently blocking codec teardown/reconnect.
+Its unpredicated `Join` also permitted an early return on a spurious wake.
+`ReceiverCodecThreadTests.mm` uses explicit promise gates to check nested
+admission, joining in-flight work and stopping with accepted work still
+running; it uses no timing sleeps. Immediate idle create/retire cycles
+cover workers reaching the wait boundary during teardown.
+
+The standalone regression compiled from that same test source fails against
+the unmodified upstream header (exit 1). It passes against this patch under
+ThreadSanitizer, including 250 create/retire/reinitialize cycles. The 100-frame /
+5,000-mutation codec corpus also passes AddressSanitizer and the scoped
+UndefinedBehaviorSanitizer configuration above after both local patches.

@@ -1,0 +1,25 @@
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+*.ipa
+*.xcarchive
+*.xcresult
+
+# Signing material, credentials and local publishing configuration
+*.p8
+*.p12
+*.pfx
+*.key
+*.pem
+*.mobileprovision
+AuthKey_*
+.env
+.env.*
+AppStore/Submission.local.json
+
+# Private hardware captures, network/device IDs and developer signing overrides
+Validation/
+Config/Signing.local.xcconfig
+*.gitbundle

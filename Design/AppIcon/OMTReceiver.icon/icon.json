@@ -1,0 +1,38 @@
+{
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.07059,0.31373,0.41176,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "IncomingSignal.svg",
+          "name": "IncomingSignal"
+        },
+        {
+          "image-name": "DisplayGlass.svg",
+          "name": "DisplayGlass"
+        },
+        {
+          "image-name": "DisplayFrame.svg",
+          "name": "DisplayFrame"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.3
+      },
+      "name": "Signal Receiver"
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}
