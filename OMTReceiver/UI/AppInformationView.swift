@@ -40,6 +40,8 @@ struct AppInformationView: View {
                 }
             }
             .navigationTitle("About OMT Receiver")
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -65,6 +67,8 @@ struct AppInformationView: View {
                 }
                 .background(Color.black.ignoresSafeArea())
                 .navigationTitle(page.rawValue)
+                .toolbarBackground(.black, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
             }
         }
         .background(Color.black.ignoresSafeArea())

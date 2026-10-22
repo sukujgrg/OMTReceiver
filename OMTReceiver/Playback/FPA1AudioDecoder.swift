@@ -21,8 +21,10 @@ enum FPA1AudioDecoder {
             for channel in 0..<frame.channels where frame.activeChannels & (UInt32(1) << channel) != 0 {
                 for sample in 0..<frame.samplesPerChannel {
                     let i = offset + sample * 4
-                    let bits = UInt32(bytes[i]) | (UInt32(bytes[i + 1]) << 8)
-                        | (UInt32(bytes[i + 2]) << 16) | (UInt32(bytes[i + 3]) << 24)
+                    var bits = UInt32(bytes[i])
+                    bits |= UInt32(bytes[i + 1]) << 8
+                    bits |= UInt32(bytes[i + 2]) << 16
+                    bits |= UInt32(bytes[i + 3]) << 24
                     let value = Float(bitPattern: bits)
                     guard value.isFinite else { throw PlaybackFailure.malformedAudio }
                     if channel < outputChannels { output[sample * outputChannels + channel] = value }
