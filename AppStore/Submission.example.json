@@ -1,0 +1,15 @@
+{
+  "appStoreConnectAppID": "",
+  "reviewContact": {
+    "firstName": "",
+    "lastName": "",
+    "email": "",
+    "phone": ""
+  },
+  "pricingDecision": "",
+  "ageRatingQuestionnaireCompleted": false,
+  "contentRightsDeclarationCompleted": false,
+  "territoriesAndTraderStatusReviewed": false,
+  "physical1080p60QualificationComplete": false,
+  "reviewDemoVideoURL": ""
+}

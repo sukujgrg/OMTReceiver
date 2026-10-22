@@ -3,8 +3,15 @@
 from pathlib import Path
 import hashlib
 import json
+import re
 
 ROOT = Path(__file__).resolve().parent.parent
+version = (ROOT / 'VERSION').read_text().strip()
+build_number = (ROOT / 'BUILD_NUMBER').read_text().strip()
+if not re.fullmatch(r'[0-9]+\.[0-9]+(?:\.[0-9]+)?', version):
+    raise SystemExit('VERSION must be X.Y or X.Y.Z')
+if not re.fullmatch(r'[1-9][0-9]*', build_number):
+    raise SystemExit('BUILD_NUMBER must be a positive integer')
 
 def uid(key):
     return hashlib.sha1(key.encode()).hexdigest()[:24].upper()
@@ -41,6 +48,9 @@ for path in app_headers:
     file_refs[rel] = ref(rel, 'sourcecode.c.h')
 
 assets_ref = ref('OMTReceiver/Assets.xcassets', 'folder.assetcatalog')
+signing_ref = ref('Config/Signing.xcconfig', 'text.xcconfig')
+app_resource_paths = ['OMTReceiver/PrivacyInfo.xcprivacy'] + [p.relative_to(ROOT).as_posix() for p in sorted((ROOT/'OMTReceiver/Resources').glob('*.txt'))]
+resource_refs = [ref(p, 'text.xml' if p.endswith('.xcprivacy') else 'text') for p in app_resource_paths]
 info_ref = ref('OMTReceiver/Info.plist', 'text.plist.xml')
 readme_ref = ref('README.md', 'net.daringfireball.markdown')
 vendor_license = ref('Vendor/libvmx/LICENSE.txt', 'text')
@@ -59,15 +69,16 @@ app_phase = source_phase('app-sources', app_sources + vendor_sources)
 test_phase = source_phase('test-sources', test_sources)
 ui_phase = source_phase('ui-sources', ui_sources)
 resource_build = obj('assets-build', f'isa = PBXBuildFile; fileRef = {assets_ref};')
-resources = obj('resources', f'isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({resource_build},); runOnlyForDeploymentPostprocessing = 0;')
+resource_builds = [resource_build] + [obj('resource-build:' + path, f'isa = PBXBuildFile; fileRef = {reference};') for path, reference in zip(app_resource_paths, resource_refs)]
+resources = obj('resources', f'isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = {array(resource_builds)}; runOnlyForDeploymentPostprocessing = 0;')
 frameworks = obj('frameworks', 'isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;')
 
-source_group = obj('source-group', 'isa = PBXGroup; name = Application; children = ' + array([file_refs[p.relative_to(ROOT).as_posix()] for p in app_sources + app_headers] + [info_ref, assets_ref]) + '; sourceTree = "<group>";')
+source_group = obj('source-group', 'isa = PBXGroup; name = Application; children = ' + array([file_refs[p.relative_to(ROOT).as_posix()] for p in app_sources + app_headers] + [info_ref, assets_ref] + resource_refs) + '; sourceTree = "<group>";')
 test_group = obj('test-group', 'isa = PBXGroup; name = Tests; children = ' + array([file_refs[p.relative_to(ROOT).as_posix()] for p in test_sources]) + '; sourceTree = "<group>";')
 ui_group = obj('ui-group', 'isa = PBXGroup; name = "UI Tests"; children = ' + array([file_refs[p.relative_to(ROOT).as_posix()] for p in ui_sources]) + '; sourceTree = "<group>";')
 vendor_group = obj('vendor-group', 'isa = PBXGroup; name = "VMX Codec (MIT)"; children = ' + array([file_refs[p.relative_to(ROOT).as_posix()] for p in vendor_sources] + [vendor_license]) + '; sourceTree = "<group>";')
 products = obj('products', f'isa = PBXGroup; name = Products; children = ({app_product}, {test_product}, {ui_product},); sourceTree = "<group>";')
-main_group = obj('main-group', f'isa = PBXGroup; children = ({source_group}, {test_group}, {ui_group}, {vendor_group}, {readme_ref}, {products},); sourceTree = "<group>";')
+main_group = obj('main-group', f'isa = PBXGroup; children = ({source_group}, {test_group}, {ui_group}, {vendor_group}, {readme_ref}, {signing_ref}, {products},); sourceTree = "<group>";')
 
 common = {
     'ARCHS': 'arm64', 'SDKROOT': 'appletvos', 'SUPPORTED_PLATFORMS': 'appletvos appletvsimulator',
@@ -82,8 +93,8 @@ common = {
 app_settings = {
     'PRODUCT_NAME':'$(TARGET_NAME)', 'PRODUCT_BUNDLE_IDENTIFIER':'com.suku.OMTReceiver',
     'INFOPLIST_FILE':'OMTReceiver/Info.plist', 'GENERATE_INFOPLIST_FILE':'NO',
-    'MARKETING_VERSION':'0.1', 'CURRENT_PROJECT_VERSION':'1',
-    'CODE_SIGN_STYLE':'Automatic', 'DEVELOPMENT_TEAM':'',
+    'MARKETING_VERSION':version, 'CURRENT_PROJECT_VERSION':build_number,
+    'CODE_SIGN_STYLE':'Automatic',
     'SWIFT_OBJC_BRIDGING_HEADER':'OMTReceiver/Codec/OMTReceiver-Bridging-Header.h',
     'HEADER_SEARCH_PATHS':'$(inherited) $(SRCROOT)/Vendor/libvmx/src $(SRCROOT)/OMTReceiver/Codec',
     'OTHER_CPLUSPLUSFLAGS':'$(inherited) -fdeclspec',
@@ -94,13 +105,13 @@ app_settings = {
 }
 test_settings = {
     'PRODUCT_NAME':'$(TARGET_NAME)', 'PRODUCT_BUNDLE_IDENTIFIER':'com.suku.OMTReceiverTests',
-    'GENERATE_INFOPLIST_FILE':'YES', 'CODE_SIGN_STYLE':'Automatic', 'DEVELOPMENT_TEAM':'',
+    'GENERATE_INFOPLIST_FILE':'YES', 'CODE_SIGN_STYLE':'Automatic',
     'TEST_HOST':'$(BUILT_PRODUCTS_DIR)/OMTReceiver.app/OMTReceiver', 'BUNDLE_LOADER':'$(TEST_HOST)',
     'LD_RUNPATH_SEARCH_PATHS':'$(inherited) @executable_path/Frameworks @loader_path/Frameworks',
 }
 ui_settings = {
     'PRODUCT_NAME':'$(TARGET_NAME)', 'PRODUCT_BUNDLE_IDENTIFIER':'com.suku.OMTReceiverUITests',
-    'GENERATE_INFOPLIST_FILE':'YES', 'CODE_SIGN_STYLE':'Automatic', 'DEVELOPMENT_TEAM':'',
+    'GENERATE_INFOPLIST_FILE':'YES', 'CODE_SIGN_STYLE':'Automatic',
     'TEST_TARGET_NAME':'OMTReceiver',
 }
 
@@ -116,7 +127,8 @@ def config_list(key, settings):
                 values['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = 'DEBUG $(inherited)'
                 values['GCC_PREPROCESSOR_DEFINITIONS'] = 'DEBUG=1 $(inherited)'
         rendered=' '.join(f'{k} = {q(v)};' for k,v in sorted(values.items()))
-        ids.append(obj(f'{key}-{mode}', f'isa = XCBuildConfiguration; buildSettings = {{ {rendered} }}; name = {mode};'))
+        base = f'baseConfigurationReference = {signing_ref}; ' if key == 'project' else ''
+        ids.append(obj(f'{key}-{mode}', f'isa = XCBuildConfiguration; {base}buildSettings = {{ {rendered} }}; name = {mode};'))
     return obj(key + '-config-list', f'isa = XCConfigurationList; buildConfigurations = {array(ids)}; defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;')
 
 project_configs = config_list('project', common)

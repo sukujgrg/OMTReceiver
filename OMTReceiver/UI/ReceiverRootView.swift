@@ -8,6 +8,7 @@ struct ReceiverRootView: View {
     @AppStorage("manualSourceAddress") private var address = ""
     @State private var manualError: String?
     @State private var showingManualEntry = false
+    @State private var showingInformation = false
     @FocusState private var videoFocused: Bool
 
     var body: some View {
@@ -46,18 +47,21 @@ struct ReceiverRootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: receiver.controlsVisible)
-        .onExitCommand(perform: receiver.isPlaying ? {
+        .onExitCommand(perform: receiver.isPlaying && !showingManualEntry && !showingInformation ? {
             if receiver.controlsVisible { receiver.hideControls() }
             else { receiver.revealControls() }
         } : nil)
         .onPlayPauseCommand {
+            guard !showingManualEntry, !showingInformation else { return }
             if receiver.controlsVisible { receiver.hideControls() }
             else { receiver.revealControls() }
         }
         .onMoveCommand { _ in
+            guard !showingManualEntry, !showingInformation else { return }
             if !receiver.controlsVisible { receiver.revealControls() }
         }
         .sheet(isPresented: $showingManualEntry) { manualEntry }
+        .fullScreenCover(isPresented: $showingInformation, onDismiss: { receiver.revealControls() }) { AppInformationView() }
     }
 
     private var controls: some View {
@@ -125,6 +129,11 @@ struct ReceiverRootView: View {
                         showingManualEntry = true
                     }
                     .accessibilityIdentifier("manual-address")
+                    Button("About", systemImage: "info.circle") {
+                        receiver.revealControls()
+                        showingInformation = true
+                    }
+                    .accessibilityIdentifier("about")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

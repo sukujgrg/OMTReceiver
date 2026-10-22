@@ -23,3 +23,7 @@ AppStore/Submission.local.json
 Validation/
 Config/Signing.local.xcconfig
 *.gitbundle
+
+# Python caches
+__pycache__/
+*.py[cod]

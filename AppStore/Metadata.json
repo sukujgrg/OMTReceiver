@@ -1,0 +1,21 @@
+{
+  "name": "OMT Receiver",
+  "subtitle": "Live video over your network",
+  "primaryLanguage": "en-US",
+  "primaryCategory": "PHOTO_AND_VIDEO",
+  "secondaryCategory": "UTILITIES",
+  "bundleIdentifier": "com.suku.OMTReceiver",
+  "sku": "OMTReceiver-tvOS",
+  "supportURL": "https://sukujgrg.github.io/OMTReceiver/support.html",
+  "privacyPolicyURL": "https://sukujgrg.github.io/OMTReceiver/privacy.html",
+  "marketingURL": "https://sukujgrg.github.io/OMTReceiver/",
+  "keywords": "OMT,video,receiver,network,stream,HDMI,production,monitor,LAN",
+  "promotionalText": "Receive an Open Media Transport source on Apple TV and show its video and audio full screen. A compatible sender on your network is required.",
+  "description": "Turn your Apple TV into an independent Open Media Transport receiver.\n\nChoose an OMT source discovered on your network, or connect using its host name or IP address and TCP port. Video appears full screen with its original aspect ratio, and audio plays through your Apple TV's active audio output.\n\nFeatures\n• Bonjour source discovery and manual connection, including IPv6 addresses.\n• Progressive 8-bit SDR VMX video through 1920×1080 at up to 60 fps.\n• FPA1 audio, mute, requested quality, reconnect and local playback statistics.\n• Siri Remote controls that stay out of the way during playback.\n• No account, advertising or tracking.\n\nA separate compatible OMT sender and a network connection are required. Ethernet is recommended. Performance depends on the source, network, Apple TV and HDMI format. 4K input, HDR, interlaced video and multiview are not supported in this version.\n\nThis is an independent project, not an official Open Media Transport product. It does not supply channels, subscriptions or copyrighted media.",
+  "releaseNotes": "Initial tvOS release preparation: independent fullscreen OMT reception, source discovery, manual connection and audio playback.",
+  "privacyNutritionLabelRecommendation": "DATA_NOT_COLLECTED",
+  "pricing": null,
+  "ageRatingQuestionnaireCompleted": false,
+  "contentRightsDeclarationCompleted": false,
+  "status": "DRAFT — owner must complete App Store Connect declarations before submission"
+}

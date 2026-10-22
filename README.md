@@ -68,6 +68,13 @@ The VMX codec source is compiled directly for arm64 with bounded decoder threads
 The original [Icon Composer source](Design/AppIcon/README.md) and four-layer tvOS
 Home Screen/App Store/Top Shelf artwork are checked in.
 
+## App Store preparation
+
+See [the distribution guide](AppStore/README.md) for versioning, privacy,
+local archive/export commands and the remaining submission gates. The
+[support site](https://sukujgrg.github.io/OMTReceiver/) contains public setup and
+privacy information. No TestFlight upload or App Store submission is automatic.
+
 ## Licence
 
 Original source and artwork are available under the [MIT licence](LICENSE).

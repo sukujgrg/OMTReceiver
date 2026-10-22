@@ -1,5 +1,9 @@
 # Third-party notices
 
+Original application source and artwork are MIT-licensed; see LICENSE. The app
+bundles the complete notices in Resources/ThirdPartyNotices.txt and displays
+them under About → Third-Party Licences.
+
 ## Official VMX codec
 
 Source: https://github.com/openmediatransport/libvmx
