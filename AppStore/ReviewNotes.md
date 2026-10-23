@@ -14,8 +14,10 @@ credentials are needed, and all app controls work with the Siri Remote.
 3. Launch OMT Receiver, allow local-network access if prompted, and select the
    sender in Sources. If Bonjour is unavailable, use Enter Address with that
    sender's actual `omt://HOST:PORT`; no developer-specific address is needed.
-4. The source appears full screen. Press Back or Play/Pause to reveal controls,
-   use mute/reconnect/quality, then return to full screen. Disconnect stops it.
+4. The source appears full screen. Press Back or Play/Pause to open the source
+   strip. Browse with Left/Right and Select a source to switch picture and audio;
+   Back dismisses the strip. Select Settings for mute/reconnect/quality and
+   Disconnect. Disconnect stops reception.
 5. About opens Getting Started, Privacy Policy and bundled third-party licences.
 
 The app does not provide a hosted stream or connect to a developer backend.

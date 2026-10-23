@@ -1,6 +1,6 @@
-# Preparation evidence — 23 October 2026
+# Preparation evidence — 24 October 2026
 
-Current candidate: version 1.0.0 (4). Local checks used Apple Silicon, Xcode 27.1 and the tvOS 27
+Current candidate: version 1.0.0 (5). Local checks used Apple Silicon, Xcode 27.1 and the tvOS 27
 SDK/simulator. These checks prepare a build; they do not establish App Store
 acceptance or physical performance.
 
@@ -219,6 +219,40 @@ The earlier `build/AppStore/Interlaced-20261023/` archive/export are preserved a
 superseded preparation-window prototypes. The final build 4 is installed on the
 paired first-generation Apple TV. No TestFlight upload
 or App Review submission has been performed.
+
+## Build 5 quick source switcher — 24 October 2026
+
+The source strip preserves one receiving session, separates browsing from source
+selection and keeps settings accessible through a native focus section. The
+signed Release build is installed on the paired Apple TV; this is a development
+installation, not a new App Store archive/export. The Release build completed
+with compiler warnings treated as errors, and its local packaging/signature
+checks passed.
+
+The final suite passed 95 unit tests and two ordinary simulator UI tests. Three
+external-sender tests remain opt-in. The new source-reselection test passed ten
+repetitions after correcting its asynchronous initial socket-count baseline.
+The physical Apple TV passed 40 real SDK source switches, browsing cancellation,
+current-source reselection, favourite toggling/focus return and settings access.
+The successful simulator interoperability checks and physical screenshot were
+retained and visually inspected. A 95-second 1080p60 Release collection smoke
+check completed; it is not a sustained qualification. See the current
+[hardware observations](../docs/performance.md).
+
+Evidence is under ignored `build/QuickSwitcher-20261024/`, including
+`FinalTests-2.xcresult`, `ReselectionRepeated.xcresult`,
+`HardwareRemote-2.xcresult`, `DeviceBuild-5.log`, and `ReleaseSmoke/`.
+The earlier failed UI-focus attempts, sleeping-device launch and test-fixture
+race remain preserved separately. Existing local Xcode formatting/signing-team
+edits were retained; their signing-team value triggers the public-source identity
+audit and must not be published. No new App Store publishing action was requested.
+
+The benchmark-tool suite now has 12 passing regressions, including external
+sources, expected audio/format checks and bounded recovery controls. The local
+upstream socket-pool regression also passed all four real-socket cases against
+the final candidate. The eucaly dual-output functional and sustained evidence is
+recorded separately in [hardware observations](../docs/performance.md); it does
+not replace an App Store archive/export or physical latency/audio observation.
 
 ## Hardware results and remaining checks
 

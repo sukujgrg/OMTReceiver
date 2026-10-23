@@ -1,0 +1,41 @@
+{
+  "managedCommit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+  "nativeCommit": "bb4b67be8e5964f1017592b9fc5406495e704e5d",
+  "managedTag": "v1.0.0.19",
+  "sdkVersion": "8.0.426",
+  "scope": "Local experimental copies only; pinned eucaly audit source and official shipping SDK unchanged; no upstream push authorized.",
+  "bufferBytes": 524288,
+  "sha256": "425f8ad3d87b7b4e0c8381ca0b2f3b499bbc7f59fecb250a8402b21511920cb9",
+  "runtimeArchitecture": "arm64",
+  "sourceChanges": [
+    "src/OMTConstants.cs: NETWORK_SEND_BUFFER = 524288 (upstream65536)",
+    "src/OMTSocketAsyncPool.cs: return rented slot for null socket or synchronous send exception"
+  ],
+  "variant": "512 KiB buffer + synchronous failure slot ownership repair",
+  "managedSourceState": {
+    "commit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+    "patches": [
+      {
+        "path": "Upstream/libomtnet/patches/0003-increase-bounded-tcp-send-buffer-to-512k.patch",
+        "sha256": "ac69c2756251be9b2c389a5be2b69230397f619194b53f79ca7ad6fe30749371",
+        "originalBuildPatchSHA256": "a4890642bea9b82aabc21e2e8c64b4a01fd8fddca66c5266bed86e4c8f095c7f",
+        "normalization": "Removed final blank context line and adjusted hunk count; git apply yields byte-identical source.",
+        "resultingSourceSHA256": "db34798846351b537139b4498782c29850dfc94f41da67ef2b67b30d5f4c2f39"
+      },
+      {
+        "path": "Upstream/libomtnet/patches/0002-return-socket-slot-on-synchronous-failure.patch",
+        "sha256": "dea0049345ee2a2a49352a1a48ee7765bf17130d97202c4370b92461b72e62ac"
+      }
+    ]
+  },
+  "buildCommands": [
+    "dotnet build libomtnet.csproj -c Release -f netstandard2.0 -p:TargetFrameworks=netstandard2.0",
+    "dotnet publish libomt.csproj -c Release -r osx-arm64"
+  ],
+  "buildEnvironment": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_GENERATE_ASPNET_CERTIFICATE": "false",
+    "DOTNET_CLI_HOME": "/tmp/OMTReceiver-dotnet-home-20261024",
+    "NUGET_PACKAGES": "/tmp/OMTReceiver-nuget-20261024"
+  }
+}

@@ -3,7 +3,28 @@
 Recorded 23 October 2026 on a first-generation Apple TV 4K (A10X), tvOS 26.6.
 These observations do not establish a general production or NDI performance claim.
 
-## Current candidate: 1.0.0 (4)
+## Current candidate: 1.0.0 (5)
+
+Build 5 adds a compact source strip while retaining one receive/playback session.
+Browsing leaves the active connection alone; reselecting the current live source
+does not reconnect. On 24 October, a physical Siri Remote automation completed
+40 consecutive switches between two independent SDK 1080p30 sources, including
+browsing cancellation, current-source reselection, favourite changes and settings
+navigation. The Mac sender used Wi-Fi. The suite passed 95 unit tests and two
+ordinary simulator UI tests; three sender-dependent checks are opt-in. The new
+reselection regression also passed ten repetitions after its fixture was made to
+wait for both initial media lanes.
+
+A short Release 1080p60 smoke check collected 95.0 seconds in one app process and
+one connection attempt, at 60.002 admitted fps. Its separate 90.0-second native
+window recorded 5 drops in 5,400 frames (0.0926%), zero corruption, no late audio,
+no decoder-pool stalls and nominal thermal state. This confirms the collection
+path and basic playback, not sustained performance or physical audible/panel
+continuity. The current production-readiness work is coordinated with eucaly's
+agent and will use eucaly's real output path and supplied video files; results
+remain pending. Earlier sustained figures below belong to build 2.
+
+## Build 4 scope
 
 Build 3 contains compiler-warning repairs and OBS zero-aspect compatibility. Its
 unit/UI tests and a live OBS 720p30 smoke check passed, and the operator confirmed

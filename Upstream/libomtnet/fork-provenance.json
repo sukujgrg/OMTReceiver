@@ -1,0 +1,33 @@
+{
+  "forkURL": "https://github.com/sukujgrg/libomtnet",
+  "localPath": "/Users/suku/github/openmediatransport/libomtnet",
+  "activeBranch": "codex/omt-send-stability",
+  "prBranch": {
+    "name": "codex/omt-send-stability",
+    "commit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032",
+    "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
+    "managedSDKVersion": "1.0.0.20"
+  },
+  "testedSDKBranch": {
+    "name": "codex/omt-sdk-1.0.0.19-stability",
+    "commit": "2b68007d694b9a772063f69065b86890b97dc72e",
+    "base": "5395139d45cf47bf9f90364bf68f9960183e7638",
+    "managedSDKVersion": "1.0.0.19"
+  },
+  "nativeWrapper": {
+    "localPath": "/Users/suku/github/openmediatransport/libomt",
+    "commit": "bb4b67be8e5964f1017592b9fc5406495e704e5d",
+    "changes": false
+  },
+  "regressionCasesPassedPerBranch": 4,
+  "managedBuilds": "netstandard2.0, zero warnings/errors",
+  "changesPushed": false,
+  "pullRequestOpened": false,
+  "eucalyIntegrationCommit": "23639de",
+  "hardwareQualificationPassed": false,
+  "hardwareLimitations": [
+    "29.898023fps below unchanged29.9fps gate",
+    "2 route-horizon warnings without late audio",
+    "physical panel latency/audible continuity not measured"
+  ]
+}

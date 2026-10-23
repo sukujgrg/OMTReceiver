@@ -75,8 +75,10 @@ def summarize(directory):
             error = math.sqrt(sum((v - ym - slope * (t - xm)) ** 2 for t, v in zip(x, y)) / (len(x) - 2) / sxx)
             return slope, error
         video_leads = [r['currentVideoLeadMs'] for r in clock_rows]
-        audio_leads = [r['currentAudioLeadMs'] for r in clock_rows]
-        for label, y in [('video', video_leads), ('audio', audio_leads)]:
+        leads = [('video', video_leads)]
+        if all('currentAudioLeadMs' in r for r in clock_rows):
+            leads.append(('audio', [r['currentAudioLeadMs'] for r in clock_rows]))
+        for label, y in leads:
             slope, error = fit(y)
             lead_trend[label] = {'millisecondsPerMinute': slope * 60,
                                  'earlyMeanMs': statistics.mean(y[:12]),
@@ -91,6 +93,7 @@ def summarize(directory):
     delta = lambda name: last.get(name, 0) - first.get(name, 0)
     checks = {
         'collectionCompleted': manifest.get('collectionResult') == 'complete',
+        'noCollectionErrors': not manifest.get('collectionErrors'),
         'nativeRendererMetricsAvailable': native_summary['available'],
         'uniqueFixtureFramesNotDoubleCounted': source_frame_advance >= admitted,
         'sourceFrameLossBelow0_1Percent': source_frame_advance > 0 and max(0, source_frame_advance - admitted) / source_frame_advance < 0.001,
@@ -106,9 +109,24 @@ def summarize(directory):
         'noAudioAdmittedInsideRouteHorizon': delta('audioPacketsBelowRouteHorizon') == 0,
         'noAudioTimestampDiscontinuities': delta('audioTimestampDiscontinuities') == 0,
         'noTimelineResets': delta('audioTimelineResets') == 0 and delta('videoTimelineResets') == 0,
+        'noDecoderPoolStalls': delta('poolStalls') == 0,
+        'noSampledVideoStallOverTwoSeconds': all(r['uptime'] - r['lastVideoAdmissionUptime'] <= 2 for r in records),
         'noSeriousOrCriticalThermalState': max(r['thermalState'] for r in records) < 2,
         'postWarmupMemoryGrowthBelow20MiB': post_warmup_count >= 24 and memory_early is not None and memory_late - memory_early < 20,
     }
+    if 'expectedScanMode' in manifest:
+        scan_mode = manifest['expectedScanMode']
+        output_fps = target_fps * (2 if scan_mode == 'interlaced' and target_fps <= 30 else 1)
+        checks['advertisedScanModeMatchesTarget'] = all(r.get('videoSourceScanMode') == scan_mode for r in records)
+        checks['outputSamplesAtLeastTargetMinus0_1FPS'] = delta('videoSamplesAdmitted') / duration >= output_fps - 0.1
+    if manifest.get('expectAudio', True):
+        checks['expectedAudioIsAdvancing'] = audio > 0
+    if manifest.get('sourceMode') == 'external':
+        # A real publisher uses its own clock and content cadence. Timestamp
+        # deltas remain useful evidence, but cannot prove unique frame identity
+        # or attribute every missing production opportunity to the receiver.
+        checks.pop('uniqueFixtureFramesNotDoubleCounted')
+        checks.pop('sourceFrameLossBelow0_1Percent')
     if native_summary['available']:
         checks['nativeRendererCoverageAtLeast95Percent'] = native_summary['durationSeconds'] >= duration * 0.95
         checks['nativeRendererNoCorruptedFrames'] = native_summary['corruptedFrames'] == 0
@@ -123,6 +141,9 @@ def summarize(directory):
         'videoFramesAdmitted': admitted, 'videoAdmissionFPS': admitted / duration,
         'expectedFrameRateNumerator': rate.numerator, 'expectedFrameRateDenominator': rate.denominator,
         'targetFPS': target_fps, 'sourceFrameAdvance': source_frame_advance,
+        'sourceFrameAccounting': 'Inferred from source timestamps and expected rate; not a decoded content/frame counter.',
+        'videoFormat': {key: last.get(key) for key in ('videoWidth', 'videoHeight', 'videoSourceScanMode', 'videoSourceFlags')},
+        'audioFormat': {key: last.get(key) for key in ('audioSampleRate', 'audioChannels', 'audioActiveChannelsMask')},
         **({'sourceFrameAdvanceAt30FPS': source_frame_advance} if rate == 30 else {}),
         'sourceFrameAdvanceMinusAdmissions': source_frame_advance - admitted,
         'worstFiveSecondAdmissionFPS': min(windows) if windows else None,
@@ -144,7 +165,7 @@ def summarize(directory):
         'maximumSampledVideoLeadMs': max(r['currentVideoLeadMs'] for r in records),
         'payloadAfterTransportMailboxMbps': (last['payloadBytesAfterTransportMailbox'] - first['payloadBytesAfterTransportMailbox']) * 8 / duration / 1_000_000,
         'scheduledPlaybackLeadTrend': lead_trend,
-        'latencyStabilityFlagged': bool(lead_trend) and any(lead_trend[lane]['changeInMeansMs'] > 1000 / target_fps for lane in ['video','audio']),
+        'latencyStabilityFlagged': bool(lead_trend) and any(lead_trend[lane]['changeInMeansMs'] > 1000 / target_fps for lane in ['video','audio'] if lane in lead_trend),
         'route': last['route'], 'nativeRenderer': native_summary,
         'cpuPercentOfOneCoreMean': statistics.mean(cpu) if cpu else None,
         'cpuPercentOfOneCoreMaximum': max(cpu) if cpu else None,
@@ -161,7 +182,7 @@ def summarize(directory):
         'operatorObservation': observation,
         'audibleContinuityVerifiedForThisRun': bool(observation and observation.get('physicalAudioCheckPerformed')
                                                     and observation.get('audibleContinuityPassed')),
-        'limits': 'Instrumented single opaque SDK-generated test pattern. Native renderer data does not measure physical HDMI/panel delivery. No phone/capture latency measurement. Audio listening evidence, when available, is recorded separately in operatorObservation. Decode/audio gap extrema include warmup. Process CPU is expressed as a percentage of one CPU core.'
+        'limits': 'Instrumented single-source run; see manifest for source identity and scenario. Source frame accounting is inferred from timestamps, not content identity. Native renderer data does not measure physical HDMI/panel delivery. No phone/capture latency measurement. Audio listening evidence, when available, is recorded separately in operatorObservation. Decode/audio gap extrema include warmup. Process CPU is expressed as a percentage of one CPU core.'
     }
 
 

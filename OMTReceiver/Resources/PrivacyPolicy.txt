@@ -1,5 +1,5 @@
 OMT Receiver Privacy Policy
-Last updated: 23 October 2026
+Last updated: 24 October 2026
 
 OMT Receiver receives video and audio from an Open Media Transport source you choose and plays it on your Apple TV. It has no account system, advertising, analytics service, or tracking.
 
@@ -7,10 +7,10 @@ Network use
 The app uses Bonjour to find OMT sources and connects to the source you select or enter. Your selected source can see the receiver's network address and the protocol information needed to deliver the stream. No viewing history, video or audio is sent to the app developer. OMT media connections are unencrypted; use sources and networks you trust.
 
 Data on your Apple TV
-Video and audio are held in bounded memory buffers for playback and are not recorded to files. The last address entered manually is saved in the app's own preferences to make reconnection easier. The app shows connection and playback statistics locally. Separate opt-in developer benchmark runs can write diagnostic reports to the app's cache; normal Home Screen launches do not start those runs or upload reports.
+Video and audio are held in bounded memory buffers for playback and are not recorded to files. The last address entered manually and the identities of sources you mark as favourites are saved in the app's own preferences to make source selection easier. The app shows connection and playback statistics locally. Separate opt-in developer benchmark runs can write diagnostic reports to the app's cache; normal Home Screen launches do not start those runs or upload reports.
 
 Retention and control
-Disconnect closes the selected stream. You can erase a saved manual address by replacing or clearing it in Enter Address. Removing the app removes its local preferences and cache. tvOS may also reclaim cached data. Local-network access is controlled by the device's privacy settings. Declining access prevents network reception; no unrelated permission is required.
+Disconnect closes the selected stream. You can erase a saved manual address by replacing or clearing it in Enter Address, and remove a favourite by selecting Unfavourite for that source. Removing the app removes its local preferences and cache. tvOS may also reclaim cached data. Local-network access is controlled by the device's privacy settings. Declining access prevents network reception; no unrelated permission is required.
 
 Contact
 Use the support page or the public issue tracker linked there. Do not post private source addresses, credentials, recordings or raw diagnostic reports in public issues.

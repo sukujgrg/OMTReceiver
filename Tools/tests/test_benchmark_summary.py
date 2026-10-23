@@ -66,6 +66,70 @@ class FrameRateSummaryTests(unittest.TestCase):
             self.assertEqual(result["sourceFrameAdvanceAt30FPS"],1800)
             self.assertEqual(result["videoAdmissionFPS"],30)
 
+    def test_interlaced_thirty_requires_sixty_output_samples(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            self.fixture(path, frames=1800, numerator=30)
+            manifest = json.loads((path / "manifest.json").read_text())
+            manifest['expectedScanMode'] = 'interlaced'
+            (path / "manifest.json").write_text(json.dumps(manifest))
+            rows = [json.loads(line) for line in (path / "receiver-series.jsonl").read_text().splitlines()]
+            for index, row in enumerate(rows):
+                row.update(videoSourceScanMode='interlaced', videoSamplesAdmitted=index * 1800)
+            (path / "receiver-series.jsonl").write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            result = summary.summarize(path)
+            self.assertTrue(result['runtimeTargets']['advertisedScanModeMatchesTarget'])
+            self.assertFalse(result['runtimeTargets']['outputSamplesAtLeastTargetMinus0_1FPS'])
+            rows[-1]['videoSamplesAdmitted'] = 3600
+            (path / "receiver-series.jsonl").write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            self.assertTrue(summary.summarize(path)['runtimeTargets']['outputSamplesAtLeastTargetMinus0_1FPS'])
+
+    def test_progressive_source_cannot_pass_an_interlaced_check(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            self.fixture(path)
+            manifest = json.loads((path / "manifest.json").read_text())
+            manifest['expectedScanMode'] = 'interlaced'
+            (path / "manifest.json").write_text(json.dumps(manifest))
+            self.assertFalse(summary.summarize(path)['runtimeTargets']['advertisedScanModeMatchesTarget'])
+
+    def test_fresh_report_does_not_hide_stalled_video(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            self.fixture(path)
+            rows = [json.loads(line) for line in (path / 'receiver-series.jsonl').read_text().splitlines()]
+            rows[-1]['lastVideoAdmissionUptime'] -= 5
+            (path / 'receiver-series.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            self.assertFalse(summary.summarize(path)['runtimeTargets']['noSampledVideoStallOverTwoSeconds'])
+
+    def test_missing_audio_cannot_pass_an_audio_video_run(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            self.fixture(path)
+            rows = [json.loads(line) for line in (path / 'receiver-series.jsonl').read_text().splitlines()]
+            for row in rows:
+                row['audioPacketsAdmitted'] = 0
+                row.pop('currentAudioLeadMs', None)
+            (path / 'receiver-series.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            self.assertFalse(summary.summarize(path)['runtimeTargets']['expectedAudioIsAdvancing'])
+            manifest = json.loads((path / 'manifest.json').read_text())
+            manifest['expectAudio'] = False
+            (path / 'manifest.json').write_text(json.dumps(manifest))
+            self.assertNotIn('expectedAudioIsAdvancing', summary.summarize(path)['runtimeTargets'])
+
+    def test_external_publisher_timestamps_do_not_claim_unique_fixture_frames(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            self.fixture(path)
+            manifest = json.loads((path / 'manifest.json').read_text())
+            manifest['sourceMode'] = 'external'
+            (path / 'manifest.json').write_text(json.dumps(manifest))
+            result = summary.summarize(path)
+            self.assertNotIn('uniqueFixtureFramesNotDoubleCounted', result['runtimeTargets'])
+            self.assertNotIn('sourceFrameLossBelow0_1Percent', result['runtimeTargets'])
+            self.assertIn('nativeRendererMetricsAvailable', result['runtimeTargets'])
+            self.assertIn('admissionAtLeastTargetMinus0_1FPS', result['runtimeTargets'])
+
 
 if __name__ == "__main__":
     unittest.main()

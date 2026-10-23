@@ -34,6 +34,37 @@ enum OMTAddressError: LocalizedError {
     var errorDescription: String? { "Enter an OMT address such as omt://192.168.1.20:6400." }
 }
 
+/// Stores source identities only. Discovery and favourites never open a media
+/// connection, and a selected manual/temporarily undiscovered source stays visible.
+@MainActor
+final class ReceiverSourcePreferences: ObservableObject {
+    private let defaults: UserDefaults
+    private let key = "favouriteSourceIDs"
+    @Published private(set) var favourites: Set<String>
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        favourites = Set((defaults.stringArray(forKey: key) ?? []).prefix(128))
+    }
+
+    func toggleFavourite(_ source: OMTSource) {
+        if favourites.contains(source.id) { favourites.remove(source.id) }
+        else if favourites.count < 128 { favourites.insert(source.id) }
+        defaults.set(favourites.sorted(), forKey: key)
+    }
+
+    func orderedSources(_ discovered: [OMTSource], selected: OMTSource?) -> [OMTSource] {
+        var unique = Dictionary(discovered.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        if let selected, unique[selected.id] == nil { unique[selected.id] = selected }
+        return unique.values.sorted { lhs, rhs in
+            let leftFavourite = favourites.contains(lhs.id), rightFavourite = favourites.contains(rhs.id)
+            if leftFavourite != rightFavourite { return leftFavourite }
+            let order = lhs.name.localizedStandardCompare(rhs.name)
+            return order == .orderedSame ? lhs.id < rhs.id : order == .orderedAscending
+        }
+    }
+}
+
 /// Discovery is local to its browser/session owner. It never connects to or
 /// selects a source merely because an advertisement arrives.
 @MainActor

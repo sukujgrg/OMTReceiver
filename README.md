@@ -34,10 +34,15 @@ is unavailable, choose **Enter Address…** and supply the sender's actual host
 and TCP port. Hostnames and bracketed IPv6 addresses are supported.
 
 The app preserves the video's aspect ratio, with black gutters where needed.
-Controls hide after playback starts. Back or Play/Pause reveals or hides them;
-arrow navigation also returns to controls. Mute, requested quality, statistics,
-Reconnect and Disconnect are available. Discovery never selects a source for
-you. Disconnect cancels retry; suspension closes media connections and resources.
+During playback, Back, Play/Pause or arrow navigation opens a compact source
+strip. Browse without changing picture or audio, then press Select to switch.
+Back dismisses the strip; reopening focuses the current source. Selecting the
+current live source does not reconnect. Favourite the current source to keep it
+near the front. A selected manual or temporarily undiscovered source stays in
+the strip. Settings opens mute, requested quality, statistics, Reconnect and
+Disconnect. Discovery never selects a source for you. Disconnect cancels retry;
+suspension closes media connections and resources. Only the selected source is
+received; the source strip does not open live previews.
 
 ## Supported media
 

@@ -1,0 +1,41 @@
+{
+  "managedCommit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+  "nativeCommit": "bb4b67be8e5964f1017592b9fc5406495e704e5d",
+  "managedTag": "v1.0.0.19",
+  "sdkVersion": "8.0.426",
+  "scope": "Local experimental copies only; pinned eucaly audit source and official shipping SDK unchanged; no upstream push authorized.",
+  "bufferBytes": 262144,
+  "sha256": "4514116392a82e4c4b5d5b5fd732f1bd771644e8c95072e2b75cedabe6c8997a",
+  "runtimeArchitecture": "arm64",
+  "sourceChanges": [
+    "src/OMTConstants.cs: NETWORK_SEND_BUFFER = 262144 (was 65536)",
+    "src/OMTSocketAsyncPool.cs: return rented slot for null socket or synchronous send exception"
+  ],
+  "variant": "256 KiB buffer + synchronous failure slot ownership repair",
+  "managedSourceState": {
+    "commit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+    "patches": [
+      {
+        "path": "Upstream/libomtnet/patches/0001-increase-bounded-tcp-send-buffer.patch",
+        "sha256": "43fd34a958428b0897e3f6d8baa24e5776231c68f96d7567a24c3ad02d478d9f",
+        "originalBuildPatchSHA256": "0ef1bc1ba05c1fe1655587595e487b398e568fc93d6a4b424f7d6aa573def11f",
+        "normalization": "Removed final blank context line and adjusted hunk count; git apply yields byte-identical source.",
+        "resultingSourceSHA256": "5baa6262697c26ec4e3f5cf1024d8081c83ee43454f64c58dc973318340751f4"
+      },
+      {
+        "path": "Upstream/libomtnet/patches/0002-return-socket-slot-on-synchronous-failure.patch",
+        "sha256": "dea0049345ee2a2a49352a1a48ee7765bf17130d97202c4370b92461b72e62ac"
+      }
+    ]
+  },
+  "buildCommands": [
+    "dotnet build libomtnet.csproj -c Release -f netstandard2.0 -p:TargetFrameworks=netstandard2.0",
+    "dotnet publish libomt.csproj -c Release -r osx-arm64"
+  ],
+  "buildEnvironment": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_GENERATE_ASPNET_CERTIFICATE": "false",
+    "DOTNET_CLI_HOME": "/tmp/OMTReceiver-dotnet-home-20261024",
+    "NUGET_PACKAGES": "/tmp/OMTReceiver-nuget-20261024"
+  }
+}

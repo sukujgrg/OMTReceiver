@@ -5,6 +5,7 @@ import UIKit
 struct ReceiverRootView: View {
     @ObservedObject var receiver: ReceiverSession
     @ObservedObject var discovery: OMTDiscovery
+    @StateObject private var sourcePreferences = ReceiverSourcePreferences()
     @AppStorage("manualSourceAddress") private var address = ""
     @State private var manualError: String?
     @State private var showingManualEntry = false
@@ -18,23 +19,49 @@ struct ReceiverRootView: View {
                 .ignoresSafeArea()
                 .accessibilityLabel("OMT video output")
 
-            if receiver.isPlaying && !receiver.controlsVisible {
+            if receiver.hasSelection && receiver.overlay == .hidden {
                 Color.clear
                     .ignoresSafeArea()
                     .focusable()
                     .focused($videoFocused)
                     .focusEffectDisabled()
-                    .accessibilityLabel("Video playing. Press Back to show controls.")
-                    .accessibilityIdentifier("fullscreen-video")
+                    .accessibilityLabel("\(receiver.status). Press Back to choose a source.")
+                    .accessibilityIdentifier(receiver.isPlaying ? "fullscreen-video" : "connecting-video")
+                    .onTapGesture { receiver.revealSources() }
                     .onAppear { videoFocused = true }
             }
 
-            if receiver.controlsVisible || !receiver.isPlaying {
+            if receiver.controlsVisible {
                 controls
                     .transition(.opacity)
             }
 
-            if receiver.diagnosticsVisible && !receiver.controlsVisible && receiver.isPlaying {
+            if receiver.sourcesVisible {
+                VStack {
+                    Spacer()
+                    ReceiverSourceSwitcher(receiver: receiver, discovery: discovery, preferences: sourcePreferences)
+                }
+                .padding(.horizontal, 70)
+                .padding(.bottom, 45)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            if receiver.overlay == .hidden && !receiver.isPlaying && receiver.hasSelection {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 18) {
+                        ProgressView()
+                        Text("\(receiver.sourceName) · \(receiver.status)").lineLimit(2)
+                    }
+                    .padding(24)
+                    .background(.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
+                    .accessibilityIdentifier("connection-status")
+                }
+                .padding(60)
+                .allowsHitTesting(false)
+            }
+
+            if receiver.diagnosticsVisible && receiver.overlay == .hidden && receiver.isPlaying {
                 VStack {
                     Spacer()
                     Text(receiver.statistics)
@@ -46,19 +73,19 @@ struct ReceiverRootView: View {
                 .allowsHitTesting(false)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: receiver.controlsVisible)
-        .onExitCommand(perform: receiver.isPlaying && !showingManualEntry && !showingInformation ? {
-            if receiver.controlsVisible { receiver.hideControls() }
-            else { receiver.revealControls() }
+        .animation(.easeInOut(duration: 0.2), value: receiver.overlay)
+        .onExitCommand(perform: receiver.hasSelection && !showingManualEntry && !showingInformation ? {
+            if receiver.sourcesVisible { receiver.dismissOverlay() }
+            else { receiver.revealSources() }
         } : nil)
         .onPlayPauseCommand {
             guard !showingManualEntry, !showingInformation else { return }
-            if receiver.controlsVisible { receiver.hideControls() }
-            else { receiver.revealControls() }
+            if receiver.overlay == .hidden { receiver.revealSources() }
+            else { receiver.dismissOverlay() }
         }
         .onMoveCommand { _ in
             guard !showingManualEntry, !showingInformation else { return }
-            if !receiver.controlsVisible { receiver.revealControls() }
+            if receiver.overlay == .hidden { receiver.revealSources() }
         }
         .sheet(isPresented: $showingManualEntry) { manualEntry }
         .fullScreenCover(isPresented: $showingInformation, onDismiss: { receiver.revealControls() }) { AppInformationView() }
@@ -77,6 +104,10 @@ struct ReceiverRootView: View {
                     }
                 }
                 Spacer()
+                if receiver.hasSelection {
+                    Button("Sources", systemImage: "rectangle.stack") { receiver.revealSources() }
+                        .accessibilityIdentifier("show-sources")
+                }
                 if receiver.isPlaying {
                     Button("Full Screen", systemImage: "arrow.up.left.and.arrow.down.right") {
                         receiver.hideControls()
@@ -111,7 +142,7 @@ struct ReceiverRootView: View {
                                 ForEach(discovery.sources) { source in
                                     Button {
                                         manualError = nil
-                                        receiver.connect(to: source)
+                                        receiver.selectSource(source)
                                     } label: {
                                         Label(source.name, systemImage: "network")
                                             .lineLimit(1)
@@ -181,7 +212,7 @@ struct ReceiverRootView: View {
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("receiver-statistics")
             }
-            Text("Press Back or Play/Pause to show or hide these controls during playback.")
+            Text(receiver.hasSelection ? "Press Back to choose a source. Select Settings in the source strip to return here." : "Choose a source to start watching.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(48)
@@ -219,11 +250,114 @@ struct ReceiverRootView: View {
         do {
             let source = try OMTSource.manual(address: address)
             manualError = nil
-            receiver.connect(to: source)
+            receiver.selectSource(source)
             showingManualEntry = false
         } catch {
             manualError = error.localizedDescription
         }
+    }
+}
+
+private struct ReceiverSourceSwitcher: View {
+    @ObservedObject var receiver: ReceiverSession
+    @ObservedObject var discovery: OMTDiscovery
+    @ObservedObject var preferences: ReceiverSourcePreferences
+    @FocusState private var focusedSourceID: String?
+    @Namespace private var sourceFocus
+
+    private var sources: [OMTSource] {
+        preferences.orderedSources(discovery.sources, selected: receiver.selectedSource)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Sources").font(.headline)
+                    Text("\(receiver.sourceName) · \(receiver.status)")
+                        .font(.callout).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Spacer()
+                if let source = receiver.selectedSource {
+                    Button {
+                        preferences.toggleFavourite(source)
+                    } label: {
+                        Label(preferences.favourites.contains(source.id) ? "Unfavourite" : "Favourite",
+                              systemImage: preferences.favourites.contains(source.id) ? "star.fill" : "star")
+                    }
+                    .accessibilityIdentifier("favourite-current-source")
+                    .accessibilityHint("Changes the order of sources without interrupting playback")
+                }
+                Button("Settings", systemImage: "gearshape") { receiver.revealControls() }
+                    .accessibilityIdentifier("switcher-settings")
+                Button("Close", systemImage: "xmark") { receiver.dismissOverlay() }
+                    .accessibilityIdentifier("switcher-close")
+            }
+            .focusSection()
+            if let message = receiver.message {
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .font(.callout).foregroundStyle(.orange).lineLimit(2)
+                    .accessibilityIdentifier("switcher-error")
+            }
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 28) {
+                        ForEach(sources) { source in
+                            sourceButton(source)
+                                .id(source.id)
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 22)
+                }
+                .focusScope(sourceFocus)
+                .task {
+                    let target = receiver.selectedSource?.id ?? sources.first?.id
+                    if let target { proxy.scrollTo(target, anchor: .center) }
+                    await Task.yield()
+                    guard !Task.isCancelled else { return }
+                    focusedSourceID = target
+                }
+                .onChange(of: sources.map(\.id)) { _, ids in
+                    // Discovery can remove the focused, unselected advertisement.
+                    // Restore a reachable item without changing playback.
+                    if let focusedSourceID, !ids.contains(focusedSourceID) {
+                        self.focusedSourceID = receiver.selectedSource?.id ?? ids.first
+                    }
+                }
+            }
+            Text("Select to switch · Back to return to video · Favourite the current source to keep it near the front")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .padding(30)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("source-switcher")
+    }
+
+    private func sourceButton(_ source: OMTSource) -> some View {
+        let selected = receiver.selectedSource?.id == source.id
+        return Button { receiver.selectSource(source) } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: selected ? "checkmark.circle.fill" : "network")
+                    Spacer()
+                    if preferences.favourites.contains(source.id) { Image(systemName: "star.fill") }
+                }
+                Text(source.name).font(.headline).lineLimit(2)
+                    .truncationMode(.middle)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(selected ? receiver.status : "Select to watch")
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            .frame(width: 320, height: 160, alignment: .leading)
+        }
+        .focused($focusedSourceID, equals: source.id)
+        .prefersDefaultFocus(selected, in: sourceFocus)
+        .accessibilityLabel(source.name)
+        .accessibilityValue(selected ? "Current source · \(receiver.status)" : "Available source")
+        .accessibilityHint(selected ? "Return to this source" : "Switch picture and audio to this source")
+        .accessibilityIdentifier("quick-source-\(source.id)")
     }
 }
 

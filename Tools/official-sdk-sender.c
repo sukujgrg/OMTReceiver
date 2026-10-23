@@ -79,7 +79,7 @@ static void sleep_until(int64_t deadline) {
 
 static void usage(const char *program) {
     printf("Usage: %s [options]\n"
-           "  --seconds N              Finite duration, 0.1–3600 (default 60).\n"
+           "  --seconds N              Finite duration, 0.1–18000 (default 60).\n"
            "  --name NAME              Source name (default OMTReceiver Test Pattern).\n"
            "  --fps RATE               1–60 fps as N or N/D (default 30; e.g. 60 or 60000/1001).\n"
            "  --video-pause-after S    Inject one video-only producer pause after S seconds.\n"
@@ -138,8 +138,8 @@ static bool parse_options(int argc, char **argv, Options *options) {
             char *end = NULL;
             errno = 0;
             double seconds = strtod(value, &end);
-            if (errno || end == value || *end || !isfinite(seconds) || seconds < 0.1 || seconds > 3600) {
-                fprintf(stderr, "--seconds must be between 0.1 and 3600.\n");
+            if (errno || end == value || *end || !isfinite(seconds) || seconds < 0.1 || seconds > 18000) {
+                fprintf(stderr, "--seconds must be between 0.1 and 18000.\n");
                 return false;
             }
             options->seconds = seconds;

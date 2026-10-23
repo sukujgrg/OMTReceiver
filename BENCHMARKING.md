@@ -162,11 +162,48 @@ Only a launch with both `--omt-benchmark-run UUID` and
 `--omt-benchmark-source omt://host:port` enables collection. Reusing an existing
 run UUID is rejected. Reporting runs on its own serial queue, with bounded
 counters and histograms; playback workers perform no benchmark file writes.
-The per-run series is capped at 720 samples (one hour), while the latest report
+The per-run series is capped at 3,000 samples (four hours plus startup margin), while the latest report
 continues updating. The collector rejects non-advancing reports. Copy cache data
 while the application is active because tvOS may purge it between launches.
 Apple documents the tvOS cache-storage requirement in
 [Discover Continuity Camera for tvOS](https://developer.apple.com/videos/play/wwdc2023/10256/?time=969).
+
+## Unattended stability suite
+
+After installing the current signed Release build, run this on the controlling
+Mac with a reachable local address and an unused fixture port:
+
+```sh
+OMT_SDK_PATH="$HOME/Library/Developer/OMTSDK/1.0.0.19" \
+  python3 Tools/stability-apple-tv.py \
+  --device 'YOUR_APPLE_TV' --source omt://MAC-LAN-IP:6490 \
+  --output /tmp/omt-stability-new-run
+```
+
+The default suite has a 3.5-hour overall budget: 90 minutes of progressive60,
+30 minutes each of interlaced30, interlaced60 and progressive59.94, followed by
+separate video-delay and sender-restart recovery checks. It keeps the Mac awake,
+retains each case's reports and sender timing, continues after failures, and
+restores the normal source picker after each case. `status.json` is updated
+atomically as cases finish. A case that cannot fit inside the remaining budget
+is marked skipped. `--smoke` checks the tools with short intervals and cannot
+qualify sustained performance. The collector itself accepts up to four hours
+for a single uninterrupted run.
+
+Recovery checks require advancing picture/audio counters and restored cadence
+in the same receiver process. They do not turn planned outages into sustained
+performance passes. Unattended counters cannot verify audible continuity or
+physical panel output. Record the actual network path; a Wi-Fi sender run does
+not establish performance on an entirely Ethernet path.
+
+For a synchronized slow-client phase against an isolated source, use
+`python3 Tools/stall-omt-client.py --source omt://TEST-HOST:PORT --seconds 30`.
+It subscribes to video/audio, requests small TCP receive buffers, retains queued
+bytes without draining media, and closes only its own sockets. The OS's actual
+buffer sizes and queued byte counts are logged. Judge the publisher using the
+healthy receiver's cadence and the sender's memory/queue counters; disconnecting
+a blocked client can be a valid bounded backpressure strategy. Keep this fault
+phase separate from steady performance screening.
 
 ## Output refresh and compressed staging
 

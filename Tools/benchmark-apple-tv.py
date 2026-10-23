@@ -32,10 +32,16 @@ def main():
     parser.add_argument('--device', required=True, help='Paired Apple TV identifier or name')
     parser.add_argument('--source', required=True, help='Sender LAN address, e.g. omt://192.168.1.3:6488')
     parser.add_argument('--fps', default='30', help='Expected source rate, 1–60 as N or N/D; default 30')
-    parser.add_argument('--seconds', type=int, default=1800, help='Measured receiver interval (30–3300; default 1800)')
+    parser.add_argument('--seconds', type=int, default=1800, help='Measured receiver interval (30–14400; default 1800)')
+    parser.add_argument('--scan-mode', choices=('progressive', 'interlaced'), default='progressive')
+    parser.add_argument('--video-pause-after', type=float, default=0, help='Local fixture: inject a video-only pause at this source time')
+    parser.add_argument('--video-pause-duration', type=float, default=0, help='Local fixture: pause length, at most five seconds')
+    parser.add_argument('--restart-sender-after', type=int, default=0, help='Local fixture: restart once after this many measured seconds; a recovery test, not an uninterrupted screening run')
     parser.add_argument('--output', type=Path, required=True, help='New evidence directory; must not already exist')
     parser.add_argument('--bundle-id', default='com.suku.OMTReceiver')
     parser.add_argument('--external-sender', action='store_true', help='Use an already-running source on another Mac; do not start a local sender')
+    parser.add_argument('--expect-audio', action=argparse.BooleanOptionalAction, default=True,
+                        help='Require audio reception; use --no-expect-audio only for an intentionally video-only source')
     args = parser.parse_args()
     try:
         rate = Fraction(args.fps)
@@ -46,8 +52,16 @@ def main():
     address = urlsplit(args.source)
     if address.scheme != 'omt' or not address.hostname or not address.port or address.path not in ('', '/'):
         parser.error('--source must be omt://MAC-LAN-HOST:PORT')
-    if not 30 <= args.seconds <= 3300:
-        parser.error('--seconds must be between 30 and 3300')
+    if not 30 <= args.seconds <= 14400:
+        parser.error('--seconds must be between 30 and 14400')
+    if (not 0 <= args.video_pause_after <= 3600 or not 0 <= args.video_pause_duration <= 5
+            or bool(args.video_pause_after) != bool(args.video_pause_duration)
+            or (args.video_pause_after and args.video_pause_after + args.video_pause_duration >= args.seconds)):
+        parser.error('Video pause needs both positive values, at most five seconds, finishing before --seconds')
+    if args.external_sender and args.video_pause_after:
+        parser.error('Video pause injection requires a local fixture')
+    if args.restart_sender_after and (args.external_sender or not 30 <= args.restart_sender_after < args.seconds - 30):
+        parser.error('Sender restart requires a local fixture and at least 30 seconds on each side')
     if not args.external_sender and not os.environ.get('OMT_SDK_PATH'):
         parser.error('Set OMT_SDK_PATH to the official SDK root or MacOS library directory')
     args.output.mkdir(parents=True, exist_ok=False)
@@ -59,15 +73,45 @@ def main():
                 'sourceMode': 'external' if args.external_sender else 'local',
                 'sourceURL': args.source, 'expectedFrameRateNumerator': rate.numerator,
                 'expectedFrameRateDenominator': rate.denominator,
-                'scope': f'One 1920x1080p{rate} opaque Medium-quality stream; stereo 48 kHz FPA1'}
+                'expectedScanMode': args.scan_mode,
+                'expectAudio': args.expect_audio,
+                'videoPauseAfterSeconds': args.video_pause_after,
+                'videoPauseDurationSeconds': args.video_pause_duration,
+                'plannedSenderRestartAfterSeconds': args.restart_sender_after,
+                'scope': f'One 1920x1080 {args.scan_mode} {rate} opaque Medium-quality stream; stereo 48 kHz FPA1'}
+    if args.external_sender:
+        manifest['scope'] = f'External source at expected {rate} input frames/sec, {args.scan_mode}; actual format retained in receiver reports'
     (args.output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(f'Run {run}; evidence {args.output}', flush=True)
     source_log = (args.output / 'sender.log').open('w')
     sender = None
-    if not args.external_sender:
-        sender = subprocess.Popen(['/usr/bin/caffeinate', '-i', str(root / 'Tools/run-official-sender.sh'),
-                                   '--seconds', str(args.seconds + 120), '--port', str(address.port), '--fps', str(rate), '--benchmark'],
+
+    def start_sender():
+        fixture_options = ['--interlaced'] if args.scan_mode == 'interlaced' else []
+        if args.video_pause_after:
+            fixture_options += ['--video-pause-after', str(args.video_pause_after),
+                                '--video-pause-duration', str(args.video_pause_duration)]
+        return subprocess.Popen(['/usr/bin/caffeinate', '-i', str(root / 'Tools/run-official-sender.sh'),
+                                   '--seconds', str(args.seconds + 120), '--port', str(address.port), '--fps', str(rate), '--benchmark', *fixture_options],
                                   stdout=source_log, stderr=subprocess.STDOUT, start_new_session=True)
+
+    def stop_sender():
+        if sender is not None and sender.poll() is None:
+            try:
+                os.killpg(sender.pid, signal.SIGINT)
+            except ProcessLookupError:
+                return
+            try:
+                sender.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(sender.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                sender.wait(timeout=5)
+
+    if not args.external_sender:
+        sender = start_sender()
     else:
         source_log.write(f'External source: {args.source}; sender-side statistics remain on that Mac.\n')
         source_log.flush()
@@ -77,6 +121,14 @@ def main():
     last = None
     last_advance = time.monotonic()
     copy_errors = []
+
+    def copy_series():
+        command(['xcrun', 'devicectl', 'device', 'copy', 'from', '--device', args.device,
+                 '--source', f'Library/Caches/OMTBenchmark/{run}.jsonl',
+                 '--domain-type', 'appDataContainer', '--domain-identifier', args.bundle_id,
+                 '--destination', str(args.output / 'receiver-series.jsonl'), '--timeout', '30'],
+                args.output / 'copy-series.log', timeout=35)
+
     try:
         if sender is not None:
             startup_deadline = time.monotonic() + 30
@@ -121,6 +173,13 @@ def main():
                         first = report
                         (args.output / 'receiver-baseline.json').write_text(json.dumps(first, indent=2) + '\n')
                     elapsed = report['uptime'] - first['uptime'] if first else 0
+                    if first and args.restart_sender_after and elapsed >= args.restart_sender_after and 'senderRestart' not in manifest:
+                        manifest['senderRestart'] = {'measuredElapsedSeconds': elapsed,
+                                                     'receiverInstanceID': report['instanceID'],
+                                                     'attemptsBefore': report['attempts']}
+                        stop_sender()
+                        sender = start_sender()
+                        print('Injected isolated sender restart; retaining the same receiver process', flush=True)
                     decode = report.get('decodeMs', {})
                     print(f"[{elapsed:7.1f}s] {report['phase']} "
                           f"video={report['videoFramesAdmitted']} fps={report.get('windowVideoAdmissionFPS', 0):.2f} "
@@ -138,33 +197,31 @@ def main():
                     print(f'Collection issue: {error}', flush=True)
                     if len(copy_errors) >= 5:
                         raise RuntimeError('Five collection failures; retaining available evidence') from error
-                time.sleep(30 if first else 5)
+                time.sleep(min(30, max(1, args.seconds - elapsed)) if first else 5)
             else:
                 raise RuntimeError('Receiver did not complete the requested interval before the safety deadline')
         finally:
             records.close()
-        command(['xcrun', 'devicectl', 'device', 'copy', 'from', '--device', args.device,
-                 '--source', f'Library/Caches/OMTBenchmark/{run}.jsonl',
-                 '--domain-type', 'appDataContainer', '--domain-identifier', args.bundle_id,
-                 '--destination', str(args.output / 'receiver-series.jsonl'), '--timeout', '30'],
-                args.output / 'copy-series.log', timeout=35)
+        copy_series()
         manifest['collectionResult'] = 'complete'
     except (RuntimeError, OSError, subprocess.TimeoutExpired, KeyboardInterrupt) as error:
         manifest['collectionResult'] = 'incomplete'
         manifest['error'] = str(error)
         print(f'Benchmark incomplete: {error}', flush=True)
     finally:
+        if launched and manifest.get('collectionResult') != 'complete':
+            # Preserve the five-second history before restoring the ordinary app,
+            # even when a source, process or collection command failed mid-run.
+            try:
+                copy_series()
+            except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
+                copy_errors.append(f'Final evidence copy: {error}')
         manifest['finishedAt'] = datetime.now(timezone.utc).isoformat()
         manifest['collectionErrors'] = copy_errors
         (args.output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
         # Retire only our own isolated sender process group. Device reports are
         # collected first, so planned shutdown is not counted as a stream failure.
-        if sender is not None and sender.poll() is None:
-            os.killpg(sender.pid, signal.SIGINT)
-            try:
-                sender.wait(timeout=20)
-            except subprocess.TimeoutExpired:
-                os.killpg(sender.pid, signal.SIGKILL); sender.wait()
+        stop_sender()
         source_log.close()
         if launched:
             try:

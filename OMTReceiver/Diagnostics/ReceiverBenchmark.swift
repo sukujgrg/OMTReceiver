@@ -189,6 +189,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
     func rebased(_ lane: ReceiverTimeline.Lane) { lock.withLock { if lane == .audio { audioResets += 1 } else { videoResets += 1 } } }
 
     func video(decodeMs: Double, lead: Double, timestamp: Int64, frameRateN: Int, frameRateD: Int,
+               width: Int, height: Int, flags: UInt32,
                outputSamples: Int = 1, interlaced: Bool = false, fieldOrder: ReceiverFieldOrder = .topFirst) {
         let now = ProcessInfo.processInfo.systemUptime
         lock.withLock {
@@ -204,6 +205,9 @@ final class ReceiverBenchmark: @unchecked Sendable {
             else { values.removeValue(forKey: "videoFieldOrder") }
             values["videoFrameRateNumerator"] = frameRateN
             values["videoFrameRateDenominator"] = frameRateD
+            values["videoWidth"] = width
+            values["videoHeight"] = height
+            values["videoSourceFlags"] = flags
             values["lastVideoSourceTimestamp100ns"] = timestamp
             values["lastVideoAdmissionUptime"] = now
         }
@@ -213,10 +217,13 @@ final class ReceiverBenchmark: @unchecked Sendable {
     /// are counted at their own successful enqueue, including partial batches.
     func additionalVideoSample() { lock.withLock { videoSamples += 1 } }
 
-    func audio(timestamp: Int64, samples: Int, rate: Int, lead: Double) {
+    func audio(timestamp: Int64, samples: Int, rate: Int, channels: Int, activeChannels: UInt32, lead: Double) {
         let now = ProcessInfo.processInfo.systemUptime
         lock.withLock {
             audioPackets += 1
+            values["audioSampleRate"] = rate
+            values["audioChannels"] = channels
+            values["audioActiveChannelsMask"] = activeChannels
             if let lastAudioHost { audioGaps.record((now - lastAudioHost) * 1000) }
             if let lastAudioTimestamp, let lastAudioDuration,
                abs(Double(timestamp - lastAudioTimestamp) / 10_000_000 - lastAudioDuration) > 0.0001 { timestampSteps += 1 }
@@ -309,9 +316,10 @@ final class ReceiverBenchmark: @unchecked Sendable {
         do {
             let data = try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys])
             try data.write(to: latestURL, options: .atomic)
-            // Bounded to 720 five-second samples (one hour). The latest report
+            // Bounded to 3,000 five-second samples (four hours plus setup margin).
+            // The latest report
             // continues updating, so a full series cannot masquerade as fresh.
-            if exports < 720 {
+            if exports < 3000 {
                 let handle = try FileHandle(forWritingTo: seriesURL)
                 defer { try? handle.close() }
                 try handle.seekToEnd(); try handle.write(contentsOf: data + Data([10]))

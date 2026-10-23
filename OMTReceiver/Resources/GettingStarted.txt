@@ -6,7 +6,9 @@ Choose a source in the Sources list. If it does not appear, choose Enter Address
 
 Interlaced conversion can soften fine vertical detail. If interlaced motion appears to step backward, show the controls and change Field order to Bottom first. Top first is the default. Changing field order reconnects the same source.
 
-The video fills the screen while preserving its aspect ratio. Back or Play/Pause reveals playback controls. Reconnect retries the chosen source; Disconnect stops it. Requested quality is a suggestion to the sender, which may use another quality for its connected receivers.
+The video fills the screen while preserving its aspect ratio. Back, Play/Pause or arrow navigation opens the source strip. Browse with Left and Right, then press Select to switch picture and audio. Browsing leaves the current source playing. Back closes the strip; opening it again focuses the current source. Selecting the source already playing returns to the video without reconnecting. Favourite the current source to keep it near the front; select Unfavourite to remove it.
+
+Select Settings in the source strip for playback controls or to enter an address. Reconnect retries the chosen source; Disconnect stops it. Requested quality is a suggestion to the sender, which may use another quality for its connected receivers.
 
 If there is no picture, confirm the sender is running, both devices can communicate, and local-network permission is allowed. The manual address must include the sender's port. If playback is uneven, test Ethernet and a lower sender rate. To display 60 unique pictures per second, the Apple TV HDMI output must also use a suitable refresh rate.
 

@@ -233,6 +233,7 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
                     lead: time.seconds - synchronizer.currentTime().seconds,
                     rendererStatus: audioRenderer.status.rawValue, nominalLead: timeline.playoutDelay)
                 benchmark?.audio(timestamp: frame.timestamp, samples: frame.samplesPerChannel, rate: frame.sampleRate,
+                                 channels: frame.channels, activeChannels: frame.activeChannels,
                                  lead: time.seconds - synchronizer.currentTime().seconds)
                 lastAudioTimestamp = frame.timestamp
             } catch { fail(error.localizedDescription, token: token); return }
@@ -322,6 +323,7 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
                 benchmark?.video(decodeMs: decodeMs,
                     lead: firstTime.seconds - synchronizer.currentTime().seconds, timestamp: frame.timestamp,
                     frameRateN: frame.frameRateN, frameRateD: frame.frameRateD,
+                    width: frame.width, height: frame.height, flags: frame.flags,
                     outputSamples: 1, interlaced: frame.flags & 1 != 0, fieldOrder: fieldOrder)
             }, additionalSample: {
                 benchmark?.additionalVideoSample()

@@ -12,6 +12,8 @@ final class ReceiverSession: ObservableObject {
         case idle, connecting, waitingForVideo, playing, reconnecting, suspended
     }
 
+    enum Overlay { case controls, sources, hidden }
+
     @Published private(set) var playback = ReceiverPlayback()
     private let benchmark = ReceiverBenchmark.makeIfRequested()
     private var benchmarkStarted = false
@@ -33,7 +35,9 @@ final class ReceiverSession: ObservableObject {
             reconnect()
         }
     }
-    @Published var controlsVisible = true
+    @Published private(set) var overlay: Overlay = .controls
+    var controlsVisible: Bool { overlay == .controls }
+    var sourcesVisible: Bool { overlay == .sources }
     @Published var diagnosticsVisible = false
     @Published var muted = false {
         didSet { playback.setMuted(muted) }
@@ -55,7 +59,7 @@ final class ReceiverSession: ObservableObject {
         }
     }
 
-    private var selectedSource: OMTSource?
+    @Published private(set) var selectedSource: OMTSource?
     private var connection: OMTConnection?
     private var ingress: ReceiverIngress?
     private var generation = UUID()
@@ -105,9 +109,22 @@ final class ReceiverSession: ObservableObject {
         selectedSource = source
         isInterlaced = false
         sourceName = source.name
+        message = nil
+        statistics = ""
         retryCount = 0
-        controlsVisible = true
+        overlay = .controls
         beginAttempt()
+    }
+
+    /// Browsing never calls this method. Re-selecting a live or pending source
+    /// dismisses the switcher without retiring its transport or audio lease.
+    func selectSource(_ source: OMTSource) {
+        if selectedSource?.id == source.id, connection != nil || activationTask != nil {
+            dismissOverlay()
+            return
+        }
+        connect(to: source)
+        dismissOverlay()
     }
 
     func disconnect() {
@@ -119,7 +136,7 @@ final class ReceiverSession: ObservableObject {
         message = nil
         statistics = ""
         phase = .idle
-        controlsVisible = true
+        overlay = .controls
     }
 
     func reconnect() {
@@ -131,13 +148,23 @@ final class ReceiverSession: ObservableObject {
 
     func revealControls() {
         hideTask?.cancel()
-        controlsVisible = true
+        overlay = .controls
+    }
+
+    func revealSources() {
+        hideTask?.cancel()
+        overlay = hasSelection ? .sources : .controls
+    }
+
+    func dismissOverlay() {
+        guard hasSelection else { return }
+        hideTask?.cancel()
+        overlay = .hidden
     }
 
     func hideControls() {
         guard isPlaying else { return }
-        hideTask?.cancel()
-        controlsVisible = false
+        dismissOverlay()
     }
 
     func suspend() {
@@ -178,7 +205,7 @@ final class ReceiverSession: ObservableObject {
                 guard !(error is CancellationError) else { return }
                 self.message = "Audio output could not start: \(error.localizedDescription)"
                 self.phase = .idle
-                self.controlsVisible = true
+                self.overlay = .sources
                 return
             }
             guard !Task.isCancelled, let self, self.generation == attempt,
@@ -254,7 +281,7 @@ final class ReceiverSession: ObservableObject {
         stopAttempt()
         message = error
         phase = .reconnecting
-        controlsVisible = true
+        if overlay == .hidden { overlay = .sources }
         retryCount = min(retryCount + 1, 5)
         let delay = min(1 << (retryCount - 1), 10)
         let attempt = generation
@@ -287,10 +314,11 @@ final class ReceiverSession: ObservableObject {
 
     private func hideControlsAfterDelay() {
         hideTask?.cancel()
+        guard overlay == .controls else { return }
         hideTask = Task { [weak self] in
             do { try await Task.sleep(for: .seconds(3)) } catch { return }
-            guard let self, self.isPlaying else { return }
-            self.controlsVisible = false
+            guard let self, self.isPlaying, self.overlay == .controls else { return }
+            self.overlay = .hidden
         }
     }
 
@@ -323,7 +351,7 @@ final class ReceiverSession: ObservableObject {
         stopAttempt()
         phase = .suspended
         message = "Playback paused by a system audio interruption."
-        controlsVisible = true
+        if overlay == .hidden { overlay = .sources }
     }
 
     func audioInterruptionEnded(shouldResume: Bool) {

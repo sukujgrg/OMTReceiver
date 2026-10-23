@@ -1,0 +1,25 @@
+{
+  "managedCommit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+  "nativeCommit": "bb4b67be8e5964f1017592b9fc5406495e704e5d",
+  "managedTag": "v1.0.0.19",
+  "sdkVersion": "8.0.426",
+  "scope": "Local experimental copies only; pinned eucaly audit source and official shipping SDK unchanged; no upstream push authorized.",
+  "bufferBytes": 65536,
+  "sha256": "08ea175b70d552e10a42ebc742a496a594718840ba7c6f7a77029cd3fca94cb2",
+  "runtimeArchitecture": "arm64",
+  "sourceChanges": [],
+  "managedSourceState": {
+    "commit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+    "patches": []
+  },
+  "buildCommands": [
+    "dotnet build libomtnet.csproj -c Release -f netstandard2.0 -p:TargetFrameworks=netstandard2.0",
+    "dotnet publish libomt.csproj -c Release -r osx-arm64"
+  ],
+  "buildEnvironment": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_GENERATE_ASPNET_CERTIFICATE": "false",
+    "DOTNET_CLI_HOME": "/tmp/OMTReceiver-dotnet-home-20261024",
+    "NUGET_PACKAGES": "/tmp/OMTReceiver-nuget-20261024"
+  }
+}

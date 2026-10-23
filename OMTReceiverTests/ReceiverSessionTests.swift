@@ -8,6 +8,117 @@ import XCTest
 final class ReceiverSessionTests: XCTestCase {
     private var subscriptions: Set<AnyCancellable> = []
 
+    func testBrowsingAndReselectingCurrentSourceKeepTheSamePlaybackAndConnections() async throws {
+        let lanes = expectation(description: "Initial video and audio lanes accepted")
+        let server = try await makeServer(accepted: { count in if count == 2 { lanes.fulfill() } })
+        defer { server.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources())
+        defer { session.disconnect() }
+        let source = try OMTSource.manual(address: "127.0.0.1:\(server.port)")
+        let connected = next(.waitingForVideo, session: session)
+        session.selectSource(source)
+        await fulfillment(of: [connected, lanes], timeout: 5)
+        let playback = session.playback
+        let connections = server.acceptedConnectionCount
+        for _ in 0..<50 {
+            session.revealSources()
+            XCTAssertTrue(session.sourcesVisible)
+            session.revealControls()
+            session.revealSources()
+            session.selectSource(source)
+            XCTAssertEqual(session.overlay, .hidden)
+            await Task.yield()
+        }
+        XCTAssertTrue(session.playback === playback)
+        XCTAssertEqual(server.acceptedConnectionCount, connections)
+        XCTAssertEqual(session.selectedSource, source)
+        XCTAssertEqual(session.phase, .waitingForVideo)
+    }
+
+    func testRapidSourceSwitchCannotBeOverwrittenByLatePreviousActivation() async throws {
+        let first = expectation(description: "First source activation")
+        let second = expectation(description: "Replacement source activation")
+        let released = expectation(description: "Old source late activation released")
+        let audio = ControlledReceiverAudioSession(requested: { count in
+            if count == 1 { first.fulfill() }
+            if count == 2 { second.fulfill() }
+        }, firstReleased: { released.fulfill() })
+        let oldServer = try await makeServer(), newServer = try await makeServer()
+        defer { oldServer.stop(); newServer.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources(audioSession: audio))
+        defer { session.disconnect() }
+        let oldSource = try OMTSource.manual(address: "127.0.0.1:\(oldServer.port)")
+        let newSource = try OMTSource.manual(address: "127.0.0.1:\(newServer.port)")
+        session.selectSource(oldSource)
+        await fulfillment(of: [first], timeout: 3)
+        session.selectSource(newSource)
+        await fulfillment(of: [second], timeout: 3)
+        let leases = await audio.requestedIDs
+        let old = try XCTUnwrap(leases.first), replacement = try XCTUnwrap(leases.last)
+        let connected = next(.waitingForVideo, session: session)
+        await audio.complete(replacement)
+        await fulfillment(of: [connected], timeout: 5)
+        let playback = session.playback
+        await audio.complete(old)
+        await fulfillment(of: [released], timeout: 3)
+        XCTAssertEqual(session.selectedSource, newSource)
+        XCTAssertTrue(session.playback === playback)
+        XCTAssertEqual(oldServer.acceptedConnectionCount, 0)
+        XCTAssertGreaterThan(newServer.acceptedConnectionCount, 0)
+        let active = await audio.activeIDs
+        XCTAssertEqual(active, [replacement])
+    }
+
+    func testSwitchingSourceDuringRetryCancelsOldSourceAndDisconnectStaysDisconnected() async throws {
+        let oldServer = try await makeServer(), newServer = try await makeServer()
+        defer { oldServer.stop(); newServer.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources())
+        defer { session.disconnect() }
+        let oldSource = try OMTSource.manual(address: "127.0.0.1:\(oldServer.port)")
+        let newSource = try OMTSource.manual(address: "127.0.0.1:\(newServer.port)")
+        let connected = next(.waitingForVideo, session: session)
+        session.selectSource(oldSource)
+        await fulfillment(of: [connected], timeout: 5)
+        let failed = next(.reconnecting, session: session)
+        oldServer.stop()
+        await fulfillment(of: [failed], timeout: 5)
+        XCTAssertTrue(session.sourcesVisible)
+        XCTAssertNotNil(session.message)
+        let replaced = next(.waitingForVideo, session: session)
+        session.selectSource(newSource)
+        XCTAssertNil(session.message, "A new source must not display the previous source's failure.")
+        await fulfillment(of: [replaced], timeout: 5)
+        let playback = session.playback
+        // Cross the old retry deadline: a stale retry must not revive that source.
+        try await Task.sleep(for: .milliseconds(1200))
+        XCTAssertEqual(session.selectedSource, newSource)
+        XCTAssertTrue(session.playback === playback)
+        session.disconnect()
+        session.revealSources()
+        session.dismissOverlay()
+        XCTAssertTrue(session.controlsVisible)
+        XCTAssertNil(session.selectedSource)
+        XCTAssertEqual(session.phase, .idle)
+    }
+
+    func testFavouritesPersistWithoutInventingMissingSourcesAndRetainCurrentManualSource() throws {
+        let suite = "OMTReceiver.tests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let first = try OMTSource.manual(address: "127.0.0.1:6400")
+        let favourite = try OMTSource.manual(address: "127.0.0.1:6401")
+        let manual = try OMTSource.manual(address: "127.0.0.1:6402")
+        let preferences = ReceiverSourcePreferences(defaults: defaults)
+        preferences.toggleFavourite(favourite)
+        let restored = ReceiverSourcePreferences(defaults: defaults)
+        XCTAssertEqual(restored.orderedSources([first, favourite, first], selected: manual).map(\.id),
+                       [favourite.id, first.id, manual.id])
+        XCTAssertEqual(restored.orderedSources([], selected: manual), [manual])
+        XCTAssertTrue(restored.orderedSources([], selected: nil).isEmpty)
+        restored.toggleFavourite(favourite)
+        XCTAssertTrue(ReceiverSourcePreferences(defaults: defaults).favourites.isEmpty)
+    }
+
     func testFieldOrderChangeRebuildsSameSourceAndDoesNotRestartAfterDisconnect() async throws {
         let server = try await makeServer()
         defer { server.stop() }
@@ -233,8 +344,8 @@ final class ReceiverSessionTests: XCTestCase {
         ])
     }
 
-    private func makeServer() async throws -> IdleOMTServer {
-        let server = try IdleOMTServer()
+    private func makeServer(accepted: @escaping @Sendable (Int) -> Void = { _ in }) async throws -> IdleOMTServer {
+        let server = try IdleOMTServer(accepted: accepted)
         let ready = expectation(description: "Isolated TCP fixture ready")
         server.start { ready.fulfill() }
         await fulfillment(of: [ready], timeout: 5)
@@ -249,17 +360,22 @@ private final class IdleOMTServer: @unchecked Sendable {
     private let queue = DispatchQueue(label: "OMTReceiver.tests.listener")
     private var clients: [NWConnection] = []
     private let countLock = NSLock()
+    private let accepted: @Sendable (Int) -> Void
     private var acceptedCount = 0
     var port: UInt16 { listener.port!.rawValue }
     var acceptedConnectionCount: Int { countLock.lock(); defer { countLock.unlock() }; return acceptedCount }
 
-    init() throws { listener = try NWListener(using: .tcp, on: .any) }
+    init(accepted: @escaping @Sendable (Int) -> Void = { _ in }) throws {
+        self.accepted = accepted
+        listener = try NWListener(using: .tcp, on: .any)
+    }
 
     func start(ready: @escaping @Sendable () -> Void) {
         listener.stateUpdateHandler = { state in if case .ready = state { ready() } }
         listener.newConnectionHandler = { [weak self] connection in
             guard let self else { connection.cancel(); return }
-            self.countLock.lock(); self.acceptedCount += 1; self.countLock.unlock()
+            self.countLock.lock(); self.acceptedCount += 1; let count = self.acceptedCount; self.countLock.unlock()
+            self.accepted(count)
             self.clients.append(connection)
             connection.start(queue: self.queue)
         }
