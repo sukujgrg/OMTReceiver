@@ -131,3 +131,25 @@ Darwin lsof labels the mbuf reservation as SNDBUF; its
 reads `sbi_mbmax` for that field. Do not interpret that value as `sbi_hiwat`.
 This diagnostic was added when netstat stopped exposing the TCP table in the
 agent environment; it does not alter sockets or the running application.
+
+
+## Additional receiver-load follow-up
+
+A later extra NDI UDP media flow reproducibly triggered late OMT audio and
+operator-heard NDI gaps on this Wi-Fi sender path. Removing only the diagnostic
+receiver restored playback; a 30-second reattachment reproduced the failure.
+OMT mean TCP RTT changed 12.55 → 108.30 → 10.48 ms. Source/receiver stage timing
+places the large delay beyond prompt source processing and before parser
+completion; exact SDK enqueue results are distinguished from raw call attempts.
+The first 27 retained load-warning blocks all had positive 7,720-byte enqueue
+returns; later channel rejections are separate observations during recovery.
+Parser completion is not physical arrival, and a positive enqueue return is not
+wire delivery. The specific SDK/OS/network component and matched wired behavior
+remain unknown; no matched wired sender run was possible without a cable.
+See [the retained failure evidence](../../docs/performance.md).
+
+The larger constant also applies to audio. A theoretical buffer capacity is not
+measured backlog; no valid load-period audio queue capture justified another
+size or priority change. The independent pool ownership repair remains valid.
+A local documentation-only follow-up commit in the PR branch records these limits;
+no runtime change, repair push or upstream PR was made in this follow-up.

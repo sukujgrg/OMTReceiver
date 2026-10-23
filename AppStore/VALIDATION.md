@@ -254,6 +254,27 @@ the final candidate. The eucaly dual-output functional and sustained evidence is
 recorded separately in [hardware observations](../docs/performance.md); it does
 not replace an App Store archive/export or physical latency/audio observation.
 
+### Audio timing diagnostics follow-up
+
+The final build-5 diagnostic changes passed 99 app unit tests, 14 Python tooling
+regressions, the physical Home/source-picker preflight and a signed Release build
+with warnings treated as errors and zero compiler diagnostics. Instrumentation
+is opt-in; normal playback delay, quality and timestamp mapping are unchanged.
+Bounded histories retain first warnings and recent stage events; report coverage
+cannot suppress cumulative failures. Raw media is not retained.
+
+A real additional NDI media flow reproduced audible gaps, late TV audio and
+queue-overrun reconnects. Removing the owned probe restored playback and the
+operator confirmed clean NDI audio. A controlled repeat raised OMT mean TCP RTT
+from 12.55 to 108.30 ms, returning to 10.48 ms after removal. These failed load
+captures do not establish production qualification. Source-call versus enqueue
+semantics, collector errors, failed alignment, and the unperformed matched wired
+comparison remain explicit in [hardware observations](../docs/performance.md).
+The first 27 retained load-warning blocks had positive SDK enqueue returns;
+later reconnect periods also showed channel rejections. These findings do not
+isolate the physical network or establish the cause of the original two small
+margin warnings. Further buffer or network-priority changes were not justified.
+
 ## Hardware results and remaining checks
 
 Physical testing resumed on 23 October. Build 1 completed the 30/59.94 cadence

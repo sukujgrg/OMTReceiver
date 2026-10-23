@@ -30,15 +30,17 @@ final class OMTConnection: @unchecked Sendable {
     private let endpoint: NWEndpoint
     private let queue = DispatchQueue(label: "org.openmediatransport.receiver.network", qos: .userInitiated)
     private let mailbox: OMTPacketMailbox
+    private let benchmark: ReceiverBenchmark?
     private let onState: @Sendable (OMTConnectionState) -> Void
     private var lanes: [Role: Lane] = [:] // network queue only
     private var started = false
     private var quality: OMTQuality = .default
     private var programTally = true
 
-    init(endpoint: NWEndpoint, onPacket: @escaping @Sendable (OMTPacket) -> Void,
+    init(endpoint: NWEndpoint, benchmark: ReceiverBenchmark? = nil, onPacket: @escaping @Sendable (OMTPacket) -> Void,
          onState: @escaping @Sendable (OMTConnectionState) -> Void) {
         self.endpoint = endpoint
+        self.benchmark = benchmark
         self.mailbox = OMTPacketMailbox(onPacket: onPacket)
         self.onState = onState
     }
@@ -157,6 +159,7 @@ final class OMTConnection: @unchecked Sendable {
             }
         default: break
         }
+        if case .audio(let frame) = packet { benchmark?.audioReceived(frame.timestamp) }
         if !mailbox.offer(packet), mailbox.isOpen {
             finish(.failed("The receiver could not keep up with OMT audio or metadata. Its bounded input queue filled."))
         }

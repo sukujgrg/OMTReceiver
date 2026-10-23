@@ -76,6 +76,29 @@ output. The probe is disabled in ordinary Home-screen launches. Cache contents
 can survive app updates, so verify a fresh packet count and the current schema
 (including `nominalLeadMs`) before using a file as evidence for a new build.
 
+The explicit `--omt-benchmark-run` mode additionally records
+`audioPipelineTiming`: fixed-size histograms, the first 32 route-horizon warnings
+and the most recent 32 exceptional audio admissions, with source timestamps,
+local uptime and event UTC. The first-warning history preserves a failure's
+beginning even if a burst fills the recent ring before export. The stages
+are parser completion, transport-mailbox delivery, main-actor ingress, playback
+queue, sample construction and renderer enqueue. `playbackWaitMs` includes sample
+construction and renderer enqueue; do not add those costs a second time.
+`receiveGapMs` measures parser callbacks, not physical NIC arrival. All stage
+durations use the same device's monotonic clock. UTC is only a correlation aid;
+it cannot establish one-way latency between unsynchronized machines.
+
+`routeHorizonMs` is output latency plus one I/O buffer. A route-horizon event can
+still have positive lead before the packet's presentation timestamp. It is a
+conservative margin violation, not proof of a physical audible dropout. These
+diagnostics never increase the playback delay, alter timestamps or change the
+screening thresholds. They are disabled during ordinary launches and retain no
+PCM. Event storage is bounded, so use the exported series and cumulative counters
+together when investigating a long run. The benchmark summary deduplicates
+warning events and reports whether their coverage matches the authoritative
+cumulative warning count; absence from bounded history cannot turn a fault
+into a pass.
+
 ## Hardware benchmarking and portable Mac sender
 
 See [BENCHMARKING.md](../BENCHMARKING.md) for the opt-in 30-minute TV collector,

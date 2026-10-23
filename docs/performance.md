@@ -1,6 +1,6 @@
 # Hardware observations
 
-Recorded 23 October 2026 on a first-generation Apple TV 4K (A10X), tvOS 26.6.
+Recorded 23–24 October 2026 on a first-generation Apple TV 4K (A10X), tvOS 26.6.
 These observations do not establish a general production or NDI performance claim.
 
 ## Current candidate: 1.0.0 (5)
@@ -20,9 +20,216 @@ one connection attempt, at 60.002 admitted fps. Its separate 90.0-second native
 window recorded 5 drops in 5,400 frames (0.0926%), zero corruption, no late audio,
 no decoder-pool stalls and nominal thermal state. This confirms the collection
 path and basic playback, not sustained performance or physical audible/panel
-continuity. The current production-readiness work is coordinated with eucaly's
-agent and will use eucaly's real output path and supplied video files; results
-remain pending. Earlier sustained figures below belong to build 2.
+continuity. The coordinated eucaly results below use its real output path and
+supplied video files. Earlier sustained figures below belong to build 2.
+
+### Eucaly dual-output stability investigation
+
+The real eucaly OutputCoordinator, shared player/audio pipeline and independent
+network helpers fed this Apple TV and a native NDI receiver on the separate
+monitor Mac. The sender used Wi-Fi and the remote receiver used Ethernet.
+Output was 1080p30 Medium VMX, stereo 48 kHz FPA1. The host was an isolated,
+optimized Debug test product. GUI rendering, physical speaker output and
+source-to-panel latency were not measured.
+
+A real NDI helper SIGPIPE crash on receiver attachment was reproduced and fixed
+by eucaly's agent. The closed-socket regression and subsequent real receiver
+attachment/reconnection passed. Content changes, Preview, Hide/Show, workspace
+transfers and deliberate helper crash/Retry were exercised separately; recovery
+retained the companion helper. Fault-phase interruptions remain separate from
+the clean measurements.
+
+OMT loss was associated with a full 64 KiB TCP send buffer and SDK pool
+rejections. Matched upstream builds retained the four-slot pool and image
+quality. The 64 KiB arm admitted 3,523 frames / 184.999 seconds (19.043 fps),
+with two audio timestamp gaps. The 256 KiB arm admitted 5,346 / 180.003 seconds
+(29.700 fps), with no audio timestamp gaps; it still missed the 29.9 fps target.
+Common source positions 100–210 seconds improved SDK enqueue cadence from
+16.371 to 29.564 fps, with 1,496 versus 34 rejections. Producer replacements
+are not subtractable frame losses because a publisher can reuse its current
+picture. A separate 256 KiB trace found the video socket full in 321 of 1,199
+samples, motivating the bounded 512 KiB candidate.
+
+The final candidate also repairs a rented socket-send slot leak when submission
+fails synchronously. The original pool failed both failure-path regressions;
+all four bounded real-socket regressions passed after repair. The tested release
+and current-upstream fork branches passed managed builds with zero diagnostics.
+Source patches, original and normalized patch hashes, byte-identical patch
+verification, build provenance and read-only socket diagnostics are retained in
+[Upstream/libomtnet](../Upstream/libomtnet/README.md). The fork is cloned under
+`~/github/openmediatransport/libomtnet`. No OMT repair commits were pushed and
+no PR was opened.
+
+The clean 512 KiB run lasted 1,254.999 seconds: 37,522 admitted frames at
+29.898023 fps, one attempt, zero freeze/reconnect/failure, late audio, timestamp
+or timeline resets, or decoder-pool stalls. There were 14 playback coalescences
+and zero ingress coalescences. The separate 1,250.001-second native window had
+5 drops / 37,372 frames (0.013379%) and zero corruption. Post-warmup memory was
+48.67–53.78 MiB, with early/late means rising 0.52 MiB; thermal state stayed
+nominal. Video lead did not grow; audio early/late lead rose 27.95 ms, within
+the existing one-frame stability screen.
+
+**The strict combined screen still failed:** 29.898023 fps is below the
+unchanged 29.9 fps target, and two audio admissions crossed the conservative
+route horizon. Neither was late by its timestamp. Physical audible continuity
+and overall production readiness remain unestablished.
+
+Parallel full-bandwidth NDI capture lasted 1,300.019 seconds: 38,927 video frames,
+64,999 audio blocks, zero SDK drops, timestamp gaps, invalid PCM, capture errors
+or metadata overflow. Sparse pixel fingerprints changed 37,630 times, with at
+most five identical frames. Near-silence meant both channel RMS values below
+1e-7, not exact-zero identity: 731 blocks / 14.62 seconds. Every interval aligned
+with five EOF/rewind windows. Offline analysis found 2.773 seconds of authored
+head/tail silence per wrap. The remaining small alignment/rewind difference
+cannot be fully attributed; transport timestamps do not establish gapless
+content fidelity.
+
+An observer on/off/on comparison retained the same source/helpers/TV instance.
+Pausing only the launcher's process/socket sampler gave essentially unchanged
+rates: 29.938 / 29.938 / 29.931 fps in roughly 115-second interior windows.
+Different content positions and network timing remain confounders. No observer
+or pacing workaround was justified.
+
+Eucaly integrated the two local SDK repairs at `23639de`. Its 1,010-test suite
+(six expected skips), signed archive/export, deep/strict signatures and packaged
+runtime-load checks passed. These checks do not erase the hardware screen
+failure. Evidence is under ignored `build/QuickSwitcher-20261024/`, including
+`Eucaly-Clean512k`, the buffer comparison/recovery runs, `Eucaly-ObserverABA512k`
+and native `NDIRemote` metadata. The two audio warnings are investigated below.
+
+### Audio route-margin investigation
+
+The two clean-run counter increases occurred within the five-second report
+intervals 18:00:37–18:00:42 and 18:01:17–18:01:22 UTC on 23 October. The route
+reported 80.00 ms output latency plus a 21.33 ms I/O buffer: a 101.33 ms
+conservative horizon. Their minimum admission leads were 101.030 and 93.685 ms,
+crossing that horizon by 0.303 and 7.648 ms while remaining ahead of their PTS.
+No audio timestamp discontinuity, timeline reset, late packet or pool stall
+accompanied either event. Neither interval is an authored-silence/EOF window.
+
+Eucaly's source-side cumulative audio submission-age and SDK-call maxima did not
+increase across either interval. The remote NDI capture had 120.990 and
+126.681 ms capture-return gaps near the corresponding source blocks, despite
+regular sender SDK timestamp steps. The legacy CSV column `receiver_timestamp`
+is misleadingly named: it copies NDI's sender-generated SDK submission time,
+not receiver arrival time. This is confirmed by the bundled vendor header and
+[NDI's frame documentation](https://docs.ndi.video/all/developing-with-ndi/sdk/frame-types).
+The probe's monotonic host clock measures capture return on a single A/V capture
+thread, so those gaps alone cannot distinguish vendor transport, network,
+receiver decoding or capture-thread scheduling. The original TV reports retain
+five-second warning brackets rather than exact affected packet identities.
+
+The follow-up adds bounded, opt-in per-event receiver stage timing and uses
+eucaly's per-block source/IPC/SDK trace. Scheduling, quality, playback delay and
+screening thresholds remain unchanged. The signed Release build and all 99 app
+unit tests passed, including transport-versus-main-queue attribution and storage
+bounds. The physical Home/source-picker preflight also passed. Its diagnostic
+capture is retained under `build/QuickSwitcher-20261024/AudioTiming-20261024/`.
+
+
+A later real failure began when the operator's remote NDI Monitor joined the
+existing native receiver. Source SDK connection count increased from one to
+three; this count does not equal the number of media flows. The TV changed from
+zero steady audio warnings to late audio and bounded-queue reconnects. The
+20-minute collector completed with 2,309 margin events, 1,524 late packets,
+13 within-attempt timestamp discontinuities and 15 connection attempts, at
+26.474 admitted fps. One latest-report copy command also failed; the full series
+was subsequently retained. This is a failed screening capture.
+
+Stopping only the owned native NDI probe reduced the SDK connection count to two.
+The TV recovered and its fault counters stopped increasing. The operator
+confirmed that audio in the remaining remote NDI Monitor was now clean. A
+bounded 30-second reattachment reproduced the failure and recovered after its
+automatic exit. This comparison kept source quality, media, buffers and playback
+margins unchanged. Actual NDI UDP media flows were one/two/one:
+
+| Phase | OMT TCP mean RTT | Maximum RTT | TV behavior |
+| --- | --- | --- | --- |
+| GUI-only baseline | 12.55 ms | 19.69 ms | One startup margin event; no late audio |
+| Additional native NDI receiver | 108.30 ms | 168.56 ms | Late audio and reconnects |
+| Native receiver removed | 10.48 ms | 15.12 ms | Playback recovered; fault counters stopped |
+
+The 185.002-second comparison recorded 273 additional margin events, 206 late
+packets, three timestamp discontinuities and three attempts. Its parallel native
+probe recorded 16 audio timecode gaps despite zero SDK dequeue-drop counters.
+The first longer native probe had 76 timecode gaps and a 1,671.965 ms maximum
+capture-return pause. Zero SDK-reported drops therefore did not establish
+continuity. These deliberate load transitions remain separate from the earlier
+unchanged-load run.
+
+Exact source-block matching found regular 960-sample PCM, prompt application/IPC
+handoff and synchronous SDK calls through the failure. Key packets spent about
+1–6 ms between receiver parser completion and renderer admission. Source API
+calls alone did not prove enqueue acceptance, because the original sender ignored
+audio return codes. Eucaly's agent added raw OMT audio return bytes, bounded
+per-block trace fields and first-audio-channel enqueue/drop counters, with 26
+focused real-SDK/helper tests and independent review. Zero remains legitimate
+without an audio subscriber; positive bytes mean at least one matching channel
+enqueue, not delivery to every receiver. NDI's void audio API stays explicitly
+unknown. No retry, quality, buffer, clock or latency-margin change was made.
+
+A second 30-second load repeat with the new diagnostics again failed: 482 new
+margin events, 407 late packets and six attempts over 185.002 seconds. There
+were no within-attempt timestamp discontinuities. The first retained steady
+margin event had 86.520 ms lead, an 80.593 ms parser-callback gap and only
+0.647 ms local processing; a nearby packet had a 202.361 ms parser gap and
+0.633 ms local processing. All 32 retained first margin warnings matched
+7,720-byte OMT enqueue returns: five startup events and 27 load events. The
+startup events had 60–214 ms receiver playback waits and are a different timing
+pattern from the load onset. For the first three load-warning source timestamps
+192393200000, 192393400000 and 192394000000, the SDK calls took
+0.098, 0.055 and 0.058 ms; their return ages were 36.664, 35.268 and 35.426 ms.
+These initial affected blocks were accepted promptly, rather than rejected by
+the SDK. Positive enqueue does not establish asynchronous socket completion,
+wire delivery or physical playback.
+
+The first subsequent zero return came 1.22 seconds of source time after the
+first load warning and coincided with channel removal after receiver failure.
+Later reconnected first-audio-channel reports showed separate `FramesDropped`
+observations of one and twelve, with additional zero returns. These are later
+admission-pressure observations, not a globally monotonic loss count or proof
+that every later affected packet was accepted. Across the 205-block onset
+window, source/IPC stages were complete with regular 960-sample steps and no
+trace overflow. SDK return to local ACK trace, including the new statistics
+getter and reporting, stayed below 0.009 ms. Exact joins, input hashes and
+limits are retained in eucaly's `audio-warning-trace-02/analysis-transport/`.
+
+Eucaly committed these diagnostics at `97d4009`. Its full checks passed:
+1,011 XCTest cases with six expected opt-in skips, one Swift Testing case,
+seven update-feed tests and 103 release-workflow tests. Signed archive/export,
+deep/strict signatures and finite packaged OMT/NDI runtime-load checks also
+passed. Its SDK binary and playback settings were unchanged in this follow-up.
+
+The 512 KiB constant applies to audio as well as video. Normal/recovery socket
+samples showed small audio backlog, but the load sampler missed the failure
+interval. An attempted aligned repeat stayed idle without starting transport
+or the added NDI receiver; it is incomplete setup evidence. It cannot justify
+another buffer size. The receiver now retains the first 32 margin events as well
+as 32 recent exceptional events, and its summary reports missing event coverage
+without weakening cumulative warning counters. All 99 app unit tests, 14 Python
+regressions and the final signed Release build passed; build warnings were errors.
+
+The confirmed finding is a reproducible load-triggered delay beyond timely
+source enqueue and before receiver parser completion on this Wi-Fi sender path.
+Parser callbacks are not physical NIC-arrival measurements: SDK queues, sender
+and receiver OS scheduling, the access point and radio path remain unisolated.
+The RTT increase supports transport pressure, not a Wi-Fi-only diagnosis.
+A matched wired comparison has not been performed; the operator has no cable
+for this sender Mac. Further saturation repeats cannot resolve that attribution.
+The original two small warnings fit part of this pattern but lack exact
+affected-packet records, so their cause remains unproven. Existing short
+loopback regressions do not reproduce this full source workload, and no matched
+full-pipeline loopback trial was run. The next useful path investigation needs
+aligned sender/receiver packet sequence and ACK timing plus queue measurements,
+with clock uncertainty and host-capture limitations retained. The send-pool
+ownership and SIGPIPE repairs address independent code defects; 512 KiB remains
+a bounded performance candidate, not an Ethernet or production qualification. No further
+buffer or network-priority tuning was applied.
+
+Hardware collectors, sources and helpers exited; the ordinary receiver launch
+was restored and the operator's NDI Monitor was left open. The final failed
+alignment and all successful/failing load evidence remain separate under
+`AudioTiming-20261024/`. No OMT upstream repair or documentation commit was pushed.
 
 ## Build 4 scope
 

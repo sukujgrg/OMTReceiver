@@ -135,6 +135,39 @@ def summarize(directory):
                      if 0 < r['uptime'] - first['uptime'] <= 60 and 'windowVideoAdmissionFPS' in r]
     last_windows = [r['windowVideoAdmissionFPS'] for r in records
                     if last['uptime'] - 60 <= r['uptime'] < last['uptime'] and 'windowVideoAdmissionFPS' in r]
+    warning_events = []
+    warning_events_observed = 0
+    timing_sequences = {}
+    timing_available = False
+    for record in records:
+        timing = record.get('audioPipelineTiming')
+        if not isinstance(timing, dict):
+            continue
+        timing_available = True
+        instance = record['instanceID']
+        previous = timing_sequences.get(instance, 0)
+        # The first warnings survive a burst that can evict them from the
+        # recent ring before export. Merge before the sequence high-water test.
+        events = {event.get('sequence', 0): event for event in
+                  timing.get('firstRouteWarnings', []) + timing.get('recentEvents', [])}
+        for _, event in sorted(events.items()):
+            sequence = event.get('sequence', 0)
+            if sequence <= previous:
+                continue
+            if 'routeHorizon' in event.get('reasons', []):
+                warning_events_observed += 1
+                if len(warning_events) < 128:
+                    warning_events.append(event)
+            timing_sequences[instance] = max(timing_sequences.get(instance, 0), sequence)
+    timing_warnings = {
+        'available': timing_available,
+        'observedWarningEventCount': warning_events_observed,
+        'cumulativeWarningCountIncludingWarmup': last.get('audioPacketsBelowRouteHorizon', 0),
+        'exactWarningCoverageComplete': timing_available and warning_events_observed == last.get('audioPacketsBelowRouteHorizon', 0),
+        'retainedWarningEvents': warning_events,
+        'retainedEventLimit': 128,
+        'scope': 'Exact diagnostic events including warmup, deduplicated across exports. Bounded device history can omit events; cumulative warning counters and runtime targets remain authoritative.'
+    }
     return {
         'runID': manifest['runID'], 'collectionResult': manifest.get('collectionResult', 'running'),
         'intervalSeconds': duration, 'receiverSamples': len(records),
@@ -159,6 +192,8 @@ def summarize(directory):
         'poolStalls': delta('poolStalls'), 'attempts': last['attempts'], 'failures': last['failures'],
         'decodeMsIncludingWarmup': last['decodeMs'],
         'audioAdmissionGapMsIncludingWarmup': last['audioAdmissionGapMs'],
+        'audioPipelineTimingIncludingWarmup': last.get('audioPipelineTiming'),
+        'audioRouteHorizonEventsIncludingWarmup': timing_warnings,
         'minimumAudioLeadMsIncludingWarmup': last.get('minimumAudioLeadMs'),
         'maximumAudioLeadMsIncludingWarmup': last.get('maximumAudioLeadMs'),
         'minimumSampledVideoLeadMs': min(r['currentVideoLeadMs'] for r in records),

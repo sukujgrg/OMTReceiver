@@ -141,6 +141,7 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
     }
 
     func enqueue(audio frame: OMTAudioFrame, generation token: UInt64) {
+        benchmark?.audioQueued(frame.timestamp)
         lock.lock()
         if !stopped, !failed, generation == token {
             let duration = Double(frame.samplesPerChannel) / Double(max(1, frame.sampleRate))
@@ -227,14 +228,19 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
             do {
                 if lastAudioTimestamp == frame.timestamp { continue }
                 let time = try map(frame.timestamp, lane: .audio)
+                let buildBegan = benchmark.map { _ in ProcessInfo.processInfo.systemUptime }
                 let sample = try FPA1AudioDecoder.makeSample(frame, at: time)
+                let enqueueBegan = buildBegan.map { _ in ProcessInfo.processInfo.systemUptime }
                 guard admitted(token, { audioRenderer.enqueue(sample) }) else { return }
+                let enqueueEnded = enqueueBegan.map { _ in ProcessInfo.processInfo.systemUptime }
                 audioProbe?.admitted(frame: frame, sample: sample,
                     lead: time.seconds - synchronizer.currentTime().seconds,
                     rendererStatus: audioRenderer.status.rawValue, nominalLead: timeline.playoutDelay)
                 benchmark?.audio(timestamp: frame.timestamp, samples: frame.samplesPerChannel, rate: frame.sampleRate,
                                  channels: frame.channels, activeChannels: frame.activeChannels,
-                                 lead: time.seconds - synchronizer.currentTime().seconds)
+                                 lead: time.seconds - synchronizer.currentTime().seconds,
+                                 sampleBuildMs: ((enqueueBegan ?? 0) - (buildBegan ?? 0)) * 1000,
+                                 rendererEnqueueMs: ((enqueueEnded ?? 0) - (enqueueBegan ?? 0)) * 1000)
                 lastAudioTimestamp = frame.timestamp
             } catch { fail(error.localizedDescription, token: token); return }
         }

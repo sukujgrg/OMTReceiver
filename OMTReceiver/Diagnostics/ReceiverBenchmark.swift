@@ -66,6 +66,124 @@ struct BenchmarkHistogram {
     }
 }
 
+/// Optional stage timing for audio. No PCM is retained, clocks are all local
+/// uptime, and both in-flight packets and exceptional events have fixed bounds.
+struct BenchmarkAudioTrace {
+    private struct Pending {
+        var received: Double?
+        var delivered: Double?
+        var queued: Double?
+        var receiveGap: Double?
+    }
+    private var pending: [Int64: Pending] = [:]
+    private var order: [Int64] = []
+    private var lastReceived: Double?
+    private var lastAdmitted: Double?
+    private var lastTimestamp: Int64?
+    private var lastLead: Double?
+    private(set) var events: [[String: Any]] = []
+    private(set) var firstRouteWarnings: [[String: Any]] = []
+    private(set) var eventCount: UInt64 = 0
+    private var receiveGaps = BenchmarkHistogram()
+    private var deliveryWaits = BenchmarkHistogram()
+    private var mainWaits = BenchmarkHistogram()
+    private var playbackWaits = BenchmarkHistogram()
+    private var sampleBuilds = BenchmarkHistogram()
+    private var rendererEnqueues = BenchmarkHistogram()
+    var pendingCount: Int { pending.count }
+
+    mutating func resetConnection() {
+        pending.removeAll(keepingCapacity: true); order.removeAll(keepingCapacity: true)
+        lastReceived = nil; lastAdmitted = nil; lastTimestamp = nil; lastLead = nil
+    }
+
+    private mutating func update(_ timestamp: Int64, _ body: (inout Pending) -> Void) {
+        if pending[timestamp] == nil {
+            if order.count == 64 { pending.removeValue(forKey: order.removeFirst()) }
+            order.append(timestamp)
+        }
+        var value = pending[timestamp] ?? Pending()
+        body(&value); pending[timestamp] = value
+    }
+
+    mutating func received(_ timestamp: Int64, at now: Double) {
+        let gap = lastReceived.map { (now - $0) * 1000 }
+        if let gap { receiveGaps.record(gap) }
+        update(timestamp) { $0.received = now; $0.receiveGap = gap }
+        lastReceived = now
+    }
+
+    mutating func delivered(_ timestamp: Int64, at now: Double) {
+        update(timestamp) { $0.delivered = now }
+    }
+
+    mutating func queued(_ timestamp: Int64, at now: Double) {
+        update(timestamp) { $0.queued = now }
+    }
+
+    mutating func admitted(_ timestamp: Int64, at now: Double, lead: Double, horizon: Double,
+                          sampleBuildMs: Double, rendererEnqueueMs: Double,
+                          wallTime: @autoclosure () -> Double = Date().timeIntervalSince1970) {
+        let stage = pending.removeValue(forKey: timestamp)
+        if let index = order.firstIndex(of: timestamp) { order.remove(at: index) }
+        var event: [String: Any] = ["sourceTimestamp100ns": timestamp, "admissionUptime": now,
+            "routeHorizonMs": horizon * 1000,
+            "sampleBuildMs": sampleBuildMs, "rendererEnqueueMs": rendererEnqueueMs]
+        if lead.isFinite { event["leadMs"] = lead * 1000 }
+        var reasons: [String] = []
+        if lead.isFinite, lead < horizon { reasons.append("routeHorizon") }
+        if let lastAdmitted { event["admissionGapMs"] = (now - lastAdmitted) * 1000 }
+        if let lastTimestamp { event["sourceTimestampStepMs"] = Double(timestamp - lastTimestamp) / 10_000 }
+        if let lastLead { event["previousLeadMs"] = lastLead * 1000 }
+        if let gap = stage?.receiveGap {
+            event["receiveGapMs"] = gap
+            if gap > 60 { reasons.append("receiveGap") }
+        }
+        if let received = stage?.received {
+            event["receivedUptime"] = received
+            event["receiveToAdmissionMs"] = (now - received) * 1000
+        }
+        if let received = stage?.received, let delivered = stage?.delivered {
+            let wait = (delivered - received) * 1000
+            deliveryWaits.record(wait); event["transportDeliveryWaitMs"] = wait
+            if wait > 30 { reasons.append("transportDeliveryWait") }
+        }
+        if let delivered = stage?.delivered, let queued = stage?.queued {
+            let wait = (queued - delivered) * 1000
+            mainWaits.record(wait); event["mainIngressWaitMs"] = wait
+            if wait > 30 { reasons.append("mainIngressWait") }
+        }
+        if let queued = stage?.queued {
+            let wait = (now - queued) * 1000
+            playbackWaits.record(wait); event["playbackWaitMs"] = wait
+            if wait > 30 { reasons.append("playbackWait") }
+        }
+        sampleBuilds.record(sampleBuildMs); rendererEnqueues.record(rendererEnqueueMs)
+        if sampleBuildMs > 20 { reasons.append("sampleBuild") }
+        if rendererEnqueueMs > 20 { reasons.append("rendererEnqueue") }
+        if !reasons.isEmpty {
+            eventCount += 1
+            event["sequence"] = eventCount; event["reasons"] = reasons
+            event["observedAtUnixSeconds"] = wallTime()
+            // Preserve the beginning of a failure even if a burst overwrites
+            // the recent ring before the next five-second export.
+            if reasons.contains("routeHorizon"), firstRouteWarnings.count < 32 {
+                firstRouteWarnings.append(event)
+            }
+            if events.count == 32 { events.removeFirst() }
+            events.append(event)
+        }
+        lastAdmitted = now; lastTimestamp = timestamp; lastLead = lead.isFinite ? lead : nil
+    }
+
+    var summary: [String: Any] {
+        ["eventCount": eventCount, "recentEvents": events, "firstRouteWarnings": firstRouteWarnings,
+         "receiveGapMs": receiveGaps.summary, "transportDeliveryWaitMs": deliveryWaits.summary,
+         "mainIngressWaitMs": mainWaits.summary, "playbackWaitMs": playbackWaits.summary,
+         "sampleBuildMs": sampleBuilds.summary, "rendererEnqueueMs": rendererEnqueues.summary]
+    }
+}
+
 /// Optional per-session counters, including across reconnects. The playback
 /// worker only updates bounded state under a short lock; file I/O and native
 /// metric queries run on a separate serial queue, never on the playback worker.
@@ -82,6 +200,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
     private var values: [String: Any] = [:]
     private var decode = BenchmarkHistogram()
     private var audioGaps = BenchmarkHistogram()
+    private var audioTrace = BenchmarkAudioTrace()
     private var lastAudioHost: Double?
     private var lastAudioTimestamp: Int64?
     private var lastAudioDuration: Double?
@@ -150,6 +269,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
     func beganAttempt() {
         lock.withLock {
             attempts += 1; lastAudioHost = nil; lastAudioTimestamp = nil; lastAudioDuration = nil
+            audioTrace.resetConnection()
         }
     }
 
@@ -166,7 +286,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
             rendererMetrics = [:]
             routeHorizon = outputLatency + ioDuration
             route = ["nominalLeadMs": nominalLead * 1000, "outputLatencyMs": outputLatency * 1000,
-                     "ioBufferMs": ioDuration * 1000,
+                     "ioBufferMs": ioDuration * 1000, "routeHorizonMs": routeHorizon * 1000,
                      "sampleRate": AVAudioSession.sharedInstance().sampleRate,
                      "ports": AVAudioSession.sharedInstance().currentRoute.outputs.map { $0.portType.rawValue }]
         }
@@ -217,10 +337,28 @@ final class ReceiverBenchmark: @unchecked Sendable {
     /// are counted at their own successful enqueue, including partial batches.
     func additionalVideoSample() { lock.withLock { videoSamples += 1 } }
 
-    func audio(timestamp: Int64, samples: Int, rate: Int, channels: Int, activeChannels: UInt32, lead: Double) {
+    func audioReceived(_ timestamp: Int64) {
+        let now = ProcessInfo.processInfo.systemUptime
+        lock.withLock { audioTrace.received(timestamp, at: now) }
+    }
+
+    func audioDelivered(_ timestamp: Int64) {
+        let now = ProcessInfo.processInfo.systemUptime
+        lock.withLock { audioTrace.delivered(timestamp, at: now) }
+    }
+
+    func audioQueued(_ timestamp: Int64) {
+        let now = ProcessInfo.processInfo.systemUptime
+        lock.withLock { audioTrace.queued(timestamp, at: now) }
+    }
+
+    func audio(timestamp: Int64, samples: Int, rate: Int, channels: Int, activeChannels: UInt32, lead: Double,
+               sampleBuildMs: Double = 0, rendererEnqueueMs: Double = 0) {
         let now = ProcessInfo.processInfo.systemUptime
         lock.withLock {
             audioPackets += 1
+            audioTrace.admitted(timestamp, at: now, lead: lead, horizon: routeHorizon,
+                                sampleBuildMs: sampleBuildMs, rendererEnqueueMs: rendererEnqueueMs)
             values["audioSampleRate"] = rate
             values["audioChannels"] = channels
             values["audioActiveChannelsMask"] = activeChannels
@@ -234,6 +372,8 @@ final class ReceiverBenchmark: @unchecked Sendable {
                 values["currentAudioLeadMs"] = lead * 1000
             }
             lastAudioHost = now; lastAudioTimestamp = timestamp; lastAudioDuration = Double(samples) / Double(max(1, rate))
+            values["lastAudioSourceTimestamp100ns"] = timestamp
+            values["lastAudioAdmissionUptime"] = now
         }
     }
 
@@ -276,6 +416,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
                 "ingressCoalescedVideo": ingressSkipped, "playbackCoalescedVideo": playbackSkipped,
                 "poolStalls": poolStalls, "videoTimelineResets": videoResets, "audioTimelineResets": audioResets,
                 "decodeMs": decode.summary, "audioAdmissionGapMs": audioGaps.summary,
+                "audioPipelineTiming": audioTrace.summary,
                 "lateAudioPackets": lateAudio, "audioPacketsBelowRouteHorizon": shortAudioLead,
                 "audioTimestampDiscontinuities": timestampSteps, "currentVideoLeadMs": videoLead * 1000,
                 "route": route, "renderer": rendererMetrics, "failures": failures,

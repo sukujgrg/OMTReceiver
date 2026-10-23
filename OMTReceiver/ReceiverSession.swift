@@ -252,7 +252,9 @@ final class ReceiverSession: ObservableObject {
             }
         }
         ingress = inbox
-        let transport = OMTConnection(endpoint: source.endpoint, onPacket: { [weak inbox] packet in
+        let benchmark = benchmark
+        let transport = OMTConnection(endpoint: source.endpoint, benchmark: benchmark, onPacket: { [weak inbox] packet in
+            if case .audio(let frame) = packet { benchmark?.audioDelivered(frame.timestamp) }
             inbox?.submit(packet)
         }, onState: { [weak self] state in
             Task { @MainActor [weak self] in

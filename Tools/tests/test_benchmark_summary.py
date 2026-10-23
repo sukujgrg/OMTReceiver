@@ -10,6 +10,37 @@ spec.loader.exec_module(summary)
 
 
 class FrameRateSummaryTests(unittest.TestCase):
+    def test_audio_warning_events_are_deduplicated_across_exports(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            self.fixture(path)
+            rows = [json.loads(line) for line in (path / 'receiver-series.jsonl').read_text().splitlines()]
+            event = {'sequence': 1, 'sourceTimestamp100ns': 42, 'leadMs': 94,
+                     'reasons': ['routeHorizon', 'receiveGap']}
+            for row in rows:
+                row['audioPipelineTiming'] = {'eventCount': 1, 'recentEvents': [event],
+                                              'firstRouteWarnings': [event]}
+                row['audioPacketsBelowRouteHorizon'] = 1
+            (path / 'receiver-series.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            result = summary.summarize(path)['audioRouteHorizonEventsIncludingWarmup']
+            self.assertEqual(result['observedWarningEventCount'], 1)
+            self.assertEqual(result['retainedWarningEvents'], [event])
+            self.assertTrue(result['exactWarningCoverageComplete'])
+
+    def test_missing_warning_event_does_not_hide_the_authoritative_counter(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            self.fixture(path)
+            rows = [json.loads(line) for line in (path / 'receiver-series.jsonl').read_text().splitlines()]
+            rows[-1]['audioPacketsBelowRouteHorizon'] = 2
+            rows[-1]['audioPipelineTiming'] = {'eventCount': 100, 'recentEvents': [
+                {'sequence': 99, 'sourceTimestamp100ns': 42, 'reasons': ['routeHorizon']}]}
+            (path / 'receiver-series.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            result = summary.summarize(path)
+            self.assertEqual(result['audioInsideRouteHorizon'], 2)
+            self.assertFalse(result['runtimeTargets']['noAudioAdmittedInsideRouteHorizon'])
+            self.assertFalse(result['audioRouteHorizonEventsIncludingWarmup']['exactWarningCoverageComplete'])
+
     def fixture(self, directory, frames=3600, numerator=60, denominator=1, seconds=60, advertised=None, legacy=False):
         manifest = {"runID": "test", "requestedIntervalSeconds": seconds, "collectionResult": "complete"}
         if not legacy:
