@@ -187,12 +187,27 @@ its run recorded three ingress and one playback coalescence.
 
 The controlling Mac's source producer also missed deadlines (maximum video
 lateness about 329 ms in the two-field capture and 350 ms in the mixed capture).
+The active sender SDK frame counters advanced while their dropped-frame
+counters remained zero; separate producer timing counters recorded 41 and 57
+video calls more than one frame interval late in the respective runs. Late
+production and SDK-reported dropped frames are distinct measurements.
 These disturbed, short local-sender runs do not pass the existing 0.1% native
 drop target and do not qualify sustained interlaced performance. The remaining
 drops cannot be attributed to the receiver alone. All measured bursts are kept;
 a clean-source, fully wired sustained interlaced check remains pending. The
 older build-2 qualification does not establish build-4 interlaced performance.
 See [hardware observations](../docs/performance.md) for separate windows and scope.
+
+The operator then selected Sienna OMT Signal Generator on the final installed
+build and confirmed that picture and audio work with Interlaced selected. The
+Mac generator's native controls showed 1920×1080, 60 FPS, Interlaced and 4:2:2
+8 Bit. This is direct sender interoperability and a physical picture/audio spot
+check; it does not replace the pending sustained interlaced qualification.
+
+[GitHub validation](https://github.com/sukujgrg/OMTReceiver/actions/runs/39906315510)
+passed for feature commit `66afc1c`, including generated-file checks, source/tool
+checks, unit/remote-navigation tests, an unsigned device archive and packaging
+validation on the runner. The public pages deployment also succeeded.
 
 Current local archive: `build/AppStore/Interlaced-Preroll-20261023/OMTReceiver.xcarchive`.
 Its signed Release build completed with zero warning/error diagnostics and passed

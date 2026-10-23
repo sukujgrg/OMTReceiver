@@ -43,12 +43,21 @@ cadence or source-to-panel latency.
 **These short interlaced runs are not performance qualification passes.** Their
 native drop rates exceed the existing 0.1% screening target. The controlling Mac
 also missed source-producer deadlines: maximum video lateness reached about
-329 ms during the two-field check and 350 ms during the mixed run. Native drop
+329 ms during the two-field check and 350 ms during the mixed run. During active reception, the SDK's frame count advanced and its dropped-frame
+counter stayed at zero. The producer separately reported 41 and 57 video calls
+more than one frame interval late in the respective runs. Zero SDK-reported
+frame loss does not establish steady production or zero native receiver drops.
+Native drop
 bursts occurred in these disturbed runs; the remaining drops cannot be assigned
 to the receiver alone. They used this Mac as sender to the Ethernet-connected
 TV, rather than repeating the earlier fully wired qualification. A clean-source,
 fully wired sustained interlaced run remains pending. Source and renderer
 windows are separate; the reported drop bursts have not been excluded.
+
+After these instrumented checks, the operator selected Sienna OMT Signal
+Generator with 1920×1080, 60 FPS, Interlaced and 4:2:2 8 Bit, and confirmed working
+picture and audio on the final installed build. This is a physical spot check
+and direct interoperability evidence, separate from the timed SDK runs.
 
 The independent unit/native/remote tests cover both field orders, field-pixel
 correctness, fractional cadence, alias/canary safety, scan transitions and the
