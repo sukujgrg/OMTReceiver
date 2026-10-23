@@ -74,7 +74,7 @@ enum PlaybackFailure: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidTimestamp: return "The source sent an invalid media timestamp."
-        case .unsupportedVideo: return "This receiver supports progressive, 8-bit SDR VMX video up to 1920 × 1080 at 60 fps."
+        case .unsupportedVideo: return "This receiver supports progressive or interlaced, 8-bit SDR VMX video up to 1920 × 1080 and 60 fps. Interlaced heights: 480, 576 or 1080."
         case .malformedVideo(let code): return "The source sent an invalid VMX video frame (\(code))."
         case .malformedAudio: return "The source sent invalid FPA1 audio."
         case .allocation: return "The receiver could not allocate a media buffer."

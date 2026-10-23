@@ -28,10 +28,13 @@ typedef struct {
     double seconds;
     double video_pause_after;
     double video_pause_duration;
+    double switch_scan_after;
     int port;
     int frame_rate_n;
     int frame_rate_d;
     bool alpha;
+    bool interlaced;
+    bool bottom_field_first;
     bool benchmark;
     bool silent_left;
     bool silent_right;
@@ -81,12 +84,15 @@ static void usage(const char *program) {
            "  --fps RATE               1–60 fps as N or N/D (default 30; e.g. 60 or 60000/1001).\n"
            "  --video-pause-after S    Inject one video-only producer pause after S seconds.\n"
            "  --video-pause-duration S  Pause for 0.001–5 seconds; audio keeps running.\n"
+           "  --interlaced             Encode genuinely offset fields (rate is complete pairs/sec).\n"
+           "  --bottom-field-first     Put the earlier field in odd rows (default top first).\n"
+           "  --switch-scan-after S    Toggle progressive/interlaced once after S seconds.\n"
            "  --alpha                  Send straight-alpha BGRA gradients and text.\n"
            "  --benchmark              Print five-second sender timing reports as JSON.\n"
            "  --silent-channel SIDE    none, left, right, or both (default none).\n"
            "  --port N                 SDK listen port, 1–65535 (default 6488).\n"
            "  --help                   Show help without calling the SDK.\n\n"
-           "1080p SDR BT.709 up to 60 fps, fixed Medium quality. Stereo planar Float32 at\n"
+           "1080 SDR BT.709 up to 60 complete frames/sec, fixed Medium quality. Stereo Float32 at\n"
            "48 kHz, exactly 960 samples/block. Both tracks use relative 100ns PTS.\n"
            "A white square and a short 1 kHz tone mark each whole second.\n"
            "Normal tones: left 440 Hz, right 660 Hz. Silent channels are exact zero.\n",
@@ -109,6 +115,14 @@ static bool parse_options(int argc, char **argv, Options *options) {
             options->alpha = true;
             continue;
         }
+        if (strcmp(argument, "--interlaced") == 0) {
+            options->interlaced = true;
+            continue;
+        }
+        if (strcmp(argument, "--bottom-field-first") == 0) {
+            options->bottom_field_first = true;
+            continue;
+        }
         if (index + 1 >= argc) {
             fprintf(stderr, "Missing value for %s\n", argument);
             return false;
@@ -129,6 +143,15 @@ static bool parse_options(int argc, char **argv, Options *options) {
                 return false;
             }
             options->seconds = seconds;
+        } else if (strcmp(argument, "--switch-scan-after") == 0) {
+            char *end = NULL;
+            errno = 0;
+            double seconds = strtod(value, &end);
+            if (errno || end == value || *end || !isfinite(seconds) || seconds < 0.1 || seconds > 3600) {
+                fprintf(stderr, "--switch-scan-after must be between 0.1 and 3600 seconds.\n");
+                return false;
+            }
+            options->switch_scan_after = seconds;
         } else if (strcmp(argument, "--video-pause-after") == 0 || strcmp(argument, "--video-pause-duration") == 0) {
             char *end = NULL;
             errno = 0;
@@ -186,6 +209,11 @@ static bool parse_options(int argc, char **argv, Options *options) {
         fprintf(stderr, "Video pause requires both options and must finish before --seconds.\n");
         return false;
     }
+    if (options->switch_scan_after >= options->seconds
+        || (options->bottom_field_first && !options->interlaced && options->switch_scan_after == 0)) {
+        fprintf(stderr, "Scan switch must finish before --seconds; field order requires interlaced video.\n");
+        return false;
+    }
     return true;
 }
 
@@ -238,6 +266,18 @@ static void draw_counter(uint8_t *pixels, uint64_t frame) {
             }
         }
     }
+}
+
+// A half-frame phase moves the pattern between fields, so this fixture tests
+// actual interlaced motion rather than merely setting the transport flag.
+static void make_picture(uint8_t *pixels, const uint8_t *background, uint64_t phase,
+                         int64_t timestamp, bool alpha) {
+    memcpy(pixels, background, (size_t)WIDTH * HEIGHT * 4);
+    rectangle(pixels, (int)(phase * 11 / 2 % (WIDTH - 24)), 0, 24, 720, 255, 255, 255, 255);
+    rectangle(pixels, 800 + (int)(phase * 7 / 2 % 800), 790, 128, 128, 0, 220, 255, alpha ? 160 : 255);
+    uint8_t marker = timestamp % TICKS_PER_SECOND < TICKS_PER_SECOND / 20 ? 255 : 0;
+    rectangle(pixels, 1710, 910, 140, 140, marker, marker, marker, 255);
+    draw_counter(pixels, phase / 2);
 }
 
 static void *send_audio(void *opaque) {
@@ -308,9 +348,10 @@ int main(int argc, char **argv) {
 
     const size_t pixel_bytes = (size_t)WIDTH * HEIGHT * 4;
     uint8_t *background = malloc(pixel_bytes), *pixels = malloc(pixel_bytes);
-    if (!background || !pixels) {
+    uint8_t *second_field = options.interlaced || options.switch_scan_after > 0 ? malloc(pixel_bytes) : NULL;
+    if (!background || !pixels || ((options.interlaced || options.switch_scan_after > 0) && !second_field)) {
         fprintf(stderr, "Could not allocate test-pattern pixels.\n");
-        free(background); free(pixels); omt_shutdown();
+        free(background); free(pixels); free(second_field); omt_shutdown();
         if (owns_storage) rmdir(storage_template);
         return 1;
     }
@@ -318,7 +359,7 @@ int main(int argc, char **argv) {
     omt_send_t *sender = omt_send_create(options.name, OMTQuality_Medium);
     if (!sender) {
         fprintf(stderr, "Official SDK could not start the sender on port %d. Choose an unused --port.\n", options.port);
-        free(background); free(pixels); omt_shutdown();
+        free(background); free(pixels); free(second_field); omt_shutdown();
         if (owns_storage) rmdir(storage_template);
         return 1;
     }
@@ -333,8 +374,10 @@ int main(int argc, char **argv) {
     char address[OMT_MAX_STRING_LENGTH] = {0};
     omt_send_getaddress(sender, address, (int)sizeof(address));
     printf("Source: %s\nManual local address: omt://127.0.0.1:%d\n", address, options.port);
-    printf("1080p%d/%d BGRA%s, Medium, stereo48k/960; duration %.3fs; storage %s\n",
-           options.frame_rate_n, options.frame_rate_d, options.alpha ? " straight alpha" : " opaque", options.seconds, getenv("OMT_STORAGE_PATH"));
+    printf("1080 %d/%d complete frames/s, %s, %s field first, BGRA%s, Medium, stereo48k/960; duration %.3fs; storage %s\n",
+           options.frame_rate_n, options.frame_rate_d, options.interlaced ? "interlaced" : "progressive",
+           options.bottom_field_first ? "bottom" : "top", options.alpha ? " straight alpha" : " opaque",
+           options.seconds, getenv("OMT_STORAGE_PATH"));
     fflush(stdout);
 
     AudioContext audio = { .sender = sender, .options = &options, .start_ns = monotonic_ns() };
@@ -342,7 +385,7 @@ int main(int argc, char **argv) {
     int thread_error = pthread_create(&audio_thread, NULL, send_audio, &audio);
     if (thread_error) {
         fprintf(stderr, "Audio thread failed: %s\n", strerror(thread_error));
-        omt_send_destroy(sender); omt_shutdown(); free(background); free(pixels);
+        omt_send_destroy(sender); omt_shutdown(); free(background); free(pixels); free(second_field);
         if (owns_storage) rmdir(storage_template);
         return 1;
     }
@@ -384,11 +427,21 @@ int main(int argc, char **argv) {
         int64_t lateness = monotonic_ns() - (audio.start_ns + timestamp * 100);
         if (lateness > 1000000000LL * options.frame_rate_d / options.frame_rate_n) video_late_frames++;
         if (lateness > maximum_video_lateness_ns) maximum_video_lateness_ns = lateness;
-        memcpy(pixels, background, pixel_bytes);
-        rectangle(pixels, (int)(index * 11 % (WIDTH - 24)), 0, 24, 720, 255, 255, 255, 255);
-        rectangle(pixels, 800 + (int)(index * 7 % 800), 790, 128, 128, 0, 220, 255, options.alpha ? 160 : 255);
-        rectangle(pixels, 1710, 910, 140, 140, timestamp % TICKS_PER_SECOND < TICKS_PER_SECOND / 20 ? 255 : 0, timestamp % TICKS_PER_SECOND < TICKS_PER_SECOND / 20 ? 255 : 0, timestamp % TICKS_PER_SECOND < TICKS_PER_SECOND / 20 ? 255 : 0, 255);
-        draw_counter(pixels, index);
+        make_picture(pixels, background, index * 2, timestamp, options.alpha);
+        bool switched = options.switch_scan_after > 0 && (double)timestamp / TICKS_PER_SECOND >= options.switch_scan_after;
+        bool interlaced = options.interlaced != switched;
+        if (interlaced) {
+            int64_t half_frame = TICKS_PER_SECOND * options.frame_rate_d / (2 * options.frame_rate_n);
+            make_picture(second_field, background, index * 2 + 1, timestamp + half_frame, options.alpha);
+            // The first instant occupies one parity, the later instant the other.
+            int later_parity = options.bottom_field_first ? 0 : 1;
+            for (int row = later_parity; row < HEIGHT; row += 2) {
+                memcpy(pixels + (size_t)row * WIDTH * 4,
+                       second_field + (size_t)row * WIDTH * 4, (size_t)WIDTH * 4);
+            }
+        }
+        frame.Flags = (options.alpha ? OMTVideoFlags_Alpha : OMTVideoFlags_None)
+            | (interlaced ? OMTVideoFlags_Interlaced : OMTVideoFlags_None);
         frame.Timestamp = timestamp;
         // libomt consumes/encodes the caller's raw buffer synchronously and
         // retains its own encoded network buffers. Reuse only after return.
@@ -427,7 +480,7 @@ int main(int argc, char **argv) {
     // Raw video buffers also remain allocated through destruction.
     omt_send_destroy(sender);
     omt_shutdown();
-    free(background); free(pixels);
+    free(background); free(pixels); free(second_field);
     if (owns_storage) rmdir(storage_template);
     return audio.scheduling_error ? 1 : 0;
 }

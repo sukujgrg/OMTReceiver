@@ -102,3 +102,36 @@ end. The default is no injected pause.
 This deliberately disturbs playback and producer deadlines. Keep its evidence
 separate from sustained performance qualification. It tests whether a delayed
 video lane recovers without shifting the common audio/video clock or freezing.
+
+
+## Interlaced motion and format-switch checks
+
+The fixture can generate genuine interlaced motion: alternating rows are sampled
+at two different half-frame phases, then compressed by the official SDK. Its
+`--fps` always describes complete field pairs per second when interlaced, rather
+than the broadcast shorthand for fields per second.
+
+```sh
+Tools/run-official-sender.sh --seconds 120 --fps 30000/1001 --interlaced
+Tools/run-official-sender.sh --seconds 120 --fps 60 --interlaced
+Tools/run-official-sender.sh --seconds 120 --fps 30 --interlaced --bottom-field-first
+Tools/run-official-sender.sh --seconds 120 --fps 30 --switch-scan-after 30
+```
+
+The default field order is top-first. For the bottom-first fixture, choose Bottom
+first in the receiver's Field order control. `--switch-scan-after` reverses the
+initial scan mode once, preserving timestamps and audio; it must occur before
+`--seconds` ends. A progressive fixture still produces the original pattern.
+
+The receiver doubles output cadence for interlaced sources up to 30 complete
+pairs/sec. Higher pair rates use one field per packet to stay within 60 output
+pictures/sec. Decoder/benchmark source counts and `windowVideoAdmissionFPS`
+continue to count admitted compressed frames; `videoSamplesAdmitted` and
+`windowVideoSampleFPS` count the progressive samples actually enqueued. Native
+renderer counters have their separate observation window. The existing sustained
+summary targets are for the progressive fixture; do not treat an interlaced run's
+source-frame pass as proof that every second field was displayed.
+
+For the opt-in field-order remote-navigation test, publish the default source
+with `--interlaced`, select the OMTReceiverInterop scheme and pass
+`OMT_RUN_INTERLACED_INTEROP=1` to `xcodebuild`. The ordinary suite skips this test.

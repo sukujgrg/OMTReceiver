@@ -42,19 +42,20 @@ you. Disconnect cancels retry; suspension closes media connections and resources
 ## Supported media
 
 - Progressive VMX1, 16×16 through **1920×1080**, up to **60 fps**, including 59.94.
+- Interlaced 8-bit VMX at 480, 576 or 1080 lines, converted automatically for progressive display.
 - 8-bit Rec.601/709 SDR, display aspect ratio, opaque and straight-alpha pictures.
   Alpha is composited over black for HDMI output.
 - FPA1 planar Float32 audio, including sparse/silent channel masks, rendered
   through the active tvOS audio route with a shared audio/video schedule.
 - Direct OMT 1.0 TCP reception, Bonjour discovery and bounded reconnects.
 
-4K, rates above 60, interlaced, 10/16-bit and preview-only video are reported as
+4K, source rates above 60, 10/16-bit and preview-only video are reported as
 unsupported. Discovery servers, virtual-router redirects and multiview are not
 implemented. The receiver/session/renderer boundaries leave room for future
 independent view slots; this version shows one source.
 
-A bounded compressed queue holds future video. Decoding begins within 133 ms of
-presentation, with at most ten decoded surfaces. Audio/video share 120 ms of
+A bounded compressed queue holds future video. Decoding begins near presentation,
+with at most ten surfaces shared by decode, deinterlacing and display. Audio/video share 120 ms of
 network/decode headroom plus the audio route's latency and I/O buffer duration.
 This is a scheduling budget, not measured end-to-end latency. See the
 [hardware observations](docs/performance.md) for actual results and limitations;
@@ -65,8 +66,20 @@ a separate post-repair physical spot check confirmed smooth picture and
 clean audio.
 
 Build 3 also accepts the official OBS plugin's unspecified aspect ratio and
-repairs the remaining compiler warnings. Signal generators must use a
-progressive, 8-bit SDR format; an interlaced preset is unsupported.
+repairs the remaining compiler warnings. Build 4 adds automatic interlaced playback.
+
+Interlaced output uses low-latency spatial (bob) interpolation, so fine vertical
+detail can be softer than native progressive video. Up to 30 complete field pairs
+per second, both fields are presented (for example 29.97 pairs → 59.94 pictures).
+Above 30 pairs per second, the first field is presented at the source rate to
+keep output within 60 fps. OMT supplies no field-dominance value: the default is
+top-first, with a **Field order** control during interlaced playback for bottom-first
+sources. Changing order reconnects the same source with fresh playback resources.
+No temporal history or extra lookahead is retained. Progressive video keeps its
+existing path. Hardware screening results for earlier builds do not qualify the
+new interlaced path. Short device checks reached the expected output cadence,
+but native drops and source timing disturbances mean sustained interlaced
+performance still needs qualification; see the hardware observations.
 
 ## Development and distribution
 

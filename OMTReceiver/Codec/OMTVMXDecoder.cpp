@@ -6,9 +6,10 @@
 #include <limits>
 
 namespace {
+constexpr uint32_t interlacedFlag = 1;
 constexpr uint32_t alphaFlag = 2;
 constexpr uint32_t premultipliedFlag = 4;
-constexpr uint32_t unsupportedFlags = ~uint32_t(6);
+constexpr uint32_t unsupportedFlags = ~uint32_t(7);
 constexpr size_t maximumPacket = 16 * 1024 * 1024;
 
 bool dimensionsValid(int width, int height) {
@@ -113,7 +114,11 @@ extern "C" int OMTVMXValidate(const uint8_t *source, size_t length, int width, i
         if (source[1] > 3) return 2;
         cursor = 2;
     }
-    if (source[cursor] != 1 || source[cursor + 1] > 100) return 2;
+    const bool interlaced = (flags & interlacedFlag) != 0;
+    // VMX's two field banks require these exact heights. In particular, do not
+    // let VMX_ConfigureInterlaced silently fall back to progressive geometry.
+    if (interlaced && height != 480 && height != 576 && height != 1080) return 2;
+    if (source[cursor] != (interlaced ? 2 : 1) || source[cursor + 1] > 100) return 2;
     const int slices = (height + 15) / 16;
     if (source[cursor + 2] != slices) return 2;
     cursor += 3;
@@ -180,6 +185,47 @@ extern "C" int OMTVMXDecoderDecode(OMTVMXDecoder *decoder, const uint8_t *source
                 }
                 pixel[3] = 255;
             }
+        }
+    }
+    return 0;
+}
+
+// Spatial bob uses only one field, never a line from its temporal neighbour.
+// Copy the field's real lines and interpolate missing lines between adjacent
+// lines of that same field, extending the first/last line at the image edges.
+// Packed UYVY and opaque BGRA keep each byte's component position across rows.
+extern "C" int OMTVMXBob(const uint8_t *source, size_t sourceCapacity, size_t sourceStride,
+                         uint8_t *destination, size_t destinationCapacity, size_t destinationStride,
+                         int width, int height, int bytesPerPixel, int field) {
+    if (!source || !destination || !dimensionsValid(width, height)
+        || height % 2 || (bytesPerPixel != 2 && bytesPerPixel != 4) || (field != 0 && field != 1)) return 1;
+    const size_t rowBytes = size_t(width) * size_t(bytesPerPixel);
+    if (sourceStride < rowBytes || destinationStride < rowBytes
+        || size_t(height) > sourceCapacity / sourceStride
+        || size_t(height) > destinationCapacity / destinationStride) return 1;
+    const bool inPlace = source == destination;
+    if (inPlace && sourceStride != destinationStride) return 1;
+    if (!inPlace) {
+        const uintptr_t a = reinterpret_cast<uintptr_t>(source);
+        const uintptr_t b = reinterpret_cast<uintptr_t>(destination);
+        const size_t sourceSpan = size_t(height) * sourceStride;
+        const size_t destinationSpan = size_t(height) * destinationStride;
+        if ((a < b && b - a < sourceSpan) || (b < a && a - b < destinationSpan)) return 1;
+    }
+    const int first = field;
+    const int last = height - 2 + field;
+    for (int y = 0; y < height; ++y) {
+        uint8_t *output = destination + size_t(y) * destinationStride;
+        if ((y & 1) == field) {
+            // Exact in-place bob leaves this field's real lines untouched.
+            // Its interpolated lines read only these still-original real lines.
+            if (!inPlace) std::memcpy(output, source + size_t(y) * sourceStride, rowBytes);
+        } else {
+            const int above = std::max(first, y - 1);
+            const int below = std::min(last, y + 1);
+            const uint8_t *a = source + size_t(above) * sourceStride;
+            const uint8_t *b = source + size_t(below) * sourceStride;
+            for (size_t x = 0; x < rowBytes; ++x) output[x] = uint8_t((unsigned(a[x]) + unsigned(b[x]) + 1) >> 1);
         }
     }
     return 0;

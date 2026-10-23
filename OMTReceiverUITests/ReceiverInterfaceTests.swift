@@ -84,6 +84,94 @@ final class ReceiverInterfaceTests: XCTestCase {
         XCTAssertFalse(app.buttons["disconnect"].exists)
     }
 
+    /// Opt-in test with the SDK fixture's genuine interlaced pattern. The normal
+    /// scheme has no external sender dependency and skips this check.
+    @MainActor
+    func testInterlacedPlaybackFieldOrderIsOperableWithTheRemote() throws {
+        guard ProcessInfo.processInfo.environment["OMT_RUN_INTEROP"] == "1",
+              ProcessInfo.processInfo.environment["OMT_RUN_INTERLACED_INTEROP"] == "1" else {
+            throw XCTSkip("Run the interop scheme with OMT_RUN_INTERLACED_INTEROP=1 and an interlaced SDK fixture.")
+        }
+        let app = XCUIApplication()
+        app.launchEnvironment["OMT_UNIT_TESTS"] = "0"
+        app.launch()
+        let source = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "OMTReceiver Test Pattern")).firstMatch
+        XCTAssertTrue(source.waitForExistence(timeout: 25))
+        let remote = XCUIRemote.shared
+        for _ in 0..<10 {
+            if source.hasFocus { break }
+            remote.press(.up)
+        }
+        XCTAssertTrue(source.hasFocus)
+        guard source.hasFocus else { return }
+        remote.press(.select)
+        let fullscreen = app.descendants(matching: .any).matching(identifier: "fullscreen-video").firstMatch
+        XCTAssertTrue(fullscreen.waitForExistence(timeout: 20))
+        remote.press(.menu)
+        let order = app.descendants(matching: .any).matching(identifier: "interlaced-field-order").firstMatch
+        XCTAssertTrue(order.waitForExistence(timeout: 5))
+        print("Interlaced controls focus tree: \(app.debugDescription)")
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "Interlaced playback controls"
+        shot.lifetime = .keepAlways
+        add(shot)
+        let top = app.buttons["Top first"]
+        let bottom = app.buttons["Bottom first"]
+        remote.press(.right)
+        for _ in 0..<8 {
+            if top.hasFocus { break }
+            remote.press(.down)
+        }
+        XCTAssertTrue(top.hasFocus, "Remote must reach the field-order choices.")
+        guard top.hasFocus else { return }
+        // Native segmented pickers select on Left/Right. Changing this value
+        // reconnects immediately, so focus belongs to the new playback view.
+        remote.press(.right)
+        XCTAssertTrue(fullscreen.waitForExistence(timeout: 20), "Changing order must reconnect and return to playback.")
+        remote.press(.menu)
+        XCTAssertTrue(order.waitForExistence(timeout: 5))
+        XCTAssertTrue(bottom.isSelected, "The reconnected source must retain the selected field order.")
+        let statistics = app.switches["Show statistics"]
+        let reconnect = app.buttons["Reconnect"]
+        let disconnect = app.buttons["disconnect"]
+        XCTAssertTrue(statistics.isHittable)
+        XCTAssertTrue(reconnect.isHittable)
+        XCTAssertTrue(disconnect.isHittable)
+        // Start at the top, then enter the Playback column. This also checks
+        // that the added picker has not pushed existing controls off screen.
+        for _ in 0..<8 { remote.press(.up) }
+        remote.press(.right)
+        for _ in 0..<10 {
+            if statistics.hasFocus { break }
+            remote.press(.down)
+        }
+        XCTAssertTrue(statistics.hasFocus, "Statistics must remain reachable with the remote.")
+        guard statistics.hasFocus else { return }
+        remote.press(.select)
+        remote.press(.down)
+        if disconnect.hasFocus { remote.press(.left) }
+        XCTAssertTrue(reconnect.hasFocus)
+        guard reconnect.hasFocus else { return }
+        remote.press(.select)
+        XCTAssertTrue(fullscreen.waitForExistence(timeout: 20))
+        remote.press(.menu)
+        XCTAssertTrue(order.waitForExistence(timeout: 5))
+        XCTAssertTrue(bottom.isSelected)
+        for _ in 0..<8 { remote.press(.up) }
+        remote.press(.right)
+        for _ in 0..<10 {
+            if reconnect.hasFocus || disconnect.hasFocus { break }
+            remote.press(.down)
+        }
+        if reconnect.hasFocus { remote.press(.right) }
+        XCTAssertTrue(disconnect.hasFocus, "Disconnect must remain reachable with the remote.")
+        guard disconnect.hasFocus else { return }
+        remote.press(.select)
+        XCTAssertTrue(app.buttons["manual-address"].waitForExistence(timeout: 5))
+        XCTAssertFalse(disconnect.exists)
+        XCTAssertFalse(order.exists)
+    }
+
     /// Run with an independent official-SDK sender already publishing the test
     /// source. This is an opt-in runtime interoperability and remote-focus check.
     @MainActor

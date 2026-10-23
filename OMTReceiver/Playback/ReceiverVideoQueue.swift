@@ -31,6 +31,8 @@ struct ReceiverVideoQueue {
     /// surfaces within VMXFrameDecoder's ten-surface allocation ceiling.
     /// This only advances decoding; presentation timestamps stay unchanged.
     static func decodeLead(playoutDelay: Double) -> Double {
+        // In-place bob reserves one surface per output, so scan mode preserves
+        // the same 133 ms native preparation window and global ten-surface bound.
         min(playoutDelay, Double(VMXFrameDecoder.maximumRetainedFrames - 2) / 60)
     }
 

@@ -25,8 +25,12 @@ any sender resource needed by App Review. Do not submit private LAN addresses,
 credentials, an inaccessible private-repository link or a nonexistent demo URL.
 
 Build 3 accepts the official OBS plugin's unspecified display-aspect field and
-uses the validated image dimensions to infer square pixels. Send progressive,
-8-bit SDR video; interlaced generator presets remain unsupported.
+uses the validated image dimensions to infer square pixels. Build 4 also accepts
+interlaced 8-bit SDR VMX at 480, 576 and 1080 lines and converts it for progressive
+display. The default field order is top-first; playback controls offer bottom-first
+and reconnect the same source when changed. Spatial interpolation can soften fine
+vertical detail. At up to 30 complete field pairs per second both fields are
+presented; higher pair rates use the first field to keep output within 60 fps.
 
 The implementation accepts up to 1080p60. Build 2 passed a 30.33-minute
 instrumented screening run at 1080p SDR 60 Hz HDMI output and recovered from

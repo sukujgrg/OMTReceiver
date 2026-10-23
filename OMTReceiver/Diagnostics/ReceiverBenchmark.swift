@@ -89,6 +89,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
     private var maximumAudioLead = -Double.infinity
     private var videoLead = 0.0
     private var videoFrames: UInt64 = 0
+    private var videoSamples: UInt64 = 0
     private var audioPackets: UInt64 = 0
     private var lateAudio: UInt64 = 0
     private var shortAudioLead: UInt64 = 0
@@ -113,6 +114,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
     private var previousExportHost: Double?
     private var previousCPU: Double?
     private var previousVideoFrames: UInt64 = 0
+    private var previousVideoSamples: UInt64 = 0
     private var previousAudioPackets: UInt64 = 0
 
     static func makeIfRequested() -> ReceiverBenchmark? {
@@ -186,17 +188,30 @@ final class ReceiverBenchmark: @unchecked Sendable {
     func stalledPool() { lock.withLock { poolStalls += 1 } }
     func rebased(_ lane: ReceiverTimeline.Lane) { lock.withLock { if lane == .audio { audioResets += 1 } else { videoResets += 1 } } }
 
-    func video(decodeMs: Double, lead: Double, timestamp: Int64, frameRateN: Int, frameRateD: Int) {
+    func video(decodeMs: Double, lead: Double, timestamp: Int64, frameRateN: Int, frameRateD: Int,
+               outputSamples: Int = 1, interlaced: Bool = false, fieldOrder: ReceiverFieldOrder = .topFirst) {
         let now = ProcessInfo.processInfo.systemUptime
         lock.withLock {
             if firstVideoHost == nil { firstVideoHost = now }
             decode.record(decodeMs); videoFrames += 1; videoLead = lead
+            videoSamples += UInt64(max(0, min(2, outputSamples)))
+            let fieldsPerFrame = interlaced && Double(frameRateN) / Double(max(1, frameRateD)) <= 30 ? 2 : 1
+            values["videoSourceScanMode"] = interlaced ? "interlaced" : "progressive"
+            values["videoOutputFrameRateNumerator"] = frameRateN * fieldsPerFrame
+            values["videoOutputFrameRateDenominator"] = frameRateD
+            values["videoDeinterlacePolicy"] = interlaced ? (fieldsPerFrame == 2 ? "bob-both-fields" : "bob-first-field") : "none"
+            if interlaced { values["videoFieldOrder"] = fieldOrder.rawValue }
+            else { values.removeValue(forKey: "videoFieldOrder") }
             values["videoFrameRateNumerator"] = frameRateN
             values["videoFrameRateDenominator"] = frameRateD
             values["lastVideoSourceTimestamp100ns"] = timestamp
             values["lastVideoAdmissionUptime"] = now
         }
     }
+
+    /// The first output sample is recorded with video(...); subsequent fields
+    /// are counted at their own successful enqueue, including partial batches.
+    func additionalVideoSample() { lock.withLock { videoSamples += 1 } }
 
     func audio(timestamp: Int64, samples: Int, rate: Int, lead: Double) {
         let now = ProcessInfo.processInfo.systemUptime
@@ -243,14 +258,14 @@ final class ReceiverBenchmark: @unchecked Sendable {
     private func export() {
         queryRenderer()
         let now = ProcessInfo.processInfo.systemUptime
-        let snapshot: (report: [String: Any], video: UInt64, audio: UInt64) = lock.withLock {
+        let snapshot: (report: [String: Any], video: UInt64, videoSamples: UInt64, audio: UInt64) = lock.withLock {
             var report = values
             report.merge(["schemaVersion": 1, "runID": configuration.runID.uuidString,
                 "instanceID": instanceID, "pid": ProcessInfo.processInfo.processIdentifier,
                 "createdAt": ISO8601DateFormatter().string(from: created),
                 "updatedAt": ISO8601DateFormatter().string(from: Date()), "uptime": now,
                 "elapsedSeconds": now - began, "phase": phase, "attempts": attempts,
-                "videoFramesAdmitted": videoFrames, "audioPacketsAdmitted": audioPackets,
+                "videoFramesAdmitted": videoFrames, "videoSamplesAdmitted": videoSamples, "audioPacketsAdmitted": audioPackets,
                 "ingressCoalescedVideo": ingressSkipped, "playbackCoalescedVideo": playbackSkipped,
                 "poolStalls": poolStalls, "videoTimelineResets": videoResets, "audioTimelineResets": audioResets,
                 "decodeMs": decode.summary, "audioAdmissionGapMs": audioGaps.summary,
@@ -263,7 +278,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
             if let firstVideoHost { report["secondsSinceFirstVideo"] = now - firstVideoHost }
             if minimumAudioLead.isFinite { report["minimumAudioLeadMs"] = minimumAudioLead * 1000 }
             if maximumAudioLead.isFinite { report["maximumAudioLeadMs"] = maximumAudioLead * 1000 }
-            return (report, videoFrames, audioPackets)
+            return (report, videoFrames, videoSamples, audioPackets)
         }
         var report = snapshot.report
         var usage = rusage()
@@ -286,9 +301,10 @@ final class ReceiverBenchmark: @unchecked Sendable {
         if let previousExportHost, now > previousExportHost {
             report["windowSeconds"] = now - previousExportHost
             report["windowVideoAdmissionFPS"] = Double(snapshot.video - previousVideoFrames) / (now - previousExportHost)
+            report["windowVideoSampleFPS"] = Double(snapshot.videoSamples - previousVideoSamples) / (now - previousExportHost)
             report["windowAudioPacketsPerSecond"] = Double(snapshot.audio - previousAudioPackets) / (now - previousExportHost)
         }
-        previousExportHost = now; previousVideoFrames = snapshot.video; previousAudioPackets = snapshot.audio
+        previousExportHost = now; previousVideoFrames = snapshot.video; previousVideoSamples = snapshot.videoSamples; previousAudioPackets = snapshot.audio
         report["exportSequence"] = exports
         do {
             let data = try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys])

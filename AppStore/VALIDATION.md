@@ -1,19 +1,19 @@
 # Preparation evidence — 23 October 2026
 
-Current candidate: version 1.0.0 (3). Local checks used Apple Silicon, Xcode 27.1 and the tvOS 27
+Current candidate: version 1.0.0 (4). Local checks used Apple Silicon, Xcode 27.1 and the tvOS 27
 SDK/simulator. These checks prepare a build; they do not establish App Store
 acceptance or physical performance.
 
 | Check | Result |
 | --- | --- |
-| App unit regressions | Build 2: 63 passed, including the new delayed-video queue liveness and common-clock regressions. |
-| Normal simulator UI suite | Build 2: source picker and privacy/licence remote navigation passed; the optional external-sender test is skipped in this scheme. |
-| Official-SDK interoperability | Build 2: the optional actual-SDK fullscreen/Back/Play/Pause UI test passed separately at 1080p30. |
+| App unit regressions | Build 4: 91 passed, including the interlaced pixel/cadence/surface regressions and existing clock/queue checks. |
+| Normal simulator UI suite | Build 4: source picker and privacy/licence remote navigation passed; two external-sender tests are skipped in this scheme. |
+| Official-SDK interoperability | Build 4: progressive fullscreen/Back/Play/Pause and interlaced field-order/statistics/reconnect/disconnect tests passed separately at 1080 input lines. |
 | Final document reader | Build 2 remote scrolling, licence access, Back and focus return passed. The unchanged layout was visually inspected before the playback repair. |
 | Benchmark-tool regressions | All 5 passed. Recovery fixture built with warnings treated as errors; four invalid pause-argument cases rejected. |
 | Public source preflight | Licence, privacy manifest, metadata, icons and tracked-file pattern checks passed. Raw captures, credentials and developer signing overrides are excluded. |
-| Device Release archive | Build 2: signed generic tvOS archive created; local bundle/resource/arm64/signature checks passed with normal signing trust access. |
-| Local App Store IPA export | Build 2 export passed its App Store profile, signature and no-debug-entitlement checks. Nothing was uploaded. |
+| Device Release archive | Build 4: signed generic tvOS archive completed with warnings as errors and zero diagnostics; bundle/resource/arm64/signature checks passed. |
+| Local App Store IPA export | Build 4 export passed its App Store profile, signature and no-debug-entitlement checks. Nothing was uploaded. |
 | Public website | Home, support and privacy pages opened successfully; home and policy layouts were visually inspected. |
 
 The CI workflow also builds with GitHub's Xcode 26 runner. A Swift expression in
@@ -95,19 +95,115 @@ parser repair and its regressions found no actionable issue.
 Sienna OMT Signal Generator was separately found to be set to Interlaced. Three
 captured frames had the interlaced flag and an interlaced VMX payload, while their
 1920×1080, 60/1 fps, 8-bit Rec.709 geometry otherwise fit the supported limits. The
-receiver correctly rejects that format. Select Progressive in the generator,
-keeping 1920×1080, 60 FPS and 4:2:2 8Bit, then reconnect. After selecting
-Progressive, the operator confirmed that the Sienna signal works. No receiver
-validation was relaxed. This is a functional interoperability spot check, not a
-new sustained performance measurement.
+build-3 receiver rejected that format. Selecting Progressive in the generator,
+keeping 1920×1080, 60 FPS and 4:2:2 8Bit, restored reception; the operator confirmed
+that the signal works. No receiver validation was relaxed for that repair.
+Build 4 adds the separate interlaced path described below. These checks are
+functional interoperability spot checks, not sustained performance measurements.
 
-Current local archive: `build/AppStore/Warnings-OBS-20261023/OMTReceiver.xcarchive`.
+Build 3 archive: `build/AppStore/Warnings-OBS-20261023/OMTReceiver.xcarchive`.
 The signed Release archive also completed with zero warning/error diagnostics and
 passed local bundle/resource/signing checks. The App Store-signed export at
 `build/AppStore/Warnings-OBS-20261023/Export/OMTReceiver.ipa` passed distribution
 profile, signature and no-debug-entitlement checks. Its SHA-256 is
 `5bfffac4ec74ae98ae898442c59f45568d2a01f736619985f0b15155187ef33b`.
 No TestFlight upload or App Review submission has been performed.
+
+### Build 4 automatic interlaced reception
+
+The full Debug simulator build, with compiler warnings treated as errors, passed
+**91 unit tests and two normal UI tests**, with zero compiler warning/error
+diagnostics. The two external-sender UI tests are opt-in and skipped by the
+ordinary scheme. New regressions exercise actual interlaced VMX entropy,
+absolute field pixel values, both field orders, alpha, 480/576/1080-line native
+conversion, fractional cadence, overlapping timestamps, partial-batch accounting,
+malformed/truncated entropy, and the global ten-surface bound across resets,
+geometry and pixel-format changes. The decoder never relies on tvOS to infer
+interlacing from the compressed VMX stream.
+
+Full app testing exposed a pre-existing libvmx aligned-stride ownership bug: an
+interlaced conversion could allocate a distinct padded buffer whose stride
+happened to equal the caller's doubled field stride. Stride comparison skipped
+copy-in, copy-back and release. Pointer-identity checks repair that ownership
+boundary while preserving opposite-field rows and padding. The ARM native pixel
+and canary checks passed AddressSanitizer and scoped UndefinedBehaviorSanitizer,
+with the existing upstream shift-instrumentation exclusion. All 96 progressive
+BGRX/BGRA/P216 corpus results retained the earlier compressed lengths and hashes.
+The matching x86 call sites were updated but were not executed locally.
+
+Two independent review findings were resolved: accounting now records each
+sample when actually enqueued, including a first field whose second field is
+later discarded; and surface lifetime accounting spans retired pools, so a
+format switch cannot allocate ten new surfaces while old display buffers survive.
+Final read-only reviews, including the in-place conversion and its preparation
+window/buffer math, found no remaining actionable issue. The live,
+official-SDK progressive fullscreen/Back/Play/Pause test passed separately. The
+interlaced simulator test passed again after the preparation repair, including
+field-order selection with actual
+remote navigation, retained selection after reconnect, statistics, reconnect and
+disconnect. The source and five benchmark-tool regressions also passed. Evidence is retained
+under ignored `build/Interlaced-20261023/`, including
+`Preroll-Final-Tests.xcresult`, `Preroll-Interlaced-Remote.xcresult`,
+`Progressive-Interop.xcresult`, `Focused-Repair-2.xcresult`, and the progressive
+wire comparison. The interlaced controls screenshot was visually inspected; all
+controls fit, including statistics, reconnect and disconnect. Earlier failed runs are retained separately and are not passes.
+
+The first physical interlaced prototype admitted the expected output samples and
+had no audio timing faults, pool stalls or clock resets, but its 100 ms decoded
+preparation window produced excessive native renderer drops. In a controlled
+same-process 60-pair/s run, the native interlaced window dropped 274/3,600 frames
+(7.61%). After the source switched to progressive at unchanged timestamps, the
+stable progressive window dropped 2/2,400 (0.0833%), with approximately 125 ms
+admission lead instead of 92 ms. The controlled run recorded four audio
+route-horizon warnings, with no late audio packets, discontinuities or clock
+resets; it is retained as diagnostic evidence, not a screening pass. The operator
+reported smooth picture and clean
+audio in the earlier 30-pair/s spot check; that observation does not turn the
+native drop result into a screening pass. These failed preliminary captures are
+retained under `Hardware-30-2/` and `Hardware-60-Switch/` inside the ignored evidence
+folder. They use this Mac as the sender to the Ethernet-connected Apple TV and do not
+repeat the earlier fully wired sustained qualification.
+
+The repair preserves the original 133.33 ms preparation window while keeping
+one global ten-surface budget per decoder. For two-field output, it constructs
+the alternate field in the second output first, then reconstructs the selected
+first field in place in the woven buffer. One-field output needs only that first
+buffer. The native helper permits only exact same-base/same-stride aliasing,
+leaves the selected field's real rows intact, and rejects mismatched aliasing or
+partial overlap. Native alias, both-order, pixel and canary regressions passed
+AddressSanitizer and scoped UndefinedBehaviorSanitizer. No source timestamp,
+audio schedule or extra lookahead is added by this repair.
+
+The final physical checks are retained as `Preroll-Hardware-30/` and
+`Preroll-Hardware-60-Switch/`. The first admitted 2,701 input frames and 5,402
+output samples over 90.002 seconds (60.021 submitted fps). Its separate 85.005 s
+native window recorded 26/5,102 drops (0.510%) and no corruption. The mixed
+60-pair/s-to-progressive check admitted 7,199 input/output samples over
+120.003 s (59.990 fps). Its separate interlaced window had 22/3,599 native drops
+(0.611%); the stable progressive window had 2/2,400 (0.0833%). Each run used one
+attempt with no failures, pool stalls, audio timing faults or clock resets. The
+scan switch retained the same process, connection, source timestamps and audio;
+its run recorded three ingress and one playback coalescence.
+
+The controlling Mac's source producer also missed deadlines (maximum video
+lateness about 329 ms in the two-field capture and 350 ms in the mixed capture).
+These disturbed, short local-sender runs do not pass the existing 0.1% native
+drop target and do not qualify sustained interlaced performance. The remaining
+drops cannot be attributed to the receiver alone. All measured bursts are kept;
+a clean-source, fully wired sustained interlaced check remains pending. The
+older build-2 qualification does not establish build-4 interlaced performance.
+See [hardware observations](../docs/performance.md) for separate windows and scope.
+
+Current local archive: `build/AppStore/Interlaced-Preroll-20261023/OMTReceiver.xcarchive`.
+Its signed Release build completed with zero warning/error diagnostics and passed
+local bundle/resource/signing checks. The App Store-signed export at
+`build/AppStore/Interlaced-Preroll-20261023/Export/OMTReceiver.ipa` passed distribution
+profile, signature and no-debug-entitlement checks. Its SHA-256 is
+`2d754368263d02c01829a20fd3803efa2d50a3dab866e1c48d24ee676acc84c1`.
+The earlier `build/AppStore/Interlaced-20261023/` archive/export are preserved as
+superseded preparation-window prototypes. The final build 4 is installed on the
+paired first-generation Apple TV. No TestFlight upload
+or App Review submission has been performed.
 
 ## Hardware results and remaining checks
 

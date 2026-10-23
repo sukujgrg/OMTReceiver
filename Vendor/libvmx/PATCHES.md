@@ -74,3 +74,21 @@ and hashes matched the preserved pre-patch codec. ARM builds exercise the change
 paths; SSE/AVX call sites were updated consistently but were not executed on this
 Apple Silicon host. Sanitizer and strict Debug/Release Xcode results are recorded in the
 [preparation evidence](../../AppStore/VALIDATION.md).
+
+
+## Interlaced aligned-stride ownership
+
+Interlaced conversion doubles the row stride to address one field at a time.
+For narrow images, that doubled stride can equal the temporary SIMD-aligned
+stride even though the temporary and caller buffers are different allocations.
+The previous helpers treated equal strides as proof of shared storage, skipping
+copy-in/copy-back and release. This could encode uninitialized temporary data,
+return blank pixels and leak the temporary buffer.
+
+Copy and release decisions now use buffer identity. The release helper receives
+the original source pointer, and all native SIMD callers pass it. A neighbouring
+field's row is never treated as unused SIMD padding just because its address
+falls inside the field stride. Native regressions check absolute source values,
+field motion, aligned-tail canaries and the equal-stride/different-buffer case.
+The wrapper continues to validate the complete compressed payload before native
+decode. Interlaced inputs and progressive sources retain the same VMX wire format.

@@ -8,6 +8,33 @@ import XCTest
 final class ReceiverSessionTests: XCTestCase {
     private var subscriptions: Set<AnyCancellable> = []
 
+    func testFieldOrderChangeRebuildsSameSourceAndDoesNotRestartAfterDisconnect() async throws {
+        let server = try await makeServer()
+        defer { server.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources())
+        defer { session.disconnect() }
+        session.fieldOrder = .bottomFirst
+        XCTAssertFalse(session.hasSelection)
+        XCTAssertEqual(session.phase, .idle)
+        let source = try OMTSource.manual(address: "127.0.0.1:\(server.port)")
+        let connected = next(.waitingForVideo, session: session)
+        session.connect(to: source)
+        await fulfillment(of: [connected], timeout: 5)
+        let old = session.playback
+        let changed = next(.waitingForVideo, session: session)
+        session.fieldOrder = .topFirst
+        await fulfillment(of: [changed], timeout: 5)
+        XCTAssertEqual(session.sourceName, source.name)
+        XCTAssertFalse(session.playback === old, "The old field pipeline must be retired before applying a new order.")
+        let current = session.playback
+        session.fieldOrder = .topFirst
+        XCTAssertTrue(session.playback === current, "An unchanged order must not restart playback.")
+        session.disconnect()
+        session.fieldOrder = .bottomFirst
+        XCTAssertEqual(session.phase, .idle)
+        XCTAssertFalse(session.hasSelection)
+    }
+
     func testAudioInterruptionClosesAndRebuildsTheSelectedSource() async throws {
         let server = try await makeServer()
         defer { server.stop() }

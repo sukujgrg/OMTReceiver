@@ -665,7 +665,9 @@ inline void VMX_CreateAlignedStrideBuffer(BYTE* src, int srcStride, VMX_SIZE src
 }
 inline void VMX_CopyFromAlignedStrideBufferAndFree(BYTE* aligned, int alignedStride, BYTE* dstBuffer, int dstStride, VMX_SIZE dstSize, int bytesPerPixel)
 {
-	if (alignedStride != dstStride)
+	// A field stride can equal the temporary padded stride even though the
+	// pointers differ. Pointer identity owns copy-back and temporary retirement.
+	if (aligned != dstBuffer)
 	{
 		BYTE* pSrc = aligned;
 		for (int y = 0; y < dstSize.height; y++)
@@ -677,16 +679,16 @@ inline void VMX_CopyFromAlignedStrideBufferAndFree(BYTE* aligned, int alignedStr
 		free(aligned);
 	}
 }
-inline void VMX_FreeAlignedStrideBuffer(BYTE* aligned, int alignedStride, int srcStride)
+inline void VMX_FreeAlignedStrideBuffer(BYTE* aligned, const BYTE* original)
 {
-	if (alignedStride != srcStride)
+	if (aligned != original)
 	{
 		free(aligned);
 	}
 }
 inline void VMX_CopyToAlignedStrideBuffer(BYTE* aligned, int alignedStride, BYTE* srcBuffer, int srcStride, VMX_SIZE srcSize, int bytesPerPixel)
 {
-	if (alignedStride != srcStride)
+	if (aligned != srcBuffer)
 	{
 		BYTE* pDst = aligned;
 		for (int y = 0; y < srcSize.height; y++)

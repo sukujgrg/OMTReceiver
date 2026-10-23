@@ -2,7 +2,9 @@ Getting Started
 
 Start an OMT sender on the same network as your Apple TV. A separate compatible sender is required; this app does not supply video or subscribe to a content service. Ethernet is recommended for live reception.
 
-Choose a source in the Sources list. If it does not appear, choose Enter Address and supply the sender's actual host name or IP address and TCP port. Start with progressive 1920 by 1080, 8-bit SDR at 30 fps when checking a new setup. Rates through 60 fps are supported; sustained performance depends on your sender, network, Apple TV and HDMI format. 4K input, interlaced and 10-bit video are unsupported.
+Choose a source in the Sources list. If it does not appear, choose Enter Address and supply the sender's actual host name or IP address and TCP port. Start with progressive 1920 by 1080, 8-bit SDR at 30 fps when checking a new setup. Rates through 60 fps are supported; sustained performance depends on your sender, network, Apple TV and HDMI format. Interlaced 8-bit sources with 480, 576 or 1080 lines are converted automatically for display. 4K input and 10-bit video are unsupported.
+
+Interlaced conversion can soften fine vertical detail. If interlaced motion appears to step backward, show the controls and change Field order to Bottom first. Top first is the default. Changing field order reconnects the same source.
 
 The video fills the screen while preserving its aspect ratio. Back or Play/Pause reveals playback controls. Reconnect retries the chosen source; Disconnect stops it. Requested quality is a suggestion to the sender, which may use another quality for its connected receivers.
 

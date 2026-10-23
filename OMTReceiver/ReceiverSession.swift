@@ -26,6 +26,13 @@ final class ReceiverSession: ObservableObject {
     @Published private(set) var sourceName = ""
     @Published private(set) var message: String?
     @Published private(set) var statistics = ""
+    @Published private(set) var isInterlaced = false
+    @Published var fieldOrder: ReceiverFieldOrder = .topFirst {
+        didSet {
+            guard fieldOrder != oldValue, hasSelection else { return }
+            reconnect()
+        }
+    }
     @Published var controlsVisible = true
     @Published var diagnosticsVisible = false
     @Published var muted = false {
@@ -83,6 +90,7 @@ final class ReceiverSession: ObservableObject {
         playback.onVideoPresented = { [weak self] info in
             guard let self, self.connection != nil else { return }
             self.lastInfo = info
+            if self.isInterlaced != info.isInterlaced { self.isInterlaced = info.isInterlaced }
             if self.phase != .playing {
                 self.phase = .playing
                 self.message = nil
@@ -95,6 +103,7 @@ final class ReceiverSession: ObservableObject {
     func connect(to source: OMTSource) {
         stopAttempt()
         selectedSource = source
+        isInterlaced = false
         sourceName = source.name
         retryCount = 0
         controlsVisible = true
@@ -103,6 +112,7 @@ final class ReceiverSession: ObservableObject {
 
     func disconnect() {
         selectedSource = nil
+        isInterlaced = false
         resumeAfterBackground = false
         stopAttempt()
         sourceName = ""
@@ -188,7 +198,7 @@ final class ReceiverSession: ObservableObject {
         playback.onError = nil
         playback.onVideoPresented = nil
         benchmark?.beganAttempt()
-        playback = ReceiverPlayback(benchmark: benchmark)
+        playback = ReceiverPlayback(benchmark: benchmark, fieldOrder: fieldOrder)
         playback.setMuted(muted)
         configurePlaybackCallbacks()
         framesReceived = 0
@@ -293,8 +303,8 @@ final class ReceiverSession: ObservableObject {
                 let elapsed = max(Date().timeIntervalSince(self.metricsBegan), 0.001)
                 let mbps = Double(self.bytesReceived) * 8 / elapsed / 1_000_000
                 if let info = self.lastInfo {
-                    self.statistics = String(format: "%d × %d · %.1f fps decoded · %.1f Mbps · %.2f ms decode · %d video frames skipped",
-                        info.width, info.height, Double(info.framesDecoded) / elapsed, mbps,
+                    self.statistics = String(format: "%d × %d%@ · %.1f fps submitted · %.1f Mbps · %.2f ms decode · %d source frames skipped",
+                        info.width, info.height, info.isInterlaced ? " interlaced" : "", Double(info.framesDecoded) / elapsed, mbps,
                         info.decodeMilliseconds, info.framesDropped + UInt64(self.ingressSkipped))
                 } else {
                     self.statistics = String(format: "%.1f Mbps received · waiting for a supported video frame", mbps)

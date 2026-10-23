@@ -109,7 +109,7 @@ common = {
     'STRING_CATALOG_GENERATE_SYMBOLS':'YES',
     # No target declares App Intents. Re-enable extraction when adding Siri/Shortcuts.
     'LM_SKIP_METADATA_EXTRACTION':'YES',
-    'OMT_RUN_INTEROP':'0',
+    'OMT_RUN_INTEROP':'0', 'OMT_RUN_INTERLACED_INTEROP':'0',
 }
 app_settings = {
     'PRODUCT_NAME':'$(TARGET_NAME)', 'PRODUCT_BUNDLE_IDENTIFIER':'com.suku.OMTReceiver',
@@ -125,6 +125,7 @@ app_settings = {
     'SWIFT_EMIT_LOC_STRINGS':'YES', 'ENABLE_PREVIEWS':'YES',
 }
 test_settings = {
+    'OTHER_CPLUSPLUSFLAGS':'$(inherited) -fdeclspec',
     'PRODUCT_NAME':'$(TARGET_NAME)', 'PRODUCT_BUNDLE_IDENTIFIER':'com.suku.OMTReceiverTests',
     'GENERATE_INFOPLIST_FILE':'YES', 'CODE_SIGN_STYLE':'Automatic',
     'TEST_HOST':'$(BUILT_PRODUCTS_DIR)/OMTReceiver.app/OMTReceiver', 'BUNDLE_LOADER':'$(TEST_HOST)',
@@ -178,7 +179,7 @@ scheme = f'''<?xml version="1.0" encoding="UTF-8"?>
   </BuildAction>
   <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="NO">
     <MacroExpansion><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{app_target}" BuildableName="OMTReceiver.app" BlueprintName="OMTReceiver" ReferencedContainer="container:OMTReceiver.xcodeproj"/></MacroExpansion>
-    <EnvironmentVariables><EnvironmentVariable key="OMT_UNIT_TESTS" value="1" isEnabled="YES"/><EnvironmentVariable key="OMT_RUN_INTEROP" value="$(OMT_RUN_INTEROP)" isEnabled="YES"/></EnvironmentVariables>
+    <EnvironmentVariables><EnvironmentVariable key="OMT_UNIT_TESTS" value="1" isEnabled="YES"/><EnvironmentVariable key="OMT_RUN_INTEROP" value="$(OMT_RUN_INTEROP)" isEnabled="YES"/><EnvironmentVariable key="OMT_RUN_INTERLACED_INTEROP" value="$(OMT_RUN_INTERLACED_INTEROP)" isEnabled="YES"/></EnvironmentVariables>
     <Testables><TestableReference skipped="NO"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{test_target}" BuildableName="OMTReceiverTests.xctest" BlueprintName="OMTReceiverTests" ReferencedContainer="container:OMTReceiver.xcodeproj"/></TestableReference><TestableReference skipped="NO"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{ui_target}" BuildableName="OMTReceiverUITests.xctest" BlueprintName="OMTReceiverUITests" ReferencedContainer="container:OMTReceiver.xcodeproj"/></TestableReference></Testables>
   </TestAction>
   <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="NO">

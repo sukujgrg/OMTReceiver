@@ -149,6 +149,18 @@ struct ReceiverRootView: View {
                                 .tag(quality)
                         }
                     }
+                    if receiver.isInterlaced {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Interlaced field order").font(.callout).foregroundStyle(.secondary)
+                            Picker("Field order", selection: $receiver.fieldOrder) {
+                                ForEach(ReceiverFieldOrder.allCases, id: \.self) { order in
+                                    Text(order == .topFirst ? "Top first" : "Bottom first").tag(order)
+                                }
+                            }
+                            .accessibilityIdentifier("interlaced-field-order")
+                            .accessibilityHint("Reconnects using the selected field order. Change this if interlaced motion appears to step backward.")
+                        }
+                    }
                     Toggle("Show statistics", isOn: $receiver.diagnosticsVisible)
                     if receiver.hasSelection {
                         HStack(spacing: 20) {

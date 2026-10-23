@@ -3,14 +3,58 @@
 Recorded 23 October 2026 on a first-generation Apple TV 4K (A10X), tvOS 26.6.
 These observations do not establish a general production or NDI performance claim.
 
-## Current candidate: 1.0.0 (3)
+## Current candidate: 1.0.0 (4)
 
 Build 3 contains compiler-warning repairs and OBS zero-aspect compatibility. Its
 unit/UI tests and a live OBS 720p30 smoke check passed, and the operator confirmed
 working picture and audio. The sustained screening figures below belong to build
-2. Build 3 has not had a fresh 30-minute screening run. Sienna's interlaced preset
-was correctly rejected; after selecting Progressive, the operator confirmed that
-its signal works. See [preparation evidence](../AppStore/VALIDATION.md).
+2. Builds 3 and 4 have not had a fresh 30-minute screening run. Build 3 rejected
+Sienna's interlaced preset; after selecting Progressive, the operator confirmed
+that its signal works. Build 4 adds automatic spatial deinterlacing with an
+explicit field-order control. Up to 30 complete field pairs per second it emits
+both fields; higher pair rates use the selected first field to stay within
+60 output pictures per second. Fine vertical detail can be softer. See
+[preparation evidence](../AppStore/VALIDATION.md).
+
+## Build 4 interlaced functional checks
+
+The final build automatically received real interlaced VMX from the official
+Mac SDK on the same first-generation Apple TV. The low-latency spatial converter
+uses both fields at up to 30 complete pairs/s, and the selected first field at
+higher pair rates. The first attempt shortened native preparation to 100 ms and
+showed excessive native drops despite healthy admission. Reusing the woven
+buffer for the first output restored the original 133.33 ms preparation window
+within the ten-surface cap.
+
+| Final build-4 check | Receiver measurement | Native renderer measurement |
+| --- | --- | --- |
+| 30 complete interlaced pairs/s, both fields | 90.002 s; 2,701 input frames / 5,402 output samples; 60.021 submitted fps | 85.005 s; 26 drops / 5,102 frames (0.510%); zero corruption |
+| 60 complete interlaced pairs/s, first field; then progressive60 | 120.003 s; 7,199 input frames / output samples; 59.990 submitted fps | Interlaced: 22 / 3,599 drops (0.611%) over 60.000 s; stable progressive: 2 / 2,400 (0.0833%) over 39.996 s; zero corruption |
+
+Each final run used one connection attempt, with no receiver failures, decoder
+pool stalls, audio deadline/route-horizon violations, timestamp discontinuities
+or timeline resets. The scan switch preserved the same connection, process,
+timestamps and audio schedule. Its run recorded three ingress coalescences and
+one playback coalescence. The two-field run's final mean decode was 6.90 ms,
+p95 ≤11.25 ms; the mixed first-field/progressive run averaged 4.43 ms, p95
+≤7.25 ms. These are decode/admission and native counters, not physical panel
+cadence or source-to-panel latency.
+
+**These short interlaced runs are not performance qualification passes.** Their
+native drop rates exceed the existing 0.1% screening target. The controlling Mac
+also missed source-producer deadlines: maximum video lateness reached about
+329 ms during the two-field check and 350 ms during the mixed run. Native drop
+bursts occurred in these disturbed runs; the remaining drops cannot be assigned
+to the receiver alone. They used this Mac as sender to the Ethernet-connected
+TV, rather than repeating the earlier fully wired qualification. A clean-source,
+fully wired sustained interlaced run remains pending. Source and renderer
+windows are separate; the reported drop bursts have not been excluded.
+
+The independent unit/native/remote tests cover both field orders, field-pixel
+correctness, fractional cadence, alias/canary safety, scan transitions and the
+global surface budget. Earlier preliminary prototypes and failed captures remain
+preserved. See [preparation evidence](../AppStore/VALIDATION.md) for artifact
+locations and review results.
 
 ## Build 2 sustained screening
 

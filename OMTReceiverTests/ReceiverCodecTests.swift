@@ -106,8 +106,8 @@ final class ReceiverCodecTests: XCTestCase {
         XCTAssertThrowsError(try decoder.decode(frame(bad)))
     }
 
-    func testUnsupportedInterlacedPreviewAndHighBitDepthFailClearly() {
-        for flag: UInt32 in [1, 8, 16] {
+    func testUnsupportedPreviewHighBitDepthAndUnknownFlagsFailClearly() {
+        for flag: UInt32 in [8, 16, 32] {
             XCTAssertThrowsError(try VMXFrameDecoder().decode(frame(opaque, flags: flag))) { error in
                 XCTAssertTrue(error.localizedDescription.contains("progressive"))
             }

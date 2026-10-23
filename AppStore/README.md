@@ -3,7 +3,8 @@
 The app is prepared as a standalone tvOS application. This repository and its
 original artwork are MIT-licensed. No upload, TestFlight invitation, App Store
 submission, pricing decision or legal account declaration is performed by these
-tools. Build 3 adds the OBS compatibility and compiler-warning repairs. Build 2
+tools. Build 4 adds automatic interlaced playback; build 3 contains the OBS
+compatibility and compiler-warning repairs. Build 2
 passed the instrumented 1080p60 screening run at 1080p SDR 60 Hz
 HDMI output; a separate post-repair operator spot check confirmed smooth picture
 and clean audio. See [recorded preparation evidence](VALIDATION.md) for
@@ -12,7 +13,7 @@ completed local checks and artifact locations.
 ## Source and local checks
 
 `VERSION` is the marketing-version source; `BUILD_NUMBER` is the default numeric
-build. The current preparation is 1.0.0 (3). Advance the build number for each
+build. The current preparation is 1.0.0 (4). Advance the build number for each
 new App Store Connect upload; do not reuse a previously uploaded version/build.
 
 ```sh

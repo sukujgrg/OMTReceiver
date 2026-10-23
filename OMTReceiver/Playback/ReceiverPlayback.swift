@@ -10,6 +10,15 @@ struct VideoPlaybackInfo: Sendable {
     let decodeMilliseconds: Double
     let framesDecoded: UInt64
     let framesDropped: UInt64
+    let isInterlaced: Bool
+
+    init(width: Int, height: Int, fps: Double, decodeMilliseconds: Double,
+         framesDecoded: UInt64, framesDropped: UInt64, isInterlaced: Bool = false) {
+        self.width = width; self.height = height; self.fps = fps
+        self.decodeMilliseconds = decodeMilliseconds
+        self.framesDecoded = framesDecoded; self.framesDropped = framesDropped
+        self.isInterlaced = isInterlaced
+    }
 }
 
 /// One receiver owns one decoder, display, audio renderer and A/V timebase.
@@ -24,13 +33,13 @@ final class ReceiverPlayback: ObservableObject {
     private let worker: ReceiverPlaybackWorker
     private var generation: UInt64 = 0
 
-    init(benchmark: ReceiverBenchmark? = nil) {
+    init(benchmark: ReceiverBenchmark? = nil, fieldOrder: ReceiverFieldOrder = .topFirst) {
         let display = AVSampleBufferDisplayLayer()
         display.videoGravity = .resizeAspect
         display.backgroundColor = CGColor(gray: 0, alpha: 1)
         display.isOpaque = true
         displayLayer = display
-        worker = ReceiverPlaybackWorker(videoRenderer: display.sampleBufferRenderer, benchmark: benchmark)
+        worker = ReceiverPlaybackWorker(videoRenderer: display.sampleBufferRenderer, benchmark: benchmark, fieldOrder: fieldOrder)
         worker.onError = { [weak self] token, message in
             Task { @MainActor [weak self] in
                 guard let self, self.generation == token else { return }
@@ -80,15 +89,28 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
     private var timeline: ReceiverTimeline
     private var retryScheduled = false
     private var lastInfoHost: Double = -.infinity
-    private var lastVideoTimestamp: Int64?
+    private struct VideoBatch {
+        let frame: OMTVideoFrame
+        let cadence: ReceiverVideoCadence
+        let samples: [CMSampleBuffer]
+        let decodeMilliseconds: Double
+        var cursor = 0
+        var accounting = ReceiverVideoSampleAccounting()
+        var admitted: Int { accounting.samplesAdmitted }
+    }
+    private let fieldOrder: ReceiverFieldOrder
+    private var pendingVideoBatch: VideoBatch?
+    private var videoFormat: ReceiverVideoFormat?
+    private var presentationOrder = ReceiverVideoPresentationOrder()
     private var lastAudioTimestamp: Int64?
     private var decoded: UInt64 = 0
     private let audioProbe = HardwareAudioProbe.makeIfRequested()
     private let benchmark: ReceiverBenchmark?
     private var lastStateProbeHost: Double = -.infinity
 
-    init(videoRenderer: AVSampleBufferVideoRenderer, benchmark: ReceiverBenchmark?) {
+    init(videoRenderer: AVSampleBufferVideoRenderer, benchmark: ReceiverBenchmark?, fieldOrder: ReceiverFieldOrder) {
         self.videoRenderer = videoRenderer
+        self.fieldOrder = fieldOrder
         self.benchmark = benchmark
         // ReceiverSession creates this graph after its audio-session lease is
         // active, when the route reports the actual output and I/O latency.
@@ -163,7 +185,8 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
         synchronizer.setRate(0, time: .zero)
         videoRenderer.flush(removingDisplayedImage: removeImage, completionHandler: nil)
         audioRenderer.flush()
-        timeline.reset(); lastVideoTimestamp = nil; lastAudioTimestamp = nil
+        timeline.reset(); lastAudioTimestamp = nil
+        pendingVideoBatch = nil; videoFormat = nil; presentationOrder.reset()
         lastInfoHost = -.infinity; decoded = 0
     }
 
@@ -214,57 +237,113 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
                 lastAudioTimestamp = frame.timestamp
             } catch { fail(error.localizedDescription, token: token); return }
         }
-        // A bounded two-picture burst catches up after a delayed wake without
-        // monopolizing the worker or pushing audio behind an unbounded decode.
+        // At most one decoded batch waits for renderer readiness. Service its
+        // second field before decoding another compressed picture; audio still
+        // gets the first bounded burst at every worker wake.
         for _ in 0..<2 {
-            guard videoRenderer.isReadyForMoreMediaData else { break }
+            guard drainPendingVideo(token: token), videoRenderer.isReadyForMoreMediaData else { break }
             lock.lock()
             let entry = generation == token ? video.first : nil
             lock.unlock()
             guard let entry else { break }
             let frame = entry.frame
             do {
-                // Zero/black/chroma pixels are real replacement frames and
-                // pass through exactly the same path as every other picture.
                 let begin = CMClockGetTime(CMClockGetHostTimeClock()).seconds
                 let time = try map(frame.timestamp, lane: .video)
                 let lead = time.seconds - synchronizer.currentTime().seconds
                 guard lead <= ReceiverVideoQueue.decodeLead(playoutDelay: timeline.playoutDelay) else { break }
-                guard let image = try decoder.decode(frame) else {
+                let cadence = try ReceiverVideoCadence(frame: frame, fieldOrder: fieldOrder)
+                guard let images = try decoder.decode(frame, fields: cadence.samples.map(\.field)) else {
                     benchmark?.stalledPool()
                     scheduleRetry(); return
                 }
-                var description: CMVideoFormatDescription?
-                guard CMVideoFormatDescriptionCreateForImageBuffer(allocator: kCFAllocatorDefault,
-                    imageBuffer: image, formatDescriptionOut: &description) == noErr,
-                      let description else { throw PlaybackFailure.allocation }
-                var timing = CMSampleTimingInfo(duration: .invalid, presentationTimeStamp: time, decodeTimeStamp: .invalid)
-                var sample: CMSampleBuffer?
-                guard CMSampleBufferCreateReadyWithImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: image,
-                    formatDescription: description, sampleTiming: &timing, sampleBufferOut: &sample) == noErr,
-                      let sample else { throw PlaybackFailure.allocation }
-                // A VMX frame is self-contained. Duplicate timestamps need
-                // a queue flush before replacement; AVFoundation forbids
-                // duplicate PTS in one stream. Retain the visible old image.
-                if lastVideoTimestamp == frame.timestamp { videoRenderer.flush() }
-                guard admitted(token, videoID: entry.id, { videoRenderer.enqueue(sample) }) else { continue }
-                lastVideoTimestamp = frame.timestamp
-                decoded &+= 1
-                let now = CMClockGetTime(CMClockGetHostTimeClock()).seconds
-                benchmark?.video(decodeMs: (now - begin) * 1000,
-                                 lead: time.seconds - synchronizer.currentTime().seconds, timestamp: frame.timestamp,
-                                 frameRateN: frame.frameRateN, frameRateD: frame.frameRateD)
-                if now - lastInfoHost >= 0.250 {
-                    lastInfoHost = now
-                    lock.lock(); let count = dropped; lock.unlock()
-                    onVideo?(token, .init(width: frame.width, height: frame.height,
-                        fps: Double(frame.frameRateN) / Double(max(1, frame.frameRateD)),
-                        decodeMilliseconds: (now - begin) * 1000, framesDecoded: decoded, framesDropped: count))
+                let samples = try zip(images, cadence.samples).map { image, field in
+                    try makeVideoSample(image, time: CMTimeAdd(time, field.offset), duration: field.duration)
                 }
+                let decodeMilliseconds = (CMClockGetTime(CMClockGetHostTimeClock()).seconds - begin) * 1000
+                // Queue replacement, overflow and reset can invalidate the peek
+                // during decode. Admit all of this bounded batch, or none of it.
+                guard admitted(token, videoID: entry.id, {
+                    let format = ReceiverVideoFormat(frame)
+                    if videoFormat != format {
+                        videoRenderer.flush(); presentationOrder.reset()
+                        videoFormat = format
+                    }
+                    pendingVideoBatch = VideoBatch(frame: frame, cadence: cadence, samples: samples,
+                                                   decodeMilliseconds: decodeMilliseconds)
+                }) else { continue }
             } catch { fail(error.localizedDescription, token: token); return }
         }
+        _ = drainPendingVideo(token: token)
         lock.lock(); let pending = !video.isEmpty || !audio.isEmpty; lock.unlock()
-        if pending { scheduleRetry() }
+        if pending || pendingVideoBatch != nil { scheduleRetry() }
+    }
+
+    private func makeVideoSample(_ image: CVPixelBuffer, time: CMTime, duration: CMTime) throws -> CMSampleBuffer {
+        var description: CMVideoFormatDescription?
+        guard CMVideoFormatDescriptionCreateForImageBuffer(allocator: kCFAllocatorDefault,
+            imageBuffer: image, formatDescriptionOut: &description) == noErr,
+              let description else { throw PlaybackFailure.allocation }
+        var timing = CMSampleTimingInfo(duration: duration, presentationTimeStamp: time, decodeTimeStamp: .invalid)
+        var sample: CMSampleBuffer?
+        guard CMSampleBufferCreateReadyWithImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: image,
+            formatDescription: description, sampleTiming: &timing, sampleBufferOut: &sample) == noErr,
+              let sample else { throw PlaybackFailure.allocation }
+        return sample
+    }
+
+    /// Returns true only when no field remains pending. Admission and the
+    /// compressed head are checked under the same lock as reset/teardown.
+    private func drainPendingVideo(token: UInt64) -> Bool {
+        guard var batch = pendingVideoBatch else { return true }
+        lock.lock()
+        guard !stopped, !failed, generation == token else {
+            lock.unlock(); pendingVideoBatch = nil; return false
+        }
+        let next = video.first?.frame
+        while batch.cursor < batch.samples.count {
+            // Never enqueue an old field after a scan/geometry transition, source
+            // restart or a packet whose PTS overlaps that field. No image history
+            // survives this decision, and no companion audio is flushed.
+            if let next,
+               ReceiverVideoFormat(next) != ReceiverVideoFormat(batch.frame)
+                || !ReceiverVideoPresentationOrder.fieldFits(sourceTimestamp: batch.frame.timestamp,
+                    offset: batch.cadence.samples[batch.cursor].offset, nextTimestamp: next.timestamp) {
+                batch.cursor = batch.samples.count
+                break
+            }
+            guard videoRenderer.isReadyForMoreMediaData else { break }
+            let sample = batch.samples[batch.cursor]
+            if presentationOrder.register(CMSampleBufferGetPresentationTimeStamp(sample)) { videoRenderer.flush() }
+            videoRenderer.enqueue(sample)
+            let frame = batch.frame, decodeMs = batch.decodeMilliseconds
+            let firstTime = CMSampleBufferGetPresentationTimeStamp(batch.samples[0])
+            batch.accounting.record(firstSample: {
+                benchmark?.video(decodeMs: decodeMs,
+                    lead: firstTime.seconds - synchronizer.currentTime().seconds, timestamp: frame.timestamp,
+                    frameRateN: frame.frameRateN, frameRateD: frame.frameRateD,
+                    outputSamples: 1, interlaced: frame.flags & 1 != 0, fieldOrder: fieldOrder)
+            }, additionalSample: {
+                benchmark?.additionalVideoSample()
+            })
+            batch.cursor += 1; decoded &+= 1
+        }
+        let complete = batch.cursor == batch.samples.count
+        if complete && batch.admitted == 0 { dropped &+= 1; benchmark?.skippedVideo() }
+        let droppedCount = dropped
+        pendingVideoBatch = complete ? nil : batch
+        lock.unlock()
+        if complete, batch.admitted > 0 {
+            let frame = batch.frame
+            let now = CMClockGetTime(CMClockGetHostTimeClock()).seconds
+            if now - lastInfoHost >= 0.250 {
+                lastInfoHost = now
+                onVideo?(token, .init(width: frame.width, height: frame.height, fps: batch.cadence.outputFrameRate,
+                    decodeMilliseconds: batch.decodeMilliseconds, framesDecoded: decoded, framesDropped: droppedCount,
+                    isInterlaced: frame.flags & 1 != 0))
+            }
+        }
+        return complete
     }
 
     private func recordVideoStateIfNeeded() {
@@ -300,14 +379,14 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
             // Same mapping for video and audio; never compare sender time with
             // this device's unrelated absolute host clock.
             videoRenderer.flush(); audioRenderer.flush()
-            lastAudioTimestamp = nil; lastVideoTimestamp = nil
+            lastAudioTimestamp = nil; pendingVideoBatch = nil; presentationOrder.reset()
             synchronizer.setRate(1, time: .zero,
                 atHostTime: CMTime(seconds: mapping.hostAnchor, preferredTimescale: 1_000_000_000))
         } else if mapping.laneReset {
             audioProbe?.rebased(lane)
             benchmark?.rebased(lane)
             switch lane {
-            case .video: videoRenderer.flush(); lastVideoTimestamp = nil
+            case .video: videoRenderer.flush(); pendingVideoBatch = nil; presentationOrder.reset()
             case .audio: audioRenderer.flush(); lastAudioTimestamp = nil
             }
         }
