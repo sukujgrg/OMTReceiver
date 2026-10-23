@@ -158,9 +158,9 @@ final class ReceiverBenchmark: @unchecked Sendable {
         }
     }
 
-    func attach(display: AVSampleBufferDisplayLayer, nominalLead: Double, outputLatency: Double, ioDuration: Double) {
+    func attach(renderer: AVSampleBufferVideoRenderer, nominalLead: Double, outputLatency: Double, ioDuration: Double) {
         lock.withLock {
-            renderer = display.sampleBufferRenderer; rendererID = UUID(); metricQueryPending = false
+            self.renderer = renderer; rendererID = UUID(); metricQueryPending = false
             rendererMetrics = [:]
             routeHorizon = outputLatency + ioDuration
             route = ["nominalLeadMs": nominalLead * 1000, "outputLatencyMs": outputLatency * 1000,
@@ -168,6 +168,10 @@ final class ReceiverBenchmark: @unchecked Sendable {
                      "sampleRate": AVAudioSession.sharedInstance().sampleRate,
                      "ports": AVAudioSession.sharedInstance().currentRoute.outputs.map { $0.portType.rawValue }]
         }
+    }
+
+    func videoRendererState(_ state: [String: Any]) {
+        lock.withLock { values["videoRendererState"] = state }
     }
 
     func network(videoReceived: Int, bytes: Int, skipped: Int) {

@@ -90,3 +90,15 @@ that rate rather than a fixed 30 fps value. Run tool regressions with:
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s Tools/tests -v
 ```
+
+## Controlled video-delay recovery check
+
+The fixture can pause only its video producer while audio and the SDK transport
+keep running. For example, add `--video-pause-after 15 --video-pause-duration 0.6`
+to a 60-second run. Source timestamps remain monotonic; video catches up after
+the pause. Both options are required, and the pause must finish before the run's
+end. The default is no injected pause.
+
+This deliberately disturbs playback and producer deadlines. Keep its evidence
+separate from sustained performance qualification. It tests whether a delayed
+video lane recovers without shifting the common audio/video clock or freezing.

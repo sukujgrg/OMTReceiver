@@ -26,6 +26,8 @@ _Static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Signal-safe stop requires lock-free 
 typedef struct {
     const char *name;
     double seconds;
+    double video_pause_after;
+    double video_pause_duration;
     int port;
     int frame_rate_n;
     int frame_rate_d;
@@ -77,6 +79,8 @@ static void usage(const char *program) {
            "  --seconds N              Finite duration, 0.1–3600 (default 60).\n"
            "  --name NAME              Source name (default OMTReceiver Test Pattern).\n"
            "  --fps RATE               1–60 fps as N or N/D (default 30; e.g. 60 or 60000/1001).\n"
+           "  --video-pause-after S    Inject one video-only producer pause after S seconds.\n"
+           "  --video-pause-duration S  Pause for 0.001–5 seconds; audio keeps running.\n"
            "  --alpha                  Send straight-alpha BGRA gradients and text.\n"
            "  --benchmark              Print five-second sender timing reports as JSON.\n"
            "  --silent-channel SIDE    none, left, right, or both (default none).\n"
@@ -125,6 +129,19 @@ static bool parse_options(int argc, char **argv, Options *options) {
                 return false;
             }
             options->seconds = seconds;
+        } else if (strcmp(argument, "--video-pause-after") == 0 || strcmp(argument, "--video-pause-duration") == 0) {
+            char *end = NULL;
+            errno = 0;
+            double seconds = strtod(value, &end);
+            bool duration = strcmp(argument, "--video-pause-duration") == 0;
+            double minimum = duration ? 0.001 : 0.1;
+            double maximum = duration ? 5.0 : 3600.0;
+            if (errno || end == value || *end || !isfinite(seconds) || seconds < minimum || seconds > maximum) {
+                fprintf(stderr, "%s must be between %.3f and %.0f seconds.\n", argument, minimum, maximum);
+                return false;
+            }
+            if (duration) options->video_pause_duration = seconds;
+            else options->video_pause_after = seconds;
         } else if (strcmp(argument, "--fps") == 0) {
             char *end = NULL;
             errno = 0;
@@ -163,6 +180,11 @@ static bool parse_options(int argc, char **argv, Options *options) {
             fprintf(stderr, "Unknown argument: %s\n", argument);
             return false;
         }
+    }
+    if ((options->video_pause_after > 0) != (options->video_pause_duration > 0)
+        || (options->video_pause_after > 0 && options->video_pause_after + options->video_pause_duration >= options->seconds)) {
+        fprintf(stderr, "Video pause requires both options and must finish before --seconds.\n");
+        return false;
     }
     return true;
 }
@@ -335,6 +357,7 @@ int main(int argc, char **argv) {
     frame.Flags = options.alpha ? OMTVideoFlags_Alpha : OMTVideoFlags_None;
     frame.Data = pixels; frame.DataLength = (int)pixel_bytes;
     uint64_t frames = 0;
+    bool video_pause_applied = false;
     int64_t maximum_video_lateness_ns = 0;
     uint64_t video_late_frames = 0;
     int64_t next_report_ns = audio.start_ns + 5000000000LL;
@@ -343,6 +366,21 @@ int main(int argc, char **argv) {
         int64_t timestamp = (int64_t)(index * (uint64_t)TICKS_PER_SECOND * (uint64_t)options.frame_rate_d / (uint64_t)options.frame_rate_n);
         sleep_until(audio.start_ns + timestamp * 100);
         if (atomic_load_explicit(&stop_requested, memory_order_relaxed)) break;
+        if (!video_pause_applied && options.video_pause_after > 0
+            && (double)timestamp / TICKS_PER_SECOND >= options.video_pause_after) {
+            video_pause_applied = true;
+            int64_t pause_start = monotonic_ns();
+            printf("{\"type\":\"fixture-video-pause\",\"phase\":\"began\",\"elapsedSeconds\":%.6f,\"requestedSeconds\":%.6f}\n",
+                   (double)(pause_start - audio.start_ns) / 1000000000.0, options.video_pause_duration);
+            fflush(stdout);
+            // Only the video producer waits. The separate audio thread and SDK
+            // transport continue, preserving monotonic PTS through the delay.
+            sleep_until(pause_start + (int64_t)(options.video_pause_duration * 1000000000.0));
+            printf("{\"type\":\"fixture-video-pause\",\"phase\":\"ended\",\"elapsedSeconds\":%.6f}\n",
+                   (double)(monotonic_ns() - audio.start_ns) / 1000000000.0);
+            fflush(stdout);
+            if (atomic_load_explicit(&stop_requested, memory_order_relaxed)) break;
+        }
         int64_t lateness = monotonic_ns() - (audio.start_ns + timestamp * 100);
         if (lateness > 1000000000LL * options.frame_rate_d / options.frame_rate_n) video_late_frames++;
         if (lateness > maximum_video_lateness_ns) maximum_video_lateness_ns = lateness;

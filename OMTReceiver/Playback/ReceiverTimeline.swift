@@ -46,12 +46,14 @@ struct ReceiverTimeline {
         let lead = baseTime + correction - elapsed
         let movedBackward = previous.map { timestamp < $0.lastTimestamp } ?? false
         var laneReset = false
-        if !globalReset && (movedBackward || lead < -0.250 || lead > max(0.750, playoutDelay + 0.250)) {
-            // The official OMT sender can independently auto-generate a zero
-            // origin for each media lane. Late audio must not repeatedly reset
-            // healthy video. Retain coherent shared PTS when possible; otherwise
-            // rebase only this lane by arrival time, with no claim of recovering
-            // synchronization that the source did not encode in its timestamps.
+        let independentLateOrigin = previous == nil && lead < -0.250
+        if !globalReset && (movedBackward || independentLateOrigin || lead > max(0.750, playoutDelay + 0.250)) {
+            // Independently generated lane origins and actual source clock
+            // discontinuities need a new mapping. A delayed, still-monotonic
+            // packet does not: retiming a stale queue head can push every future
+            // picture beyond the bounded queue's decode window indefinitely.
+            // Keep the common A/V clock through transport delays; late samples
+            // retain their actual deadlines instead of shifting healthy media.
             correction = elapsed + playoutDelay - baseTime
             laneReset = true
         }

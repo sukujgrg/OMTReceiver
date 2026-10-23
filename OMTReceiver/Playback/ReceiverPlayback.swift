@@ -30,7 +30,7 @@ final class ReceiverPlayback: ObservableObject {
         display.backgroundColor = CGColor(gray: 0, alpha: 1)
         display.isOpaque = true
         displayLayer = display
-        worker = ReceiverPlaybackWorker(display: display, benchmark: benchmark)
+        worker = ReceiverPlaybackWorker(videoRenderer: display.sampleBufferRenderer, benchmark: benchmark)
         worker.onError = { [weak self] token, message in
             Task { @MainActor [weak self] in
                 guard let self, self.generation == token else { return }
@@ -73,7 +73,7 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
     private var muted = false
     private var dropped: UInt64 = 0
     // Worker queue only below this line.
-    private let display: AVSampleBufferDisplayLayer
+    private let videoRenderer: AVSampleBufferVideoRenderer
     private let audioRenderer = AVSampleBufferAudioRenderer()
     private let synchronizer = AVSampleBufferRenderSynchronizer()
     private let decoder = VMXFrameDecoder()
@@ -85,9 +85,10 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
     private var decoded: UInt64 = 0
     private let audioProbe = HardwareAudioProbe.makeIfRequested()
     private let benchmark: ReceiverBenchmark?
+    private var lastStateProbeHost: Double = -.infinity
 
-    init(display: AVSampleBufferDisplayLayer, benchmark: ReceiverBenchmark?) {
-        self.display = display
+    init(videoRenderer: AVSampleBufferVideoRenderer, benchmark: ReceiverBenchmark?) {
+        self.videoRenderer = videoRenderer
         self.benchmark = benchmark
         // ReceiverSession creates this graph after its audio-session lease is
         // active, when the route reports the actual output and I/O latency.
@@ -96,11 +97,11 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
                                      ioBufferDuration: session.ioBufferDuration)
         timeline = clock
         video = ReceiverVideoQueue(playoutDelay: clock.playoutDelay)
-        benchmark?.attach(display: display, nominalLead: timeline.playoutDelay,
+        benchmark?.attach(renderer: videoRenderer, nominalLead: timeline.playoutDelay,
                           outputLatency: session.outputLatency, ioDuration: session.ioBufferDuration)
         signal = DispatchSource.makeUserDataAddSource(queue: queue)
         synchronizer.delaysRateChangeUntilHasSufficientMediaData = false
-        synchronizer.addRenderer(display)
+        synchronizer.addRenderer(videoRenderer)
         synchronizer.addRenderer(audioRenderer)
         signal.setEventHandler { [weak self] in self?.drain() }
         signal.resume()
@@ -160,7 +161,7 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
 
     private func flush(removeImage: Bool) {
         synchronizer.setRate(0, time: .zero)
-        if removeImage { display.flushAndRemoveImage() } else { display.flush() }
+        videoRenderer.flush(removingDisplayedImage: removeImage, completionHandler: nil)
         audioRenderer.flush()
         timeline.reset(); lastVideoTimestamp = nil; lastAudioTimestamp = nil
         lastInfoHost = -.infinity; decoded = 0
@@ -185,8 +186,9 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
         audioRenderer.isMuted = isMuted
         if let failure { fail(failure, token: token); return }
         guard !isFailed else { return }
-        if display.status == .failed {
-            fail(display.error?.localizedDescription ?? "The video renderer stopped.", token: token); return
+        recordVideoStateIfNeeded()
+        if videoRenderer.status == .failed || videoRenderer.requiresFlushToResumeDecoding {
+            fail(videoRenderer.error?.localizedDescription ?? "Video output was interrupted.", token: token); return
         }
         if audioRenderer.status == .failed {
             fail(audioRenderer.error?.localizedDescription ?? "The audio renderer stopped.", token: token); return
@@ -215,7 +217,7 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
         // A bounded two-picture burst catches up after a delayed wake without
         // monopolizing the worker or pushing audio behind an unbounded decode.
         for _ in 0..<2 {
-            guard display.isReadyForMoreMediaData else { break }
+            guard videoRenderer.isReadyForMoreMediaData else { break }
             lock.lock()
             let entry = generation == token ? video.first : nil
             lock.unlock()
@@ -244,8 +246,8 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
                 // A VMX frame is self-contained. Duplicate timestamps need
                 // a queue flush before replacement; AVFoundation forbids
                 // duplicate PTS in one stream. Retain the visible old image.
-                if lastVideoTimestamp == frame.timestamp { display.flush() }
-                guard admitted(token, videoID: entry.id, { display.enqueue(sample) }) else { continue }
+                if lastVideoTimestamp == frame.timestamp { videoRenderer.flush() }
+                guard admitted(token, videoID: entry.id, { videoRenderer.enqueue(sample) }) else { continue }
                 lastVideoTimestamp = frame.timestamp
                 decoded &+= 1
                 let now = CMClockGetTime(CMClockGetHostTimeClock()).seconds
@@ -265,12 +267,39 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
         if pending { scheduleRetry() }
     }
 
+    private func recordVideoStateIfNeeded() {
+        guard let benchmark else { return }
+        let now = CMClockGetTime(CMClockGetHostTimeClock()).seconds
+        guard now - lastStateProbeHost >= 1 else { return }
+        lastStateProbeHost = now
+        lock.lock()
+        let head = video.first, count = video.count, bytes = video.byteCount
+        lock.unlock()
+        let currentTime = synchronizer.currentTime().seconds
+        var state: [String: Any] = ["sampledAtUptime": now,
+            "ready": videoRenderer.isReadyForMoreMediaData,
+            "status": videoRenderer.status.rawValue,
+            "requiresFlush": videoRenderer.requiresFlushToResumeDecoding,
+            "queueFrames": count, "queueBytes": bytes]
+        if currentTime.isFinite { state["synchronizerTimeSeconds"] = currentTime }
+        if let head {
+            state["headSourceTimestamp100ns"] = head.frame.timestamp
+            // Probing cannot change the live clock or consume a queued frame.
+            var preview = timeline
+            if let mapping = try? preview.map(head.frame.timestamp, lane: .video, hostNow: now) {
+                let lead = mapping.presentationTime.seconds - currentTime
+                if lead.isFinite { state["headLeadMs"] = lead * 1000 }
+            }
+        }
+        benchmark.videoRendererState(state)
+    }
+
     private func map(_ timestamp: Int64, lane: ReceiverTimeline.Lane) throws -> CMTime {
         let mapping = try timeline.map(timestamp, lane: lane, hostNow: CMClockGetTime(CMClockGetHostTimeClock()).seconds)
         if mapping.globalReset {
             // Same mapping for video and audio; never compare sender time with
             // this device's unrelated absolute host clock.
-            display.flush(); audioRenderer.flush()
+            videoRenderer.flush(); audioRenderer.flush()
             lastAudioTimestamp = nil; lastVideoTimestamp = nil
             synchronizer.setRate(1, time: .zero,
                 atHostTime: CMTime(seconds: mapping.hostAnchor, preferredTimescale: 1_000_000_000))
@@ -278,7 +307,7 @@ private final class ReceiverPlaybackWorker: @unchecked Sendable {
             audioProbe?.rebased(lane)
             benchmark?.rebased(lane)
             switch lane {
-            case .video: display.flush(); lastVideoTimestamp = nil
+            case .video: videoRenderer.flush(); lastVideoTimestamp = nil
             case .audio: audioRenderer.flush(); lastAudioTimestamp = nil
             }
         }

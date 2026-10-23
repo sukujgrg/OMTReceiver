@@ -51,6 +51,49 @@ final class ReceiverPlaybackTests: XCTestCase {
         XCTAssertEqual(video.presentationTime.seconds, audio.presentationTime.seconds, accuracy: 0.000_001)
     }
 
+    func testDelayedMonotonicVideoCannotStarveTheBoundedDecodeQueue() throws {
+        var clock = ReceiverTimeline(audioOutputLatency: 0.080, ioBufferDuration: 1024.0 / 48000)
+        _ = try clock.map(0, lane: .video, hostNow: 100)
+        _ = try clock.map(0, lane: .audio, hostNow: 100)
+        // A half-second-old packet arrives after a transport stall. Its source
+        // clock is still increasing; it has not restarted or changed origin.
+        let delayed = try clock.map(5_000_000, lane: .video, hostNow: 101)
+        XCTAssertFalse(delayed.laneReset, "Transport delay must not shift the source's video clock.")
+        var queue = ReceiverVideoQueue(playoutDelay: clock.playoutDelay)
+        var admitted = 0
+        // Fresh packets then arrive normally for five seconds. A correction
+        // derived from the stale packet makes every bounded-queue head too far
+        // in the future to decode, even though the source has recovered.
+        for index in 60...360 {
+            let timestamp = Int64(index) * 10_000_000 / 60
+            queue.append(.init(timestamp: timestamp, codec: OMTCodec.vmx1,
+                width: 1920, height: 1080, frameRateN: 60, frameRateD: 1,
+                aspectRatio: 16 / 9, flags: 0, colorSpace: 709, payload: Data([1])))
+            let entry = try XCTUnwrap(queue.first)
+            let elapsed = Double(index) / 60
+            let mapping = try clock.map(entry.frame.timestamp, lane: .video, hostNow: 100 + elapsed)
+            if mapping.presentationTime.seconds - elapsed <= ReceiverVideoQueue.decodeLead(playoutDelay: clock.playoutDelay) {
+                XCTAssertTrue(queue.consumeFirst(matching: entry.id))
+                admitted += 1
+            }
+        }
+        XCTAssertGreaterThan(admitted, 280, "Recovered live video must make progress without a reconnect.")
+        let video = try clock.map(60_000_000, lane: .video, hostNow: 106)
+        let audio = try clock.map(60_000_000, lane: .audio, hostNow: 106)
+        XCTAssertEqual(video.presentationTime.seconds, audio.presentationTime.seconds, accuracy: 0.000_001)
+    }
+
+    func testDelayedMonotonicAudioRetainsTheCommonSourceClock() throws {
+        var clock = ReceiverTimeline(audioOutputLatency: 0.080, ioBufferDuration: 0.020)
+        _ = try clock.map(0, lane: .audio, hostNow: 100)
+        _ = try clock.map(0, lane: .video, hostNow: 100)
+        let delayed = try clock.map(5_000_000, lane: .audio, hostNow: 101)
+        XCTAssertFalse(delayed.laneReset)
+        let audio = try clock.map(10_000_000, lane: .audio, hostNow: 101)
+        let video = try clock.map(10_000_000, lane: .video, hostNow: 101)
+        XCTAssertEqual(audio.presentationTime.seconds, video.presentationTime.seconds, accuracy: 0.000_001)
+    }
+
     func testBackwardDiscontinuityKeepsGlobalClockAndReconnectResetsIt() throws {
         var clock = ReceiverTimeline()
         _ = try clock.map(100_000_000, lane: .video, hostNow: 20)

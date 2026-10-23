@@ -3,14 +3,15 @@
 The app is prepared as a standalone tvOS application. This repository and its
 original artwork are MIT-licensed. No upload, TestFlight invitation, App Store
 submission, pricing decision or legal account declaration is performed by these
-tools. Sustained 1080p60 physical qualification is still pending. See
+tools. Build 2 passed the instrumented 1080p60 screening run at 1080p SDR 60 Hz
+HDMI output; its post-repair operator picture/audio check is still pending. See
 [recorded preparation evidence](VALIDATION.md) for completed local checks and
 artifact locations.
 
 ## Source and local checks
 
 `VERSION` is the marketing-version source; `BUILD_NUMBER` is the default numeric
-build. The current preparation is 1.0.0 (1). Advance the build number for each
+build. The current preparation is 1.0.0 (2). Advance the build number for each
 new App Store Connect upload; do not reuse a previously uploaded version/build.
 
 ```sh
@@ -109,9 +110,10 @@ See [Apple's screenshot specifications](https://developer.apple.com/help/app-sto
 
 ## Remaining submission gates
 
-- Finish short 30 fps/59.94 regression and sustained 1080p60 hardware checks when
-  the TV is available, including audio/picture spot checks. Keep claims aligned
-  with docs/performance.md; no physical end-to-end latency is established.
+- Obtain a post-repair operator picture/audio spot check. Build 2 passed all
+  instrumented targets over 30.33 minutes at 1080p SDR 60 Hz HDMI output, plus
+  controlled video-delay and source-restart recovery checks. Physical end-to-end
+  latency and build-2 4K HDMI performance remain unmeasured. See docs/performance.md.
 - Review the captured draft screenshots and obtain a physical demo video for App Review.
 - Complete publisher-owned account declarations and private review contact.
 - Validate distribution signing, create/select the App Store Connect record,

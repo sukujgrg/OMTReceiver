@@ -58,7 +58,10 @@ presentation, with at most ten decoded surfaces. Audio/video share 120 ms of
 network/decode headroom plus the audio route's latency and I/O buffer duration.
 This is a scheduling budget, not measured end-to-end latency. See the
 [hardware observations](docs/performance.md) for actual results and limitations;
-sustained 1080p60 qualification remains pending.
+build 2 fixes a delayed-video clock stall and passed a 30-minute instrumented
+1080p60 screening run at 1080p SDR 60 Hz HDMI output, with one native drop in
+108,900 frames. Controlled video-delay and sender-restart recovery also passed;
+a post-repair physical picture/audio spot check remains pending.
 
 ## Development and distribution
 
