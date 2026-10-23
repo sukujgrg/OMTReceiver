@@ -111,11 +111,6 @@
 #warning "GCC versions earlier than 10 are not supported."
 #endif
 
-#if defined(__OPTIMIZE__) && !defined(SSE2NEON_SUPPRESS_WARNINGS)
-#warning \
-    "Report any potential compiler optimization issues when using SSE2NEON. See the 'Optimization' section at https://github.com/DLTcollab/sse2neon."
-#endif
-
 /* C language does not allow initializing a variable with a function call. */
 #ifdef __cplusplus
 #define _sse2neon_const static const

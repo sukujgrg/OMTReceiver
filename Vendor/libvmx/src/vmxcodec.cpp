@@ -484,10 +484,6 @@ VMX_API VMX_INSTANCE* VMX_Create(VMX_SIZE dimensions, VMX_PROFILE profile, VMX_C
 	if ((b + checkNumBytes) > maxB) { return VMX_ERR_BUFFER_OVERFLOW; } \
 } 
 
-#define CHECKBUFF_SAVE(checkNumBytes) \
-{ \
-	if ((b + checkNumBytes) > maxB) return 0; \
-} 
 
 inline void VMX_ConfigureInterlaced(VMX_INSTANCE* instance, int interlaced) {
 	instance->Format = VMX_FORMAT_PROGRESSIVE;
@@ -1220,62 +1216,55 @@ VMX_API void VMX_SetThreads(VMX_INSTANCE* instance, int numThreads)
 }
 VMX_API int VMX_SaveTo(VMX_INSTANCE* instance, BYTE* dst, int maxLen)
 {
-	if (!instance) return 0;
-	if (!dst) return 0;
-	if (!maxLen) return 0;
+	if (!instance || !dst || maxLen < 5) return 0;
 
 	BYTE* b = dst;
-	BYTE* maxB = dst + maxLen;
-
-	int dcshift = instance->DCShift;
-	int slicecount = instance->SliceCount;
-	int qual = instance->Quality;
-	VMX_FORMAT fmt = instance->Format;
-
-	CHECKBUFF_SAVE(5);
+	BYTE* const maxB = dst + maxLen;
+	const int dcshift = instance->DCShift;
+	const int slicecount = instance->SliceCount;
+	const int qual = instance->Quality;
+	const VMX_FORMAT fmt = instance->Format;
 
 	if (dcshift > 0)
 	{
 		b[0] = VMX_CODEC_FORMAT_EXTENDED;
 		b[1] = dcshift;
-
-		b[2] = VMX_CODEC_FORMAT_PROGRESSIVE;
-		if (fmt == VMX_FORMAT_INTERLACED) b[2] = VMX_CODEC_FORMAT_INTERLACED;
+		b[2] = fmt == VMX_FORMAT_INTERLACED ? VMX_CODEC_FORMAT_INTERLACED : VMX_CODEC_FORMAT_PROGRESSIVE;
 		b[3] = qual;
 		b[4] = slicecount;
 		b += 5;
 	}
 	else {
-		b[0] = VMX_CODEC_FORMAT_PROGRESSIVE;
-		if (fmt == VMX_FORMAT_INTERLACED) b[0] = VMX_CODEC_FORMAT_INTERLACED;
+		b[0] = fmt == VMX_FORMAT_INTERLACED ? VMX_CODEC_FORMAT_INTERLACED : VMX_CODEC_FORMAT_PROGRESSIVE;
 		b[1] = qual;
 		b[2] = slicecount;
 		b += 3;
 	}
-	uint32_t len = 0;
+
+	auto appendStream = [&](const VMX_SLICE_DATA& data) {
+		const auto length = data.StreamPos - data.Stream;
+		const auto remaining = maxB - b;
+		// Bound the signed pointer difference before converting to the 32-bit
+		// wire length. maxLen is a positive int, so any admitted length fits.
+		if (length < 0 || remaining < 4 || length > remaining - 4) return false;
+		const uint32_t wireLength = static_cast<uint32_t>(length);
+		memcpy(b, &wireLength, sizeof(wireLength));
+		b += sizeof(wireLength);
+		memcpy(b, data.Stream, static_cast<size_t>(length));
+		b += length;
+		return true;
+	};
 	for (int i = 0; i < slicecount; i++)
 	{
-		VMX_SLICE_DATA d = instance->Slices[i]->DC;
-		len = d.StreamPos - d.Stream;
-		CHECKBUFF_SAVE(len + 4);
-		memcpy(b, &len, sizeof(uint32_t));
-		b += 4;
-		memcpy(b, d.Stream, len);
-		b += len;
+		if (!appendStream(instance->Slices[i]->DC)) return 0;
 	}
 	for (int i = 0; i < slicecount; i++)
 	{
-		VMX_SLICE_DATA d = instance->Slices[i]->AC;
-		len = d.StreamPos - d.Stream;
-		CHECKBUFF_SAVE(len + 4);
-		memcpy(b, &len, sizeof(uint32_t));
-		b += 4;
-		memcpy(b, d.Stream, len);
-		b += len;
+		if (!appendStream(instance->Slices[i]->AC)) return 0;
 	}
-	len = b - dst;
-	VMX_AdjustBitrate(instance, len);
-	return len;
+	const int length = static_cast<int>(b - dst); // Bounded above by maxLen.
+	VMX_AdjustBitrate(instance, length);
+	return length;
 }
 
 inline void VMX_EncodePlane(VMX_INSTANCE* instance, VMX_PLANE* pPlane, VMX_SLICE_SET* s)

@@ -24,6 +24,10 @@ attach a current physical-device demonstration video and explain how to obtain
 any sender resource needed by App Review. Do not submit private LAN addresses,
 credentials, an inaccessible private-repository link or a nonexistent demo URL.
 
+Build 3 accepts the official OBS plugin's unspecified display-aspect field and
+uses the validated image dimensions to infer square pixels. Send progressive,
+8-bit SDR video; interlaced generator presets remain unsupported.
+
 The implementation accepts up to 1080p60. Build 2 passed a 30.33-minute
 instrumented screening run at 1080p SDR 60 Hz HDMI output and recovered from
 controlled video-delay and source-restart faults. A separate post-repair

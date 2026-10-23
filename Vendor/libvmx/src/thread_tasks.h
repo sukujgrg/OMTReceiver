@@ -103,7 +103,7 @@ struct ThreadTasks
 	ThreadTask** tasks;
 };
 
-static ThreadTasks* CreateTasks(int numThreads)
+static inline ThreadTasks* CreateTasks(int numThreads)
 {
 	ThreadTasks* th = new ThreadTasks();
 	th->numThreads = numThreads;
@@ -117,7 +117,7 @@ static ThreadTasks* CreateTasks(int numThreads)
 	return th;
 }
 
-static void DestroyTasks(ThreadTasks* tasks)
+static inline void DestroyTasks(ThreadTasks* tasks)
 {
 	if (tasks)
 	{

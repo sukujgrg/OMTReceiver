@@ -84,12 +84,18 @@ struct OMTProtocolParser {
                   width * height <= 4_096 * 2_160,
                   (1...1_000_000).contains(numerator), (1...100_000).contains(denominator),
                   Double(numerator) / Double(denominator) <= 240,
-                  aspect.isFinite, aspect > 0, aspect <= 100,
+                  aspect.isFinite, aspect >= 0, aspect <= 100,
                   [0, 601, 709].contains(color), !payload.isEmpty else {
                 throw OMTProtocolError.invalid("invalid video geometry, frame rate or color space.")
             }
+            // The official OBS plugin leaves this field at zero. Infer square
+            // pixels only after validating geometry; preserve explicit display ratios.
+            let displayAspect = aspect == 0 ? Float(width) / Float(height) : aspect
+            guard displayAspect <= 100 else {
+                throw OMTProtocolError.invalid("invalid video geometry, frame rate or color space.")
+            }
             onPacket(.video(.init(timestamp: header.timestamp, codec: body.omtUInt32(at: 0), width: width, height: height,
-                                  frameRateN: numerator, frameRateD: denominator, aspectRatio: aspect,
+                                  frameRateN: numerator, frameRateD: denominator, aspectRatio: displayAspect,
                                   flags: body.omtUInt32(at: 24), colorSpace: color, payload: payload)))
         } else {
             let rate = body.omtInt(at: 4), samples = body.omtInt(at: 8), channels = body.omtInt(at: 12)

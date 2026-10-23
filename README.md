@@ -64,6 +64,10 @@ build 2 fixes a delayed-video clock stall and passed a 30-minute instrumented
 a separate post-repair physical spot check confirmed smooth picture and
 clean audio.
 
+Build 3 also accepts the official OBS plugin's unspecified aspect ratio and
+repairs the remaining compiler warnings. Signal generators must use a
+progressive, 8-bit SDR format; an interlaced preset is unsupported.
+
 ## Development and distribution
 
 The optional [Mac SDK fixture](Tools/README.md) and [benchmark collector](BENCHMARKING.md)

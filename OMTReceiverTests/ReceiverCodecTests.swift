@@ -28,6 +28,25 @@ final class ReceiverCodecTests: XCTestCase {
         XCTAssertEqual(matrix as? String, kCVImageBufferYCbCrMatrix_ITU_R_709_2 as String)
     }
 
+    func testUnspecifiedAspectReachesDecoderAsSquarePixelAttachment() throws {
+        var body = Data()
+        body.omtAppend(OMTCodec.vmx1)
+        for value: Int32 in [32, 16, 30, 1] { body.omtAppend(value) }
+        body.omtAppend(Float(0).bitPattern)
+        body.omtAppend(UInt32(0)); body.omtAppend(Int32(0))
+        body.append(opaque)
+        var bytes = Data([1, 2])
+        bytes.omtAppend(UInt64(0)); bytes.omtAppend(UInt16(0)); bytes.omtAppend(UInt32(body.count))
+        bytes.append(body)
+        var parser = OMTProtocolParser()
+        var parsed: OMTVideoFrame?
+        try parser.append(bytes) { if case .video(let frame) = $0 { parsed = frame } }
+        let image = try XCTUnwrap(VMXFrameDecoder().decode(try XCTUnwrap(parsed)))
+        let spacing = try XCTUnwrap(CVBufferCopyAttachment(image, kCVImageBufferPixelAspectRatioKey, nil) as? [String: Int])
+        XCTAssertEqual(spacing[kCVImageBufferPixelAspectRatioHorizontalSpacingKey as String], 10_000)
+        XCTAssertEqual(spacing[kCVImageBufferPixelAspectRatioVerticalSpacingKey as String], 10_000)
+    }
+
     func testStraightAndPremultipliedAlphaCompositeOntoOpaqueBlack() throws {
         let straight = try XCTUnwrap(VMXFrameDecoder().decode(frame(alpha, flags: 2)))
         let premultiplied = try XCTUnwrap(VMXFrameDecoder().decode(frame(alpha, flags: 6)))

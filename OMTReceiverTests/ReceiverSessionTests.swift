@@ -179,13 +179,13 @@ final class ReceiverSessionTests: XCTestCase {
         let audio = ControlledReceiverAudioSession(requested: { _ in requested.fulfill() }, firstReleased: { released.fulfill() })
         let resources = ReceiverApplicationResources(audioSession: audio)
         var session: ReceiverSession? = ReceiverSession(applicationResources: resources)
-        weak var weakSession = session
+        let isSessionReleased = { [weak session] in session == nil }
         session?.connect(to: try OMTSource.manual(address: "127.0.0.1:6400"))
         await fulfillment(of: [requested], timeout: 3)
         let requestedIDs = await audio.requestedIDs
         let lease = try XCTUnwrap(requestedIDs.first)
         session = nil
-        XCTAssertNil(weakSession, "The suspended activation task must not retain its session")
+        XCTAssertTrue(isSessionReleased(), "The suspended activation task must not retain its session")
         await audio.complete(lease)
         await fulfillment(of: [released], timeout: 3)
         let active = await audio.activeIDs

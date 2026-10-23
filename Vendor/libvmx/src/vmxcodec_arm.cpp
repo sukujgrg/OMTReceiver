@@ -1331,6 +1331,7 @@ void VMX_EncodePlaneInternal128(VMX_INSTANCE* instance, VMX_PLANE* pPlane, VMX_S
 				nz = _tzcnt_u64(mIndex);
 				numZeros += nz;
 				EncodeZeros(dataAC);
+				pos += nz;
 				EmitBits32(dataAC);
 				EncodeValue(dataAC, pos[0]);
 				pos++;
@@ -1350,13 +1351,13 @@ void VMX_EncodePlaneInternal128(VMX_INSTANCE* instance, VMX_PLANE* pPlane, VMX_S
 						EmitBits32(dataAC);
 					}
 					else {
-						numZeros = end - pos;
+						numZeros = static_cast<uint32_t>(end - pos);
 						break;
 					}
 				}
 			}
 			else {
-				numZeros += end - pos;
+				numZeros += static_cast<uint32_t>(end - pos);
 			}
 
 		}
@@ -1475,6 +1476,7 @@ void VMX_EncodePlaneInternal128_16(VMX_INSTANCE* instance, VMX_PLANE* pPlane, VM
 				nz = _tzcnt_u64(mIndex);
 				numZeros += nz;
 				EncodeZeros(dataAC);
+				pos += nz;
 				EmitBits32(dataAC);
 				EncodeValue(dataAC, pos[0]);
 				pos++;
@@ -1494,13 +1496,13 @@ void VMX_EncodePlaneInternal128_16(VMX_INSTANCE* instance, VMX_PLANE* pPlane, VM
 						EmitBits32(dataAC);
 					}
 					else {
-						numZeros = end - pos;
+						numZeros = static_cast<uint32_t>(end - pos);
 						break;
 					}
 				}
 			}
 			else {
-				numZeros += end - pos;
+				numZeros += static_cast<uint32_t>(end - pos);
 			}
 
 		}

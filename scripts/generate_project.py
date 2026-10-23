@@ -107,6 +107,8 @@ common = {
     'GCC_WARN_UNUSED_FUNCTION':'YES', 'GCC_WARN_UNUSED_VARIABLE':'YES',
     'ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS':'YES',
     'STRING_CATALOG_GENERATE_SYMBOLS':'YES',
+    # No target declares App Intents. Re-enable extraction when adding Siri/Shortcuts.
+    'LM_SKIP_METADATA_EXTRACTION':'YES',
     'OMT_RUN_INTEROP':'0',
 }
 app_settings = {

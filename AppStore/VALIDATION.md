@@ -1,6 +1,6 @@
 # Preparation evidence — 23 October 2026
 
-Current candidate: version 1.0.0 (2). Local checks used Apple Silicon, Xcode 27.1 and the tvOS 27
+Current candidate: version 1.0.0 (3). Local checks used Apple Silicon, Xcode 27.1 and the tvOS 27
 SDK/simulator. These checks prepare a build; they do not establish App Store
 acceptance or physical performance.
 
@@ -35,7 +35,7 @@ Local build evidence remains in the ignored build directory:
 - `build/DelayedVideo-BeforeFix-20261023.log` — expected regression assertions before repair; the old driver stalled during diagnostic cleanup and was stopped afterward.
 - `build/AppStore/Recovery-20261023/OMTReceiver.xcarchive` — repaired build 2 archive.
 - `build/AppStore/Ready-20261023/Export/OMTReceiver.ipa` — superseded build 1 export.
-- `build/AppStore/Recovery-20261023/Export/OMTReceiver.ipa` — current build 2 local export.
+- `build/AppStore/Recovery-20261023/Export/OMTReceiver.ipa` — preserved build 2 local export.
 
 The PNGs in Screenshots/ are inspected draft store assets without private source
 names. Editable Icon Composer artwork and native tvOS image stacks are checked
@@ -51,16 +51,61 @@ whole-module compiler flag and an arm64 tvOS executable. `make test` passed all
 skipped. The public-source audit and all five benchmark-tool tests also passed.
 Logs remain under ignored `build/ProjectSettings-20261023/`.
 
-The stricter checks report conversion and possible uninitialized-variable
-warnings in upstream VMX encoder code, unused functions in the worker-header test
-fixture, and a Swift weak-variable diagnostic in a session test. The receiver
-calls only VMX decoding APIs. The upstream SSE2NEON optimization notice and
-Xcode's no-AppIntents metadata notice also remain visible. These diagnostics
-remain enabled; no codec or playback source was changed for this cleanup.
+The initial settings follow-up exposed additional codec/test diagnostics. Build 3
+repairs those warnings and the subsequently reproduced OBS interoperability issue.
+The older build-2 archive and IPA remain preserved with their recorded screening
+results; those 30-minute results do not describe a new sustained test of build 3.
 
-This settings follow-up applies to future builds. The signed build-2 archive and
-IPA above, and their recorded physical screening results, were not replaced or
-retested on the TV.
+### Build 3 warning and interoperability repairs
+
+A fresh Release device build and the full Debug simulator build completed with
+compiler warnings treated as errors and **zero warning/error diagnostics**. The
+integrated suite passed **70 unit tests and two normal UI tests**; the optional
+external-sender UI test was skipped. This includes three new native serialization
+boundary tests and four OBS/aspect-ratio regressions. The exact OBS-default test
+failed against the old parser with the same invalid-geometry error shown on TV,
+then passed after the repair. Logs and result bundles remain under ignored
+`build/WarningCleanup-20261023/`.
+
+The codec now checks signed lengths before narrowing to wire fields and avoids
+reading an uninitialized coefficient count when flushing trailing zeros. The
+worker-header helpers are inline, and the session lifetime test uses an immutable
+weak capture. The obsolete SSE2NEON advisory is removed via its upstream patch;
+compiler warning categories remain enabled. The generator skips unused App
+Intents metadata extraction because no target declares an App Intent. Re-enable
+that task when adding Siri or Shortcuts integration.
+
+All 96 native BGRX/BGRA/10-bit P216 corpus results retained the original compressed
+lengths and hashes. The focused serialization tests passed AddressSanitizer and
+UndefinedBehaviorSanitizer. The corpus also passed AddressSanitizer and scoped
+UndefinedBehaviorSanitizer with the upstream shift instrumentation excluded; this
+is not exhaustive undefined-behavior qualification. See [vendor patches](../Vendor/libvmx/PATCHES.md).
+
+The official OBS plugin leaves the wire display-aspect field at zero. Build 3
+interprets that value as unspecified and derives square-pixel display geometry,
+while preserving explicit ratios and rejecting invalid dimensions, negative,
+non-finite and excessive ratios. The installed signed build reached live OBS
+720p30 playback on the first-generation Apple TV, with one attempt and no reported
+failure in the initial 50-second diagnostic check. It admitted about 30 fps, with
+zero native video drops or audio timing faults in that check. The operator then
+confirmed that both picture and audio work. This is a short interoperability and
+physical spot check, not a sustained qualification. A read-only review of the
+parser repair and its regressions found no actionable issue.
+
+Sienna OMT Signal Generator was separately found to be set to Interlaced. Three
+captured frames had the interlaced flag and an interlaced VMX payload, while their
+1920×1080, 60/1 fps, 8-bit Rec.709 geometry otherwise fit the supported limits. The
+receiver correctly rejects that format. Select Progressive in the generator,
+keeping 1920×1080, 60 FPS and 4:2:2 8Bit, then reconnect. Playback after that sender
+setting change has not yet been verified; no receiver validation was relaxed.
+
+Current local archive: `build/AppStore/Warnings-OBS-20261023/OMTReceiver.xcarchive`.
+The signed Release archive also completed with zero warning/error diagnostics and
+passed local bundle/resource/signing checks. The App Store-signed export at
+`build/AppStore/Warnings-OBS-20261023/Export/OMTReceiver.ipa` passed distribution
+profile, signature and no-debug-entitlement checks. Its SHA-256 is
+`5bfffac4ec74ae98ae898442c59f45568d2a01f736619985f0b15155187ef33b`.
+No TestFlight upload or App Review submission has been performed.
 
 ## Hardware results and remaining checks
 

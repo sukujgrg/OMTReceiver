@@ -43,3 +43,34 @@ the unmodified upstream header (exit 1). It passes against this patch under
 ThreadSanitizer, including 250 create/retire/reinitialize cycles. The 100-frame /
 5,000-mutation codec corpus also passes AddressSanitizer and the scoped
 UndefinedBehaviorSanitizer configuration above after both local patches.
+
+## Compiler-warning cleanup
+
+`VMX_SaveTo` keeps stream lengths as signed pointer differences until checking
+that the destination has space for both the four-byte length and payload. Only
+then does it narrow to the 32-bit wire field. Its final `int` result is bounded
+by the positive caller-supplied capacity. The old pointer-addition capacity macro
+is removed. `ReceiverCodecSaveTests.mm` covers both header formats, all short
+capacities with canaries, negative capacities and backward stream cursors.
+
+`EncodeZeros` now writes the zero-run code without advancing the coefficient
+cursor. The ARM, SSE and AVX callers advance that cursor explicitly when a
+nonzero coefficient is about to be read. The final trailing-zero flush no longer
+reads `nz`, which can be uninitialized for an all-zero AC plane. Remaining
+coefficient differences are explicitly narrowed within their 64-coefficient
+block. This preserves the encoded format and avoids initializing an unrelated
+cursor count merely to silence the diagnostic.
+
+The obsolete unconditional SSE2NEON optimization advisory is removed by
+backporting the header hunk from [upstream PR 717](https://github.com/DLTcollab/sse2neon/pull/717),
+merge `2e969594f58f103dd24e47395eb54583f82b7274`. No SIMD implementation is
+updated and no compiler warning category is disabled. Header-defined task-pool
+helpers are `static inline`, retaining internal linkage while allowing translation
+units to include the header without using every helper.
+
+The Apple Silicon native comparison covered 96 BGRX, BGRA and 10-bit P216 frames:
+constant zero/gray/white, sparse and deterministic random content. Encoded lengths
+and hashes matched the preserved pre-patch codec. ARM builds exercise the changed
+paths; SSE/AVX call sites were updated consistently but were not executed on this
+Apple Silicon host. Sanitizer and strict Debug/Release Xcode results are recorded in the
+[preparation evidence](../../AppStore/VALIDATION.md).

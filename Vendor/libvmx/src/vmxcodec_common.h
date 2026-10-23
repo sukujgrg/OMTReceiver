@@ -629,7 +629,6 @@ if (termsToDecode > 0 && termsToDecode < 64) { \
 		t <<= data.BitsLeft; \
 		data.Temp |= t; \
 		numZeros = 0; \
-		pos += nz; \
 	} \
 }
 

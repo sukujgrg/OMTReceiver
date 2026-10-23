@@ -177,6 +177,44 @@ final class OMTProtocolTests: XCTestCase {
         }
     }
 
+    func testOfficialOBSZeroAspectAndColorDefaultsDeriveSquarePixels() throws {
+        let dimensions: [(Int32, Int32)] = [(1_280, 720), (32, 16)]
+        for (width, height) in dimensions {
+            var parser = OMTProtocolParser()
+            var received: OMTVideoFrame?
+            try parser.append(video(width: width, height: height, numerator: 30, denominator: 1,
+                                    aspect: 0, flags: 0, color: 0)) {
+                if case .video(let frame) = $0 { received = frame }
+            }
+            let frame = try XCTUnwrap(received)
+            XCTAssertEqual(frame.aspectRatio, Float(width) / Float(height), accuracy: 0.0001)
+            XCTAssertEqual(frame.colorSpace, 0, "Preserve the SDK's undefined color-space value")
+            XCTAssertEqual(frame.flags, 0)
+        }
+    }
+
+    func testExplicitAnamorphicAspectRatioIsPreserved() throws {
+        var parser = OMTProtocolParser()
+        var aspect: Float?
+        try parser.append(video(width: 720, height: 576, aspect: 16 / 9)) {
+            if case .video(let frame) = $0 { aspect = frame.aspectRatio }
+        }
+        XCTAssertEqual(try XCTUnwrap(aspect), 16 / 9, accuracy: 0.0001)
+    }
+
+    func testUnspecifiedAspectStillRejectsInvalidGeometryAndAspectValues() {
+        let invalid: [Data] = [
+            video(width: 0, aspect: 0), video(height: 0, aspect: 0),
+            video(width: -1, aspect: 0), video(width: 4_096, height: 1, aspect: 0),
+            video(aspect: -1), video(aspect: .nan), video(aspect: .infinity),
+            video(aspect: -.infinity), video(aspect: 101)
+        ]
+        for bytes in invalid {
+            var parser = OMTProtocolParser()
+            XCTAssertThrowsError(try parser.append(bytes) { _ in XCTFail("Invalid geometry or aspect escaped") })
+        }
+    }
+
     func testManualAddressRequiresExplicitValidPortAndSupportsIPv6() throws {
         let source = try OMTSource.manual(address: "omt://192.168.1.2:6400")
         XCTAssertEqual(source.name, "192.168.1.2:6400")
@@ -199,11 +237,11 @@ final class OMTProtocolTests: XCTestCase {
 
     private func video(timestamp: UInt64 = 1, width: Int32 = 1_920, height: Int32 = 1_080,
                        numerator: Int32 = 30_000, denominator: Int32 = 1_001, aspect: Float = 16 / 9,
-                       metadata: String? = nil, terminatedMetadata: Bool = true) -> Data {
+                       flags: UInt32 = 2, color: Int32 = 709, metadata: String? = nil, terminatedMetadata: Bool = true) -> Data {
         var body = Data()
         body.omtAppend(OMTCodec.vmx1); body.omtAppend(width); body.omtAppend(height)
         body.omtAppend(numerator); body.omtAppend(denominator); body.omtAppend(aspect.bitPattern)
-        body.omtAppend(UInt32(2)); body.omtAppend(Int32(709))
+        body.omtAppend(flags); body.omtAppend(color)
         body.append(contentsOf: [0x10, 0x20, 0x30, 0x40])
         let text = metadata.map { Data($0.utf8) + (terminatedMetadata ? Data([0]) : Data()) } ?? Data()
         body.append(text)
