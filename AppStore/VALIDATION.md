@@ -60,10 +60,12 @@ timing faults, and stable memory around 53 MiB. The complete 365 measured sample
 came from one process with no collection error. An orderly source shutdown and
 restart also recovered automatically to about 60 fps in the same receiver process.
 
-A post-repair operator picture/audio confirmation remains pending while the
-operator is away. Physical end-to-end latency is unmeasured, and build 2's 4K
-HDMI output has not been requalified. See [hardware observations](../docs/performance.md)
-for scope, counter windows and the preserved failed build-1 evidence.
+In a separate short post-repair 1080p60 run, the operator confirmed smooth
+picture and clean audio between the regular marker beeps. This is a spot check,
+not continuous observation of the earlier sustained run. Physical end-to-end
+latency is unmeasured, and build 2's 4K HDMI output has not been requalified. See
+[hardware observations](../docs/performance.md) for scope, counter windows and
+the preserved failed build-1 evidence.
 
 Physical mute/unmute, About/privacy reading and Back, reconnect,
 disconnect/reselection and actual sleep/wake recovery were confirmed on build 1.

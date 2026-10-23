@@ -9,8 +9,9 @@ Build 2 passed every instrumented runtime screening target in a **30.33-minute**
 run on the first-generation Apple TV 4K, with **1080p SDR 60 Hz HDMI output**.
 The sender was the unchanged original SDK fixture on Ethernet, using one opaque
 1920×1080p60 Medium-quality pattern and stereo 48 kHz FPA1 audio. Its media sockets
-were verified on Ethernet. A new physical picture/audio spot check is still
-pending; this instrumented pass is not a claim of continuous human observation.
+were verified on Ethernet. A separate post-repair physical spot check confirmed
+smooth motion and clean audio between the regular marker beeps. The sustained
+run was instrumented, without continuous human observation.
 
 | Metric | Build 2 normal sustained result |
 | --- | --- |
@@ -83,7 +84,13 @@ This intentionally interrupted session is separate from sustained qualification.
 
 Build 2's 4K HDMI output has not been requalified; the exact HDMI refresh periods
 remain unmeasured. The current screened 60 fps configuration uses 1080p HDMI
-output. A post-repair operator picture/audio spot check remains pending.
+output. In a separate **150.00-second** post-repair 1080p60 check, the receiver
+admitted 9,001 frames at 60.006 fps, with no missing source positions or audio
+timing faults. Its separate 145.00-second native window had 8,701 frames with
+zero drops or corruption. There was one connection attempt and no reported
+failure or timeline reset. The operator confirmed smooth picture and clean audio
+between the marker beeps. This short regression and physical spot check does not
+replace sustained qualification or continuous observation of the earlier run.
 
 ## Release 1.0.0 (1) pre-TestFlight checks
 
@@ -173,5 +180,5 @@ Raw captures, source addresses, hardware identifiers, original photos and local
 build logs remain private. This repository publishes aggregate observations.
 Physical end-to-end latency, 4K decoding, multiview, complex-content qualification,
 other audio routes and a controlled NDI comparison are not established. The
-current build-2 instrumented result is a screening pass; operator confirmation
-remains pending.
+current build-2 instrumented result is a screening pass, accompanied by a
+separate successful operator picture/audio spot check.

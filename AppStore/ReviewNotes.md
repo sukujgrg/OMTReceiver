@@ -26,10 +26,10 @@ credentials, an inaccessible private-repository link or a nonexistent demo URL.
 
 The implementation accepts up to 1080p60. Build 2 passed a 30.33-minute
 instrumented screening run at 1080p SDR 60 Hz HDMI output and recovered from
-controlled video-delay and source-restart faults. A post-repair operator
-picture/audio confirmation remains pending. This is one SDK-generated pattern,
-not a general production qualification. 4K HDMI scaling does not enable 4K input
-decoding.
+controlled video-delay and source-restart faults. A separate post-repair
+operator spot check confirmed smooth picture and clean audio. This is one
+SDK-generated pattern, not a general production qualification. 4K HDMI scaling
+does not enable 4K input decoding.
 
 Copy the final review contact details from the private Submission.local.json into
 App Store Connect. Review and replace this draft before submitting.

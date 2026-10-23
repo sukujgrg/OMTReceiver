@@ -61,7 +61,8 @@ This is a scheduling budget, not measured end-to-end latency. See the
 build 2 fixes a delayed-video clock stall and passed a 30-minute instrumented
 1080p60 screening run at 1080p SDR 60 Hz HDMI output, with one native drop in
 108,900 frames. Controlled video-delay and sender-restart recovery also passed;
-a post-repair physical picture/audio spot check remains pending.
+a separate post-repair physical spot check confirmed smooth picture and
+clean audio.
 
 ## Development and distribution
 
