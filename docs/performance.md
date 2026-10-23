@@ -9,8 +9,8 @@ Build 3 contains compiler-warning repairs and OBS zero-aspect compatibility. Its
 unit/UI tests and a live OBS 720p30 smoke check passed, and the operator confirmed
 working picture and audio. The sustained screening figures below belong to build
 2. Build 3 has not had a fresh 30-minute screening run. Sienna's interlaced preset
-was correctly rejected; its Progressive setting still needs a playback check.
-See [preparation evidence](../AppStore/VALIDATION.md).
+was correctly rejected; after selecting Progressive, the operator confirmed that
+its signal works. See [preparation evidence](../AppStore/VALIDATION.md).
 
 ## Build 2 sustained screening
 

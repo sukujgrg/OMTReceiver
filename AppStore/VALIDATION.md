@@ -96,8 +96,10 @@ Sienna OMT Signal Generator was separately found to be set to Interlaced. Three
 captured frames had the interlaced flag and an interlaced VMX payload, while their
 1920×1080, 60/1 fps, 8-bit Rec.709 geometry otherwise fit the supported limits. The
 receiver correctly rejects that format. Select Progressive in the generator,
-keeping 1920×1080, 60 FPS and 4:2:2 8Bit, then reconnect. Playback after that sender
-setting change has not yet been verified; no receiver validation was relaxed.
+keeping 1920×1080, 60 FPS and 4:2:2 8Bit, then reconnect. After selecting
+Progressive, the operator confirmed that the Sienna signal works. No receiver
+validation was relaxed. This is a functional interoperability spot check, not a
+new sustained performance measurement.
 
 Current local archive: `build/AppStore/Warnings-OBS-20261023/OMTReceiver.xcarchive`.
 The signed Release archive also completed with zero warning/error diagnostics and
