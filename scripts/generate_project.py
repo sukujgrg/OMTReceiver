@@ -81,13 +81,32 @@ products = obj('products', f'isa = PBXGroup; name = Products; children = ({app_p
 main_group = obj('main-group', f'isa = PBXGroup; children = ({source_group}, {test_group}, {ui_group}, {vendor_group}, {readme_ref}, {signing_ref}, {products},); sourceTree = "<group>";')
 
 common = {
-    'ARCHS': 'arm64', 'SDKROOT': 'appletvos', 'SUPPORTED_PLATFORMS': 'appletvos appletvsimulator',
+    # Let each Apple SDK select its standard architectures (tvOS devices remain arm64).
+    'SDKROOT': 'appletvos', 'SUPPORTED_PLATFORMS': 'appletvos appletvsimulator',
     'TVOS_DEPLOYMENT_TARGET':'17.0', 'TARGETED_DEVICE_FAMILY':'3',
     'CLANG_CXX_LANGUAGE_STANDARD':'c++17', 'CLANG_CXX_LIBRARY':'libc++',
     'CLANG_ENABLE_MODULES':'YES', 'CLANG_ENABLE_OBJC_ARC':'YES',
     'SWIFT_VERSION':'5.0', 'SWIFT_STRICT_CONCURRENCY':'targeted',
     'ENABLE_USER_SCRIPT_SANDBOXING':'YES', 'DEAD_CODE_STRIPPING':'YES',
-    'GCC_WARN_ABOUT_RETURN_TYPE':'YES_ERROR', 'CLANG_WARN_DOCUMENTATION_COMMENTS':'YES',
+    # Keep Xcode's recommended diagnostics in the generator, so regeneration retains them.
+    'CLANG_ANALYZER_NONNULL':'YES', 'CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION':'YES_AGGRESSIVE',
+    'CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING':'YES', 'CLANG_WARN_BOOL_CONVERSION':'YES',
+    'CLANG_WARN_COMMA':'YES', 'CLANG_WARN_CONSTANT_CONVERSION':'YES',
+    'CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS':'YES', 'CLANG_WARN_DIRECT_OBJC_ISA_USAGE':'YES_ERROR',
+    'CLANG_WARN_DOCUMENTATION_COMMENTS':'YES', 'CLANG_WARN_EMPTY_BODY':'YES',
+    'CLANG_WARN_ENUM_CONVERSION':'YES', 'CLANG_WARN_INFINITE_RECURSION':'YES',
+    'CLANG_WARN_INT_CONVERSION':'YES', 'CLANG_WARN_NON_LITERAL_NULL_CONVERSION':'YES',
+    'CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF':'YES', 'CLANG_WARN_OBJC_LITERAL_CONVERSION':'YES',
+    'CLANG_WARN_OBJC_ROOT_CLASS':'YES_ERROR', 'CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER':'YES',
+    'CLANG_WARN_RANGE_LOOP_ANALYSIS':'YES', 'CLANG_WARN_STRICT_PROTOTYPES':'YES',
+    'CLANG_WARN_SUSPICIOUS_MOVE':'YES', 'CLANG_WARN_UNGUARDED_AVAILABILITY':'YES_AGGRESSIVE',
+    'CLANG_WARN_UNREACHABLE_CODE':'YES', 'CLANG_WARN__DUPLICATE_METHOD_MATCH':'YES',
+    'ENABLE_STRICT_OBJC_MSGSEND':'YES', 'GCC_NO_COMMON_BLOCKS':'YES',
+    'GCC_WARN_64_TO_32_BIT_CONVERSION':'YES', 'GCC_WARN_ABOUT_RETURN_TYPE':'YES_ERROR',
+    'GCC_WARN_UNDECLARED_SELECTOR':'YES', 'GCC_WARN_UNINITIALIZED_AUTOS':'YES_AGGRESSIVE',
+    'GCC_WARN_UNUSED_FUNCTION':'YES', 'GCC_WARN_UNUSED_VARIABLE':'YES',
+    'ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS':'YES',
+    'STRING_CATALOG_GENERATE_SYMBOLS':'YES',
     'OMT_RUN_INTEROP':'0',
 }
 app_settings = {
@@ -122,6 +141,8 @@ def config_list(key, settings):
         if key == 'project':
             values['DEBUG_INFORMATION_FORMAT'] = 'dwarf' if mode == 'Debug' else 'dwarf-with-dsym'
             values['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone' if mode == 'Debug' else '-O'
+            values['SWIFT_COMPILATION_MODE'] = 'incremental' if mode == 'Debug' else 'wholemodule'
+            values['ONLY_ACTIVE_ARCH'] = 'YES' if mode == 'Debug' else 'NO'
             if mode == 'Debug':
                 values['ENABLE_TESTABILITY'] = 'YES'
                 values['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = 'DEBUG $(inherited)'
@@ -143,11 +164,11 @@ dependency = obj('test-app-dependency', f'isa = PBXTargetDependency; target = {a
 obj('app-target', f'isa = PBXNativeTarget; buildConfigurationList = {app_configs}; buildPhases = ({app_phase}, {frameworks}, {resources},); buildRules = (); dependencies = (); name = OMTReceiver; productName = OMTReceiver; productReference = {app_product}; productType = "com.apple.product-type.application";')
 obj('test-target', f'isa = PBXNativeTarget; buildConfigurationList = {test_configs}; buildPhases = ({test_phase},); buildRules = (); dependencies = ({dependency},); name = OMTReceiverTests; productName = OMTReceiverTests; productReference = {test_product}; productType = "com.apple.product-type.bundle.unit-test";')
 obj('ui-target', f'isa = PBXNativeTarget; buildConfigurationList = {ui_configs}; buildPhases = ({ui_phase},); buildRules = (); dependencies = ({dependency},); name = OMTReceiverUITests; productName = OMTReceiverUITests; productReference = {ui_product}; productType = "com.apple.product-type.bundle.ui-testing";')
-project = obj('project', f'isa = PBXProject; attributes = {{ BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 2700; TargetAttributes = {{ {app_target} = {{ CreatedOnToolsVersion = 27.1; }}; {test_target} = {{ CreatedOnToolsVersion = 27.1; TestTargetID = {app_target}; }}; {ui_target} = {{ CreatedOnToolsVersion = 27.1; TestTargetID = {app_target}; }}; }}; }}; buildConfigurationList = {project_configs}; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = {main_group}; productRefGroup = {products}; projectDirPath = ""; projectRoot = ""; targets = ({app_target}, {test_target}, {ui_target},);')
+project = obj('project', f'isa = PBXProject; attributes = {{ BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 2710; TargetAttributes = {{ {app_target} = {{ CreatedOnToolsVersion = 27.1; }}; {test_target} = {{ CreatedOnToolsVersion = 27.1; TestTargetID = {app_target}; }}; {ui_target} = {{ CreatedOnToolsVersion = 27.1; TestTargetID = {app_target}; }}; }}; }}; buildConfigurationList = {project_configs}; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = {main_group}; productRefGroup = {products}; projectDirPath = ""; projectRoot = ""; targets = ({app_target}, {test_target}, {ui_target},);')
 pbx = '// !$*UTF8*$!\n{\n\tarchiveVersion = 1;\n\tclasses = {};\n\tobjectVersion = 56;\n\tobjects = {\n' + '\n'.join(objects) + f'\n\t}};\n\trootObject = {project};\n}}\n'
 (ROOT/'OMTReceiver.xcodeproj/project.pbxproj').write_text(pbx)
 scheme = f'''<?xml version="1.0" encoding="UTF-8"?>
-<Scheme LastUpgradeVersion="2700" version="1.3">
+<Scheme LastUpgradeVersion="2710" version="1.3">
   <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
     <BuildActionEntries><BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
       <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{app_target}" BuildableName="OMTReceiver.app" BlueprintName="OMTReceiver" ReferencedContainer="container:OMTReceiver.xcodeproj"/>

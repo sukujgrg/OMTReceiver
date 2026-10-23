@@ -41,6 +41,27 @@ The PNGs in Screenshots/ are inspected draft store assets without private source
 names. Editable Icon Composer artwork and native tvOS image stacks are checked
 in under Design/AppIcon and the app's asset catalogue.
 
+## Project settings follow-up
+
+The project generator now retains Xcode's recommended compiler diagnostics,
+asset/string symbol generation, platform-selected architectures, Debug active-only
+builds and Release whole-module Swift compilation. `make build` passed with the
+whole-module compiler flag and an arm64 tvOS executable. `make test` passed all
+63 unit tests and two simulator UI tests; the optional external-sender test was
+skipped. The public-source audit and all five benchmark-tool tests also passed.
+Logs remain under ignored `build/ProjectSettings-20261023/`.
+
+The stricter checks report conversion and possible uninitialized-variable
+warnings in upstream VMX encoder code, unused functions in the worker-header test
+fixture, and a Swift weak-variable diagnostic in a session test. The receiver
+calls only VMX decoding APIs. The upstream SSE2NEON optimization notice and
+Xcode's no-AppIntents metadata notice also remain visible. These diagnostics
+remain enabled; no codec or playback source was changed for this cleanup.
+
+This settings follow-up applies to future builds. The signed build-2 archive and
+IPA above, and their recorded physical screening results, were not replaced or
+retested on the TV.
+
 ## Hardware results and remaining checks
 
 Physical testing resumed on 23 October. Build 1 completed the 30/59.94 cadence
