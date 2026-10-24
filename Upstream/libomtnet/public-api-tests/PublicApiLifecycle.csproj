@@ -11,4 +11,7 @@
   <ItemGroup Condition="'$(OMTUpstreamRoot)' != ''">
     <ProjectReference Include="$(OMTUpstreamRoot)/libomtnet.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="direct-video-restart/**/*.cs" />
+  </ItemGroup>
 </Project>

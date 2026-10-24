@@ -33,7 +33,13 @@ def main():
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--rounds", type=int, default=8)
     parser.add_argument("--audio-metadata-probe", action="store_true")
+    parser.add_argument("--direct-video-restart-probe", action="store_true")
+    parser.add_argument("--sender-processes", action="store_true")
     args = parser.parse_args()
+    if args.audio_metadata_probe and args.direct_video_restart_probe:
+        parser.error("Choose one separate probe")
+    if args.sender_processes and not args.direct_video_restart_probe:
+        parser.error("--sender-processes requires --direct-video-restart-probe")
     upstream, codec, dotnet, output = (Path(getattr(args, name)).resolve()
                                       for name in ("upstream", "codec", "dotnet", "output"))
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=upstream, text=True).strip()
@@ -45,6 +51,8 @@ def main():
         raise ValueError("rounds must be between 1 and 32")
     output.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).with_name("PublicApiLifecycle.csproj").resolve()
+    if args.direct_video_restart_probe:
+        project = project.parent / "direct-video-restart/DirectVideoRestart.csproj"
     environment = os.environ.copy()
     environment.update(DOTNET_ROOT=str(dotnet.parent), DOTNET_CLI_TELEMETRY_OPTOUT="1",
                        DOTNET_GENERATE_ASPNET_CERTIFICATE="false")
@@ -53,14 +61,18 @@ def main():
     build = [str(dotnet), "build", str(project), "-c", "Release", "--artifacts-path",
              str(output / "artifacts"), "-p:OMTUpstreamRoot=" + str(upstream),
              "-p:NuGetAudit=false", "-p:UseSharedCompilation=false", "-nodeReuse:false", "-m:1"]
-    run = [str(dotnet), str(output / "artifacts/bin/PublicApiLifecycle/release/PublicApiLifecycle.dll"),
+    run = [str(dotnet), str(output / f"artifacts/bin/{project.stem}/release/{project.stem}.dll"),
            "--codec", str(codec), "--storage", str(output / "storage"),
            "--report", str(output / "report.json"), "--rounds", str(args.rounds)]
     if args.audio_metadata_probe:
         run.append("--audio-metadata-probe")
+    if args.sender_processes:
+        run.append("--sender-processes")
     manifest = dict(commit=commit, pristine=True, upstream=str(upstream), build=build, run=run,
                     codecSHA256=hashlib.sha256(codec.read_bytes()).hexdigest(),
                     harnessSHA256=hashlib.sha256(project.with_name("Program.cs").read_bytes()).hexdigest(),
+                    harnessSourceSHA256={p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                                         for p in sorted(project.parent.glob("*.cs"))},
                     sourceSHA256={str(p.relative_to(upstream)): hashlib.sha256(p.read_bytes()).hexdigest()
                                   for p in sorted((upstream / "src").rglob("*.cs"))},
                     startedUnix=time.time())
