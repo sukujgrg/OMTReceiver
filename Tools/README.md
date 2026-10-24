@@ -99,6 +99,15 @@ warning events and reports whether their coverage matches the authoritative
 cumulative warning count; absence from bounded history cannot turn a fault
 into a pass.
 
+Explicit benchmark mode also exports `connectionEvents`: the last 128 attempt,
+phase, failure and first-media events, with an authoritative
+`connectionEventCount`. Each connection attempt records its first admitted video
+and audio source timestamp once. Failure events retain the last old admission
+times so a last-old → first-new gap can be measured on the TV's monotonic clock.
+These are renderer admissions, not physical picture/speaker times. UTC is only
+for correlating source journals. Merge the five-second series by event sequence
+when a long test exceeds the ring capacity.
+
 ## Hardware benchmarking and portable Mac sender
 
 See [BENCHMARKING.md](../BENCHMARKING.md) for the opt-in 30-minute TV collector,

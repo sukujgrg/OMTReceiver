@@ -184,6 +184,40 @@ struct BenchmarkAudioTrace {
     }
 }
 
+/// Same-device lifecycle timing, retained only in explicit benchmark mode.
+/// First media is renderer admission, not physical HDMI presentation.
+struct BenchmarkRecoveryTrace {
+    private(set) var events: [[String: Any]] = []
+    private(set) var eventCount: UInt64 = 0
+    private(set) var attempt: UInt64 = 0
+    private var hasVideo = false
+    private var hasAudio = false
+
+    mutating func record(_ kind: String, at uptime: Double, wallTime: Double,
+                         fields: [String: Any] = [:]) {
+        eventCount += 1
+        var event = fields
+        event["kind"] = kind; event["sequence"] = eventCount
+        event["attempt"] = attempt; event["uptime"] = uptime
+        event["observedAtUnixSeconds"] = wallTime
+        if events.count == 128 { events.removeFirst() }
+        events.append(event)
+    }
+
+    mutating func began(at uptime: Double, wallTime: Double) {
+        attempt += 1; hasVideo = false; hasAudio = false
+        record("attemptBegan", at: uptime, wallTime: wallTime)
+    }
+
+    mutating func firstMedia(video: Bool, timestamp: Int64, at uptime: Double,
+                             wallTime: @autoclosure () -> Double) {
+        guard video ? !hasVideo : !hasAudio else { return }
+        if video { hasVideo = true } else { hasAudio = true }
+        record(video ? "firstVideo" : "firstAudio", at: uptime, wallTime: wallTime(),
+               fields: ["sourceTimestamp100ns": timestamp])
+    }
+}
+
 /// Optional per-session counters, including across reconnects. The playback
 /// worker only updates bounded state under a short lock; file I/O and native
 /// metric queries run on a separate serial queue, never on the playback worker.
@@ -201,6 +235,7 @@ final class ReceiverBenchmark: @unchecked Sendable {
     private var decode = BenchmarkHistogram()
     private var audioGaps = BenchmarkHistogram()
     private var audioTrace = BenchmarkAudioTrace()
+    private var recoveryTrace = BenchmarkRecoveryTrace()
     private var lastAudioHost: Double?
     private var lastAudioTimestamp: Int64?
     private var lastAudioDuration: Double?
@@ -264,12 +299,20 @@ final class ReceiverBenchmark: @unchecked Sendable {
         print("OMT benchmark run \(configuration.runID.uuidString); reports: \(latestURL.path)")
     }
 
-    func setPhase(_ value: String) { lock.withLock { phase = value } }
+    func setPhase(_ value: String) {
+        lock.withLock {
+            guard phase != value else { return }
+            phase = value
+            recoveryTrace.record("phaseChanged", at: ProcessInfo.processInfo.systemUptime,
+                                 wallTime: Date().timeIntervalSince1970, fields: ["phase": value])
+        }
+    }
 
     func beganAttempt() {
         lock.withLock {
             attempts += 1; lastAudioHost = nil; lastAudioTimestamp = nil; lastAudioDuration = nil
             audioTrace.resetConnection()
+            recoveryTrace.began(at: ProcessInfo.processInfo.systemUptime, wallTime: Date().timeIntervalSince1970)
         }
     }
 
@@ -277,6 +320,13 @@ final class ReceiverBenchmark: @unchecked Sendable {
         lock.withLock {
             if failures.count < 8 { failures.append(message) }
             values["failureCount"] = (values["failureCount"] as? Int ?? 0) + 1
+            var fields: [String: Any] = ["message": message]
+            for key in ["lastVideoAdmissionUptime", "lastAudioAdmissionUptime",
+                        "lastVideoSourceTimestamp100ns", "lastAudioSourceTimestamp100ns"] {
+                if let value = values[key] { fields[key] = value }
+            }
+            recoveryTrace.record("failure", at: ProcessInfo.processInfo.systemUptime,
+                                 wallTime: Date().timeIntervalSince1970, fields: fields)
         }
     }
 
@@ -314,6 +364,8 @@ final class ReceiverBenchmark: @unchecked Sendable {
         let now = ProcessInfo.processInfo.systemUptime
         lock.withLock {
             if firstVideoHost == nil { firstVideoHost = now }
+            recoveryTrace.firstMedia(video: true, timestamp: timestamp, at: now,
+                                     wallTime: Date().timeIntervalSince1970)
             decode.record(decodeMs); videoFrames += 1; videoLead = lead
             videoSamples += UInt64(max(0, min(2, outputSamples)))
             let fieldsPerFrame = interlaced && Double(frameRateN) / Double(max(1, frameRateD)) <= 30 ? 2 : 1
@@ -357,6 +409,8 @@ final class ReceiverBenchmark: @unchecked Sendable {
         let now = ProcessInfo.processInfo.systemUptime
         lock.withLock {
             audioPackets += 1
+            recoveryTrace.firstMedia(video: false, timestamp: timestamp, at: now,
+                                     wallTime: Date().timeIntervalSince1970)
             audioTrace.admitted(timestamp, at: now, lead: lead, horizon: routeHorizon,
                                 sampleBuildMs: sampleBuildMs, rendererEnqueueMs: rendererEnqueueMs)
             values["audioSampleRate"] = rate
@@ -417,6 +471,8 @@ final class ReceiverBenchmark: @unchecked Sendable {
                 "poolStalls": poolStalls, "videoTimelineResets": videoResets, "audioTimelineResets": audioResets,
                 "decodeMs": decode.summary, "audioAdmissionGapMs": audioGaps.summary,
                 "audioPipelineTiming": audioTrace.summary,
+                "connectionEventCount": recoveryTrace.eventCount,
+                "connectionEvents": recoveryTrace.events,
                 "lateAudioPackets": lateAudio, "audioPacketsBelowRouteHorizon": shortAudioLead,
                 "audioTimestampDiscontinuities": timestampSteps, "currentVideoLeadMs": videoLead * 1000,
                 "route": route, "renderer": rendererMetrics, "failures": failures,

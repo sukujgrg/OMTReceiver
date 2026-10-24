@@ -3,6 +3,33 @@ import XCTest
 @testable import OMTReceiver
 
 final class ReceiverBenchmarkTests: XCTestCase {
+    func testRecoveryTracePairsFirstMediaWithEachAttemptWithoutOverwritingItsStart() throws {
+        var trace = BenchmarkRecoveryTrace()
+        trace.began(at: 1, wallTime: 100)
+        trace.firstMedia(video: true, timestamp: 10, at: 1.1, wallTime: 100.1)
+        trace.firstMedia(video: true, timestamp: 20, at: 1.2, wallTime: 100.2)
+        trace.firstMedia(video: false, timestamp: 30, at: 1.3, wallTime: 100.3)
+        trace.began(at: 10, wallTime: 109)
+        trace.firstMedia(video: true, timestamp: 1000, at: 10.2, wallTime: 109.2)
+        let pictures = trace.events.filter { $0["kind"] as? String == "firstVideo" }
+        XCTAssertEqual(pictures.count, 2)
+        XCTAssertEqual(pictures[0]["sourceTimestamp100ns"] as? Int64, 10)
+        XCTAssertEqual(pictures[1]["sourceTimestamp100ns"] as? Int64, 1000)
+        XCTAssertEqual(pictures[1]["attempt"] as? UInt64, 2)
+        XCTAssertEqual(try XCTUnwrap(pictures[1]["uptime"] as? Double), 10.2, accuracy: 0.00001)
+        XCTAssertEqual(trace.events.filter { $0["kind"] as? String == "firstAudio" }.count, 1)
+    }
+
+    func testRecoveryTraceBoundsHistoryWhileRetainingAuthoritativeEventCount() {
+        var trace = BenchmarkRecoveryTrace()
+        for index in 0..<150 { trace.began(at: Double(index), wallTime: Double(index + 1000)) }
+        XCTAssertEqual(trace.events.count, 128)
+        XCTAssertEqual(trace.eventCount, 150)
+        XCTAssertEqual(trace.events.first?["sequence"] as? UInt64, 23)
+        XCTAssertEqual(trace.events.last?["attempt"] as? UInt64, 150)
+        XCTAssertTrue(JSONSerialization.isValidJSONObject(trace.events))
+    }
+
     func testAudioTraceSeparatesTransportBurstFromLocalQueueWaits() throws {
         var trace = BenchmarkAudioTrace()
         trace.received(100_000, at: 1)

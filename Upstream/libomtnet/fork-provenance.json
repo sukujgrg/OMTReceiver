@@ -4,7 +4,7 @@
   "activeBranch": "codex/omt-send-stability",
   "prBranch": {
     "name": "codex/omt-send-stability",
-    "commit": "cf36623036504bb944923fa8999b07c3f66bb242",
+    "commit": "f2aa755c84afbc9974e107a7655196fe4a3d834e",
     "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
     "managedSDKVersion": "1.0.0.20",
     "runtimeRepairCommit": "7ddfc84936a796a2d42732c72c5f10edaf7160ad",
@@ -12,7 +12,8 @@
     "wiredDocumentationFollowUpCommit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76",
     "videoRejectionFollowUpCommit": "c52634ab59f777bac00244245b716b2948415af5",
     "bufferExperimentCommit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032",
-    "stockReassessmentDocumentationCommit": "cf36623036504bb944923fa8999b07c3f66bb242"
+    "stockReassessmentDocumentationCommit": "cf36623036504bb944923fa8999b07c3f66bb242",
+    "TCPResetDocumentationCommit": "f2aa755c84afbc9974e107a7655196fe4a3d834e"
   },
   "testedSDKBranch": {
     "name": "codex/omt-sdk-1.0.0.19-stability",
@@ -689,7 +690,7 @@
       }
     },
     "nativeRetainedReceiverRegression": {
-      "state": "Delayed public native recovery reproduced; no permanent capacity loss demonstrated",
+      "state": "Dominant native Mac wait isolated to TCP reset recognition; published BSD/macOS exact-match mechanism is a source-and-wire inference",
       "observedFailure": "Native helper retained video-only receiver can exceed its ordinary four-second DEBUG probe budget after rapid sender-process replacement. Minimal public C-API probe recovered without receiver recreation after 5.139 seconds, then 5.054 seconds with child descriptor inheritance excluded.",
       "earlyCountExhaustionHypothesisDisproved": true,
       "managedObjectAndProcessCasesPassed": true,
@@ -712,7 +713,7 @@
         "normalExitSingleVariableComparisonCompleted": true,
         "reportSHA256": "e3b9bbd818825157d975d8bc05e7c3ccedd98a3294d44f6d0b1ef6eb0ab4eb4a"
       },
-      "SDKTimingContext": "OMTChannel five-second TCP keepalive idle and one-second BeginConnect retry; exact component causing the observed delay is not isolated.",
+      "SDKTimingContext": "Capture shows the first reset answered with ACK while the old connection remains alive, then a probe and second reset approximately5.006s later. This matches the unmodified SDK five-second TCP keepalive idle; reconnect starts immediately after accepted reset.",
       "applicationBudget": "Existing four-second DEBUG probe request budget retained; new functional retained-receiver fixture opts into a separate eight-second budget and reports first-fresh timing/four-second target separately. Scoped functional checks passed, including measured late recoveries; no four-second pass is inferred.",
       "shippingScope": "Eucaly currently ships an OMT sender; this is a DEBUG incoming loopback probe, not a production incoming-receiver timeout or upstream API SLA.",
       "SDKSourceChanged": false,
@@ -789,6 +790,178 @@
         "sameReceiverRecoveredWithoutRecreation": true,
         "helperExitPathChangeSupported": false,
         "reportSHA256": "239e5775f8909952dd0927c49b69d483d74bbf5d9ed2bf3de8d83539e1aa0679"
+      },
+      "sourceOrKernelSettingsChanged": false,
+      "causeFollowUp": {
+        "date": "2026-10-25",
+        "kernelVersion": "Darwin27.0.0 xnu-13432.1.9",
+        "nativeFirstFreshMs": [
+          4972.064375,
+          4988.966
+        ],
+        "sourceChildExitBeforeReplacement": true,
+        "firstResetWallSeconds": 1792863668.812086,
+        "lastReceiverAckBeforeReset": 737407552,
+        "firstResetSequence": 737473088,
+        "receiverAckAfterFirstReset": 737473088,
+        "receiverProbeWallSeconds": 1792863673.817892,
+        "secondResetWallSeconds": 1792863673.817931,
+        "resetGapMs": 5005.844831466675,
+        "dominantStage": "TCP disconnect recognition, not application teardown sleep or SDK callback backlog",
+        "underlyingMechanism": "Consistent with published BSD/macOS last_ack_sent reset-validation issue; installed kernel internal control block was not traced",
+        "references": [
+          "https://raw.githubusercontent.com/apple-oss-distributions/xnu/main/bsd/netinet/tcp_input.c#L4185",
+          "https://www.rfc-editor.org/rfc/rfc5961.html#section-3.2",
+          "https://github.com/graingert/asyncio-macos-loopback-rst-hang"
+        ],
+        "kernelSettingsChanged": false,
+        "SDKSourceChanged": false,
+        "earlierOwnershipOrBufferPatchAddressesThis": false,
+        "tcpAnalysisSHA256": "64ba4bb715671d238440a3c2f2c0783f52771e6956e116e73be455a1d9610301"
+      },
+      "appleTVFollowUp": {
+        "date": "2026-10-25",
+        "SDK": "Unmodified1.0.0.19",
+        "rootAppConfiguration": "OptimizedRelease",
+        "sourceMode": "Real eucaly1080p30AV output, isolated OMT-only destination",
+        "senderLink": "en0,1000baseT full-duplex,192.168.1.27",
+        "fullyObservedImmediateRestarts": 8,
+        "runs": [
+          {
+            "run": "TV-Recovery",
+            "pid": 29395,
+            "instanceID": "8AFEC39F-70EE-461E-BEB8-AAEA6DF462A7",
+            "finalUpdatedAt": "2026-10-24T17:57:26Z",
+            "finalPhase": "reconnecting",
+            "attempts": 7,
+            "fullyObservedRestartRecoveries": 3,
+            "audioLate": 0,
+            "poolStalls": 0,
+            "cycles": [
+              {
+                "run": "TV-Recovery",
+                "attempt": 2,
+                "videoAdmissionGapMs": 1279.9571249634027,
+                "audioAdmissionGapMs": 1172.4399579688907,
+                "failureToFirstVideoMs": 1253.9722910150886,
+                "attemptToFirstVideoMs": 174.43124949932098
+              },
+              {
+                "run": "TV-Recovery",
+                "attempt": 3,
+                "videoAdmissionGapMs": 1302.0602921023965,
+                "audioAdmissionGapMs": 1198.573125526309,
+                "failureToFirstVideoMs": 1294.7096247226,
+                "attemptToFirstVideoMs": 178.4740835428238
+              },
+              {
+                "run": "TV-Recovery",
+                "attempt": 4,
+                "videoAdmissionGapMs": 1238.0820829421282,
+                "audioAdmissionGapMs": 1163.7065839022398,
+                "failureToFirstVideoMs": 1232.1711666882038,
+                "attemptToFirstVideoMs": 143.9881669357419
+              }
+            ]
+          },
+          {
+            "run": "TV-RapidRecovery",
+            "pid": 29400,
+            "instanceID": "5F62E459-1984-4D0A-A38E-07AAD276D6A9",
+            "finalUpdatedAt": "2026-10-24T18:02:21Z",
+            "finalPhase": "reconnecting",
+            "attempts": 6,
+            "fullyObservedRestartRecoveries": 5,
+            "audioLate": 0,
+            "poolStalls": 0,
+            "cycles": [
+              {
+                "run": "TV-RapidRecovery",
+                "attempt": 2,
+                "videoAdmissionGapMs": 1360.7084173709154,
+                "audioAdmissionGapMs": 1234.1671250760555,
+                "failureToFirstVideoMs": 1344.4788753986359,
+                "attemptToFirstVideoMs": 191.87787547707558
+              },
+              {
+                "run": "TV-RapidRecovery",
+                "attempt": 3,
+                "videoAdmissionGapMs": 1280.2471248432994,
+                "audioAdmissionGapMs": 1120.0879998505116,
+                "failureToFirstVideoMs": 1258.7493751198053,
+                "attemptToFirstVideoMs": 208.41908361762762
+              },
+              {
+                "run": "TV-RapidRecovery",
+                "attempt": 4,
+                "videoAdmissionGapMs": 1290.3155414387584,
+                "audioAdmissionGapMs": 1214.8617915809155,
+                "failureToFirstVideoMs": 1288.1986256688833,
+                "attemptToFirstVideoMs": 169.47133373469114
+              },
+              {
+                "run": "TV-RapidRecovery",
+                "attempt": 5,
+                "videoAdmissionGapMs": 1232.8061666339636,
+                "audioAdmissionGapMs": 1131.1389580368996,
+                "failureToFirstVideoMs": 1229.052041657269,
+                "attemptToFirstVideoMs": 187.08662502467632
+              },
+              {
+                "run": "TV-RapidRecovery",
+                "attempt": 6,
+                "videoAdmissionGapMs": 1352.5234581902623,
+                "audioAdmissionGapMs": 1224.7837912291288,
+                "failureToFirstVideoMs": 1336.8666246533394,
+                "attemptToFirstVideoMs": 211.79629117250443
+              }
+            ]
+          }
+        ],
+        "videoAdmissionGapMs": {
+          "minimum": 1232.8061666339636,
+          "maximum": 1360.7084173709154,
+          "median": 1285.2813331410289
+        },
+        "audioAdmissionGapMs": {
+          "minimum": 1120.0879998505116,
+          "maximum": 1234.1671250760555
+        },
+        "sameProcessWithinEachRun": true,
+        "fiveSecondNativeBranchObserved": false,
+        "interpretation": "Includes existing one-second application retry and media startup; native Mac video-only SDK loopback and custom AV TV receiver are different paths.",
+        "outageRecoveryQualified": false,
+        "coverageLimits": [
+          "First collector ends17:57:26Z just before the next retry of the longer outage; recovery censored.",
+          "Later rapid-batch tail and intended2s outage fall after second collector final18:02:21Z.",
+          "Final fresh source selected6400 but setup used prior6401; zero media, preserved setup failure and excluded from receiver results.",
+          "Corrected synchronized outage did not run within the device window.",
+          "Physical HDMI/speaker interruption and cross-device one-way latency unmeasured."
+        ],
+        "receiverTargetedTimingCasesPassed": 11,
+        "receiverUnitCasesPassed": 101,
+        "receiverDeviceBuildAndInstallPassed": true,
+        "normalTransportOrRetryPolicyChanged": false,
+        "SDKRuntimeChanged": false,
+        "benchmarkOnlyBoundedEventsAdded": true,
+        "deviceCutoffUTC": "2026-10-24T18:10:00Z",
+        "ordinaryTVLaunchRestored": true,
+        "eucalyCleanupReported": "All3source hosts complete; all17owned helpers exited normally; no active outputs/forced cleanup; last finish18:08:44Z.",
+        "analysisSHA256": "0f3d91d31bca09c01b168551c30394cbc4efae670cb6a42b0868955a8487eea5",
+        "eucalyHarnessFollowUpCommit": "c87e3b748cbdb2bc4b7039b6c84985f32448ed71",
+        "eucalyHarnessOnlyChanges": true,
+        "eucalyReadinessOfflineCasesPassed": 24,
+        "eucalyFinalOfflineSwiftFixtureCasesPassed": 4,
+        "eucalyNetworkArchitectureCheckPassed": true,
+        "eucalyIndependentReviewRemainingFindings": 0,
+        "eucalyRetiredSourceReadinessRejected": true,
+        "eucalyCleanupExitUTC": [
+          "2026-10-24T18:03:47Z",
+          "2026-10-24T18:07:28Z",
+          "2026-10-24T18:08:44Z"
+        ],
+        "allOwnedSourcesAndWatchersRetired": true,
+        "changesPushed": false
       }
     },
     "rootFinalValidation": {

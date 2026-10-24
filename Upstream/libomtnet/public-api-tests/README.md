@@ -106,6 +106,21 @@ Seven cycles recovered in 14–987 ms, then the eighth recovered at 5.105 second
 Normal process exit therefore does not prevent the observed delay. No helper
 exit-path change or speculative SDK source patch was made.
 
+For an isolated packet trace, `--port 6498` requests that fixed listener instead
+of selecting a free port. Check that it is free first; it must not overlap any
+operator or other test source. Reports additionally retain monotonic nanosecond
+markers for Stop requested, exact child exit observed and receive start, plus
+the new sender's ready boundary in 100 ns units. The initial cycle has no old
+child to retire. No extra SDK logging or file reads are inserted in the
+close/reconnect interval.
+
+The 25 October TCP-header capture reproduced 4.972/4.989-second first-frame waits.
+The initial reset was answered with an ACK while the old connection stayed
+alive; about five seconds later a receiver probe elicited another reset and
+reconnect began. This isolates the dominant wait to TCP disconnect recognition,
+consistent with the published BSD/macOS `last_ack_sent` reset-validation issue.
+See [the physical and source analysis](../../../docs/performance.md#restart-delay-investigation-25-october).
+
 ## Separate audio-metadata probe
 
 Add `--audio-metadata-probe` with a different output directory to check whether

@@ -80,6 +80,16 @@ diagnostic ceiling. No SDK source patch was added for this finding.
 The corresponding normal-process-exit arm also recovered late at 5.105 seconds;
 changing the helper's exit path is not supported by this comparison.
 
+The 25 October TCP-header follow-up isolates the dominant wait to disconnect
+recognition: the first reset is answered with an ACK while the old connection
+remains alive, then a probe about five seconds later elicits an accepted reset.
+This is consistent with the published BSD/macOS reset-validation issue; the
+installed kernel's internal control block was not instrumented. Eight fully
+observed real eucaly restarts on Apple TV recovered with 1.233–1.361-second video
+admission gaps, including its existing one-second retry. The TV uses a different
+receiver path. Later outage samples were censored or had a wrong-address setup
+and are excluded. See [the cause and physical scope](../../docs/performance.md#restart-delay-investigation-25-october).
+
 A separate public-API audio-metadata probe fails on both stock versions: valid
 XML overwrites the PCM prefix and the metadata tail is zero. Eucaly supplies
 no audio frame metadata; this is unrelated to the rejection and warning

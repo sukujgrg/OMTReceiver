@@ -181,7 +181,15 @@ int main(int argc, char **argv) {
     char storage[PATH_MAX]; path(storage, argv[3], "receiver");
     if (mkdir(storage, 0700)) die("Receiver storage failed");
     API api = load(argv[1], argv[2], storage);
-    int port = available_port(); char endpoint[80], name[80], number[16], report_path[PATH_MAX];
+    int port = available_port();
+    const char *selected_port = getenv("OMT_PROBE_PORT");
+    if (selected_port) {
+        char *end = NULL; errno = 0;
+        long value = strtol(selected_port, &end, 10);
+        if (errno || !end || *end || value < 1024 || value > 65535) die("Invalid OMT_PROBE_PORT");
+        port = (int)value;
+    }
+    char endpoint[80], name[80], number[16], report_path[PATH_MAX];
     snprintf(endpoint, sizeof(endpoint), "omt://127.0.0.1:%d", port);
     snprintf(name, sizeof(name), "Native direct probe %ld", (long)getpid());
     snprintf(number, sizeof(number), "%d", port);
@@ -194,7 +202,9 @@ int main(int argc, char **argv) {
     omt_receive_t *receiver = NULL; pid_t child = 0;
     int failures = 0, completed = 0; int64_t previous = -1;
     for (int cycle = 0; cycle < rounds; cycle++) {
+        uint64_t stop_requested = now();
         if (!retire(&child)) { failures++; break; }
+        uint64_t exit_observed = now();
         char leaf[40]; snprintf(leaf, sizeof(leaf), "sender-%d", cycle); path(storage, argv[3], leaf);
         char *arguments[] = {binary, "--sender", argv[1], argv[2], storage, number, name, NULL};
         uint64_t boundary = 0;
@@ -216,8 +226,9 @@ int main(int argc, char **argv) {
             fresh++;
         }
         bool passed = fresh >= required_frames && invalid == 0 && first_ms >= 0 && first_ms <= 4000;
-        fprintf(report, "%s{\"cycle\":%d,\"senderPID\":%ld,\"fresh\":%d,\"pending\":%d,\"stale\":%d,\"invalid\":%d,\"firstFreshMs\":%.6f,\"elapsedMs\":%.6f,\"passed\":%s}",
-                completed ? "," : "", cycle, (long)child, fresh, pending, stale, invalid, first_ms,
+        fprintf(report, "%s{\"cycle\":%d,\"senderPID\":%ld,\"stopRequestedNs\":%" PRIu64 ",\"exitObservedNs\":%" PRIu64 ",\"senderReadyBoundary100ns\":%" PRIu64 ",\"receiveStartedNs\":%" PRIu64 ",\"fresh\":%d,\"pending\":%d,\"stale\":%d,\"invalid\":%d,\"firstFreshMs\":%.6f,\"elapsedMs\":%.6f,\"passed\":%s}",
+                completed ? "," : "", cycle, (long)child, stop_requested, exit_observed, boundary, started,
+                fresh, pending, stale, invalid, first_ms,
                 (double)(now() - started) / 1000000, passed ? "true" : "false");
         fflush(report); completed++;
         printf("native cycle=%d fresh=%d pending=%d firstMs=%.3f passed=%d\n", cycle, fresh, pending, first_ms, passed); fflush(stdout);

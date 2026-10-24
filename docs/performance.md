@@ -1,6 +1,6 @@
 # Hardware observations
 
-Recorded 23–24 October 2026 on a first-generation Apple TV 4K (A10X), tvOS 26.6.
+Recorded 23–25 October 2026 on a first-generation Apple TV 4K (A10X), tvOS 26.6.
 Application validation was followed up on 25 October 2026.
 These observations do not establish a general production or NDI performance claim.
 
@@ -186,6 +186,82 @@ finish request was not acknowledged before automatic retirement.
 Evidence is under ignored `build/StockSDK-20261024/` and eucaly's
 `build/OMTStockSDK-20261024/`. The remaining historical observations retain their
 original runtime, network and measurement scope.
+
+### Restart delay investigation, 25 October
+
+The five-second native Mac wait was reproduced with pristine SDK 1.0.0.19 and
+TCP-header capture on one isolated loopback port. The two probes first decoded
+fresh video after 4.972 and 4.989 seconds. Exact child retirement completed
+before replacement; there was no application sleep of that length.
+
+The full trace shows the first abortive reset at `1792863668.812086`, followed
+by a receiver ACK at `1792863668.812119`. The receiver kept the connection until
+a probe at `1792863673.817892` elicited a second reset; reconnect began
+immediately afterward. The 5.006-second interval matches the SDK's configured
+five-second keepalive idle. The dominant delay is therefore TCP disconnect
+recognition, rather than an eucaly teardown wait or SDK callback backlog.
+The installed Mac kernel is Darwin 27.0.0, xnu-13432.1.9.
+
+This packet pattern is consistent with the publicly reproduced
+[BSD/macOS reset-validation issue](https://github.com/graingert/asyncio-macos-loopback-rst-hang).
+[Apple's published TCP input code](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/netinet/tcp_input.c#L4185)
+uses the last acknowledged sequence for this reset check; the
+[TCP specification](https://www.rfc-editor.org/rfc/rfc5961.html#section-3.2)
+requires accepting the next expected sequence. This is a source-and-wire
+inference about that kernel mechanism, not a trace of the installed kernel's
+internal control block. No kernel settings or SDK sources were changed.
+Neither earlier transport patch addresses this mechanism.
+
+The physical Apple TV then received real eucaly video/audio over gigabit
+Ethernet with the same stock SDK. An optimized Release build added only opt-in,
+bounded connection-event diagnostics. The TV app remained in one process within
+each run; eucaly retired the exact old helper and immediately started its
+replacement on the same address. Eight immediate restart recoveries were fully
+observed across two runs: three individually controlled and five from the early
+part of an automated batch.
+
+| TV measurement across those eight restarts | Result |
+| --- | ---: |
+| Last old → first new video admission | 1.233–1.361 s |
+| Last old → first new audio admission | 1.120–1.234 s |
+| Median video admission gap | 1.285 s |
+| Late audio / decoder-pool stalls | 0 / 0 |
+| TV process changes within either run | 0 |
+
+Those gaps include the existing one-second application retry and media startup.
+If repeated attempts fail during a longer outage, the application's retry
+schedule backs off through 1, 2, 4, 8 and 10 seconds; the immediate-restart figures
+do not qualify that separate case.
+The five-second native Mac branch was not observed in these eight TV recoveries.
+The native Mac probe is video-only loopback using the managed SDK receiver;
+the TV has its own Network.framework receiver with audio/video lanes. These
+are different paths, and the measurements do not guarantee every future
+restart or measure physical HDMI/audio interruption.
+
+The attempted longer-outage sample is censored: the first collector's final
+snapshot was `17:57:26Z`, just before its next scheduled retry. The later rapid
+batch tail and intended two-second outage also fell after the second
+collector's final snapshot (`18:02:21Z`). A final fresh-source setup used the
+old port 6401 after the SDK selected 6400, so it received no media and is retained
+as a setup failure. The corrected synchronized outage did not run before the
+device cutoff. None of these samples is counted as a TV pass or failure.
+
+Eucaly tightened its test harness's deadline, graceful-shutdown and readiness
+checks; no production sender/receiver retry delay or SDK runtime was changed.
+Its local commit `c87e3b7` passes 24 offline readiness checks, four final offline
+Swift fixture cases and the network-architecture check, with independent review
+cleared. Readiness derives the actual listener and verifies process/run/generation,
+capture budget and watcher state; outage commands recheck generation at execution.
+Root added the benchmark's first-media event history and fixed-port/native
+process timing markers. Eleven focused timing tests, all 101 receiver unit
+tests, and the optimized device build/install passed. The TV was restored to
+an ordinary launch and all owned sources were stopped before the `18:10Z`
+(05:10 Sydney) cutoff. Nothing was pushed or posted upstream.
+
+Ignored evidence: `build/RestartDelay-20261025/`, especially
+`TCP-AllHeaders/tcp-analysis.json`, `tv-recovery-analysis.json`, and the raw TV
+series; eucaly retains exact source-generation, shutdown/exit and command
+journals under its restart-delay investigation directory.
 
 ### Eucaly dual-output stability investigation
 

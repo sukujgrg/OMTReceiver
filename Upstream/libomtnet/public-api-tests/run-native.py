@@ -19,6 +19,7 @@ def main():
         parser.add_argument("--" + name, required=True, type=Path)
     parser.add_argument("--rounds", type=int, default=8)
     parser.add_argument("--fresh-frames", type=int, choices=(1, 3), default=3)
+    parser.add_argument("--port", type=int, default=0, help="Optional fixed listener for an isolated socket trace; zero chooses a free port")
     parser.add_argument("--terminal-alpha", action="store_true")
     parser.add_argument("--terminal-same", action="store_true")
     parser.add_argument("--immediate-exit", action="store_true")
@@ -26,6 +27,8 @@ def main():
     args = parser.parse_args()
     if args.terminal_alpha and args.terminal_same:
         parser.error("Choose one terminal picture format")
+    if args.port != 0 and not 1024 <= args.port <= 65535:
+        parser.error("port must be zero or 1024–65535")
     library, codec, header, source_manifest, output = (
         getattr(args, name).resolve()
         for name in ("library", "codec", "header", "source_manifest", "output"))
@@ -42,6 +45,10 @@ def main():
     run = [str(binary), str(library), str(codec), str(output / "run"),
            str(args.rounds), str(args.fresh_frames)]
     environment = os.environ.copy()
+    if args.port:
+        environment["OMT_PROBE_PORT"] = str(args.port)
+    else:
+        environment.pop("OMT_PROBE_PORT", None)
     if args.terminal_alpha:
         environment["OMT_PROBE_TERMINAL_ALPHA"] = "1"
     else:
@@ -57,6 +64,7 @@ def main():
                     harnessSHA256=digest(source), build=build, run=run,
                     terminalAlpha=args.terminal_alpha, terminalSame=args.terminal_same,
                     immediateChildExit=args.immediate_exit, requiredFreshFrames=args.fresh_frames,
+                    requestedPort=args.port,
                     scope="Public C API with real native runtime, sender subprocess replacement and one persistent direct-video receiver.")
     path = output / "manifest.json"
     path.write_text(json.dumps(manifest, indent=2) + "\n")
