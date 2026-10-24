@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <Target Name="CheckUpstreamPath" BeforeTargets="PrepareForBuild" Condition="'$(OMTUpstreamRoot)' == ''">
+    <Error Text="Set OMTUpstreamRoot to a libomtnet checkout containing src/." />
+  </Target>
+  <ItemGroup>
+    <Compile Include="$(OMTUpstreamRoot)/src/**/*.cs" Exclude="$(OMTUpstreamRoot)/src/OMTLogging.cs" LinkBase="Upstream" />
+  </ItemGroup>
+</Project>

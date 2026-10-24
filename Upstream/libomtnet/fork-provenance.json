@@ -4,12 +4,13 @@
   "activeBranch": "codex/omt-send-stability",
   "prBranch": {
     "name": "codex/omt-send-stability",
-    "commit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76",
+    "commit": "c52634ab59f777bac00244245b716b2948415af5",
     "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
     "managedSDKVersion": "1.0.0.20",
     "runtimeRepairCommit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032",
     "documentationOnlyFollowUpCommit": "e21b3d515fdfe92ae3aee12a29dda31f7d1249dc",
-    "wiredDocumentationFollowUpCommit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76"
+    "wiredDocumentationFollowUpCommit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76",
+    "videoRejectionFollowUpCommit": "c52634ab59f777bac00244245b716b2948415af5"
   },
   "testedSDKBranch": {
     "name": "codex/omt-sdk-1.0.0.19-stability",
@@ -34,7 +35,8 @@
     "Physical panel latency and full-run Apple TV audible continuity unmeasured; remoteNDIMaclisteningconfirmationhasunspecifiedduration",
     "Extra NDI media flow reproducibly caused late audio/audible gaps on prior Wi-Fi sender path; physical component unisolated",
     "Wired normal-use20min case passed applicable gates; original warning causes unproven and NDIclient changed",
-    "Original overload interval lacked valid aligned audio socket queue capture; later wired single-NDI snapshots have sampling/batch gaps; no further buffer tuning"
+    "Original overload interval lacked valid aligned audio socket queue capture; later wired single-NDI snapshots have sampling/batch gaps; no further buffer tuning",
+    "Later605s native/NDI/OMT wired case passed all23gates; supports a monitored1080p30trial, not broad production sign-off."
   ],
   "wiredNormalUseComparison": {
     "receiverRunID": "21C655CD-F073-4571-A1C6-8023DE37DE6A",
@@ -57,5 +59,116 @@
     "limits": "Original two warning packets lack stage traces; NDI client differs from original native-probe run; no complete physical playout/latency qualification.",
     "eucalyBuildMode": "Optimized Debug (-O) test host; real OutputCoordinator/shared player/helpers, not Release GUI"
   },
-  "eucalyWiredEvidenceCommit": "2ffcabb9d65e295e4cd94f905f42d9bbf205dbc3"
+  "eucalyWiredEvidenceCommit": "2ffcabb9d65e295e4cd94f905f42d9bbf205dbc3",
+  "channelAdmissionRegressions": {
+    "casesPassedPerVariant": 3,
+    "variants": [
+      "original SDK1.0.0.19",
+      "repaired SDK1.0.0.19",
+      "repaired SDK1.0.0.20"
+    ],
+    "selfContainedForkProjectValidated": true,
+    "purpose": "Distinguish unsubscribed/oversize/pressure returns; verify byte identity, all four slots returned and later recovery. No codec or physical playback qualification.",
+    "harnessBuildWarnings": [
+      "Upstream Thread.Abort obsolete under net8.0",
+      "Upstream caught-exception rethrow stack warning"
+    ],
+    "runtimeSourceChanged": false
+  },
+  "videoRejectionInvestigation": {
+    "originalExactCallRetained": false,
+    "diagnosis": "Bounded send-pool pressure strongly supported; underlying SDK/OS/network cause of pressure not isolated.",
+    "fixedHelperDimensions": [
+      1920,
+      1080
+    ],
+    "recordedRawUYVYBytes": 4147200,
+    "maximumRawFormatBytes": 8294400,
+    "frameMetadataBytes": 0,
+    "videoWireHeaderBytes": 48,
+    "largestPossibleWireFrameBytes": 8294448,
+    "oversizeGuardBytes": 10485760,
+    "bundledCodecCapacityChecksVerified": true,
+    "newSDKCorrectnessBugDemonstrated": false,
+    "upstreamMasterChecked": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
+    "ownershipRepairStillNeeded": true,
+    "bufferDecision": "Retain bounded512KiB locally with wired resilience evidence; review broad upstream default separately from ownership repair."
+  },
+  "wiredThreeOutputComparison": {
+    "sourceBuildMode": "Optimized Debug (-O) test host, real native OutputWindowDestination/shared player and network helpers; not Release GUI qualification.",
+    "receiverBinarySHA256": "139a53c6098eb08cea732ccc68a42f78648bea5c377019f47936fe1a369c0aa4",
+    "receivers": "One native auxiliary display, one NDI Monitor and one OMT TV",
+    "format": "1080p30 MediumVMX/stereo48kFPA1",
+    "senderLink": "1000baseT full-duplex, Wi-Fi inactive",
+    "remoteNDILink": "100baseTX full-duplex",
+    "control64KiB": {
+      "sourceRunID": "3ED3045C-77E5-4E14-9498-84E3FD720DEB",
+      "receiverRunID": "E446FCD6-FA33-4ECC-956B-66F4ADF121BA",
+      "ownershipRepairRetained": true,
+      "intervalSeconds": 184.98944395780563,
+      "videoAdmissionFPS": 29.877380469669703,
+      "videoSDKRejections": 8,
+      "audioAdmissions": 9251,
+      "audioHorizonWarnings": 0,
+      "lateAudioPackets": 0,
+      "allApplicableRuntimeGatesPassed": false,
+      "memoryGateNote": "13 post-warmup samples below24 required; observed mean footprint did not grow.",
+      "networkCapture": "Partial; monitor ended before collector finished."
+    },
+    "retained512KiB": {
+      "sourceRunID": "7E645726-5472-464F-B68B-19D18A536E52",
+      "receiverRunID": "5D1267C9-6DA6-4172-ADE4-F38ADB3E4402",
+      "intervalSeconds": 604.9995811665431,
+      "videoAdmissions": 18107,
+      "videoAdmissionFPS": 29.928946339246377,
+      "videoSDKRejections": 0,
+      "audioAdmissions": 30250,
+      "audioHorizonWarnings": 0,
+      "lateAudioPackets": 0,
+      "audioTimestampGaps": 0,
+      "attempts": 1,
+      "failures": 0,
+      "applicableRuntimeGates": 23,
+      "allApplicableRuntimeGatesPassed": true,
+      "nativeTVRendererFrames": 17957,
+      "nativeTVRendererDrops": 3,
+      "nativeTVRendererCorruption": 0,
+      "minimumAudioLeadMs": 140.68371700000014,
+      "audioRouteHorizonMs": 101.33333154519399
+    },
+    "firstPassCommonMovieRegion": {
+      "approximateMovieSeconds": [
+        140,
+        210
+      ],
+      "controlCalls": 2056,
+      "controlEnqueues": 2048,
+      "controlRejections": 8,
+      "retainedCalls": 2057,
+      "retainedEnqueues": 2057,
+      "retainedRejections": 0
+    },
+    "nativeOperatorObservation": "Visible and smooth; scoped visual report, not presented-frame counter or full-run observation.",
+    "limits": [
+      "Later unexpected Bonjour test-name records do not prove competing tests; historical workload isolation is qualified.",
+      "Prospective later process record was a read-only tool lookup, not an observed eucaly test/helper workload.",
+      "Monitor required None/reselection during preflight; sender/native identities unchanged, measured arms remained separate.",
+      "No full Release GUI, continuous physical audio, native scanout cadence, end-to-end latency or all-format qualification."
+    ],
+    "shippingVendorRuntimeChanged": false,
+    "allOwnedHardwareJobsStopped": true
+  },
+  "eucalyVideoRejectionFollowUpCommit": "5935f45c34c0d46de478343e90aa4ff5d76c9226",
+  "eucalyFollowUpValidation": {
+    "xctestCases": 1020,
+    "expectedOptInSkips": 6,
+    "failures": 0,
+    "swiftTestingCasesPassed": 1,
+    "feedTestsPassed": 7,
+    "releaseWorkflowTestsPassed": 103,
+    "signedReleaseArchiveAndExportPassed": true,
+    "compilerWarnings": 0,
+    "packaged512KiBRuntimePreserved": true,
+    "sourceLiveTestWasReleaseGUI": false
+  }
 }

@@ -292,6 +292,18 @@ used its optimized Debug test host. This 20-minute 1080p30 case does not replace
 30-minute/60 fps or App Store release checks. See the complete
 [wired observations](../docs/performance.md#wired-one-ndione-omt-follow-up).
 
+The subsequent native/NDI/OMT comparison used the same signed Receiver Release
+binary. With eucaly's actual native output and one NDI Monitor active, the
+605.000-second 512 KiB run passed all 23 applicable receiver gates at 29.928946
+fps, with zero SDK video rejections or audio timing warnings. The matched
+64 KiB-plus-ownership-repair control recorded eight SDK video rejections and
+29.877380 fps over 184.989 seconds. Native display motion was operator-confirmed;
+its presented-frame cadence was not instrumented. Eucaly remained an optimized
+Debug test host, so this adds scoped hardware evidence rather than Release GUI
+or general production qualification. The rejection-path review and three
+actual-source channel regressions are retained in
+[the follow-up](../docs/performance.md#sdk-rejection-and-parallel-native-output-follow-up).
+
 ## Hardware results and remaining checks
 
 Physical testing resumed on 23 October. Build 1 completed the 30/59.94 cadence

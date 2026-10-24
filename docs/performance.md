@@ -353,6 +353,124 @@ GUI Monitor rather than the native NDI client used for the original two events.
 The remote 100 Mbps limit also remains explicit. No OMT fork/upstream change
 was pushed and no further runtime tuning was applied.
 
+### SDK rejection and parallel native-output follow-up
+
+The single video-channel drop in the earlier wired run was bracketed by sender
+checkpoints at 01:19:06–01:19:07 UTC. Those dates omit fractions; they do not
+identify an exact rejecting call. Four 10 Hz video-socket samples near that
+interval reached the 512 KiB high-water, and a 302.824 ms gap between outgoing
+video TCP push headers occurred there. Audio occupancy stayed at or below one
+7,720-byte block. No disconnect, socket exception or encoding failure was
+logged. Push headers are neither a complete ACK trace nor frame-arrival times.
+
+Code review distinguishes the SDK's drop paths. This receiver sends only
+metadata controls, so it does not normally exhaust a sender's incoming AV
+frame pool. Eucaly's helper canvas is fixed at 1920×1080, with no frame metadata;
+its largest possible raw format is 8,294,400-byte BGRA (the recorded movie uses
+4,147,200-byte UYVY). The managed codec passes the actual output-buffer capacity
+to `VMX_SaveTo`. Inspection of the **bundled arm64 codec binary** confirmed
+capacity checks before each copy, zero on insufficient capacity, and a successful
+return equal to bytes written. Even the largest allowed buffer plus the 48-byte
+video header is 8,294,448 bytes, below the channel's 10 MiB rejection limit.
+These facts point to unavailable asynchronous send slots under temporary
+backpressure. The exact old rejected frame and the underlying SDK/OS/network
+cause of the pressure cannot be reconstructed from the retained old trace.
+
+New bounded loopback regressions compile the actual SDK channel/protocol/pool.
+They distinguish unsubscribed zero returns from oversized rejection, then pause
+the peer to occupy all four send slots. The fifth frame is rejected once;
+resuming reads delivers all accepted bytes intact, returns all slots, and lets
+the next frame succeed. All three cases pass on original and repaired SDK
+1.0.0.19, and on the repaired 1.0.0.20 PR branch. This is existing bounded
+admission policy. The independent null/disposed-socket ownership regression
+still fails in original code and passes with the repair; Ethernet cannot fix
+that defect. See [the reproducible tests](../Upstream/libomtnet/README.md).
+
+The next hardware comparison added eucaly's actual native output on the
+auxiliary Dell P2721Q, alongside one NDI Monitor and one OMT TV. All three shared
+one player/item and video sampler. The operator confirmed the native countdown
+was “Visible and smooth”; this is a scoped visual observation, not a physical
+frame counter. Native output retained its ordinary local-audio policy. The
+sender still used gigabit Ethernet with Wi-Fi inactive; the remote NDI Mac still
+negotiated 100 Mbps. Media, quality, output dimensions, codec and TV Release
+binary were unchanged.
+
+A fresh 64 KiB control retained the ownership repair and matched the pinned
+1.0.0.19 source, native wrapper, .NET 8.0.426 toolchain and NativeAOT package
+versions/hashes. Only the buffer constant differed from the retained 512 KiB
+runtime. It was loaded in an isolated optimized Debug app copy; eucaly's vendor
+512 KiB library was preserved. Both arms exercised the real native/network
+output paths through the optimized Debug test host, rather than a Release GUI
+workflow.
+
+| Receiver observation | 64 KiB control | Retained 512 KiB |
+| --- | --- | --- |
+| Measured interval | 184.989 s | 605.000 s |
+| Video admissions / fps | 5,527 / 29.877380 | 18,107 / 29.928946 |
+| Audio admissions | 9,251 | 30,250 |
+| Late / route-horizon / timestamp-discontinuous audio | 0 / 0 / 0 | 0 / 0 / 0 |
+| Attempts / failures / timeline resets / pool stalls | 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 |
+| Video SDK rejections while connected | 8 | 0 |
+| TV native renderer | 0 drops / 5,377 frames; zero corruption | 3 drops / 17,957 frames (0.016707%); zero corruption |
+| Minimum audio lead, including warmup | 147.257 ms | 140.684 ms |
+| Runtime gates | Cadence gates failed; insufficient memory evidence | All 23 passed |
+
+The short control had only 13 post-warmup memory samples, below the unchanged
+24-sample requirement; its memory gate is not evidence of growing memory.
+The 512 KiB arm had 97 such samples, 48.89–53.84 MiB footprint and −0.132 MiB
+early-to-late mean change, with nominal thermal state. Its two movie rewinds
+caused no audio timing fault or SDK rejection. The audio route horizon remained
+101.333 ms; no playback margin or timing threshold changed.
+
+The first-pass common movie region, approximately 140–210 seconds, had 2,056
+64 KiB SDK calls with 2,048 enqueues and eight zero/drop increments, versus
+2,057 calls/enqueues and no rejection at 512 KiB. New bounded per-call diagnostics
+retained all eight connected zero returns, each paired with one drop and no
+enqueue/byte increment; calls took 3.260–4.650 ms. SDK/producer identities,
+epoch, sampler and format stayed unchanged. The calls preceded unexpected
+Bonjour discovery records for unit-test source names. Those later records alone
+do not prove active competing tests; their earlier owner was not established.
+The comparison is nominally matched, with this retrospective isolation limit.
+Prospective process records in the later arm identified only a read-only tool
+lookup, rather than another observed eucaly test/helper workload.
+
+In retained network windows, every snapshot had one active NDI UDP media flow.
+Video occupancy reached 65,536 bytes in 99/875 samples of the control, versus
+524,288 bytes in 12/5,902 samples at 512 KiB. Both audio lanes peaked at 15,440
+bytes and had no full sample. The control's network monitor ended early after
+the delayed setup, so its coverage is explicitly partial. These are sampled
+queued/outstanding bytes, not unsent-delay measurements or proof of a defective
+physical link. The larger buffer remains useful local resilience evidence on
+Ethernet, rather than an optimization justified only by Wi-Fi.
+
+During setup, Monitor initially negotiated audio/control without video. Selecting
+None and reselecting the same source restored 1080p30 reception without changing
+eucaly, native output or helper generations. This preflight issue is retained
+separately; no speculative application/SDK repair was made for it.
+
+The recommendation is to retain the ownership repair and bounded 512 KiB runtime
+locally. The ownership repair is an independent upstream correctness fix; a
+general buffer-default change merits separate platform/performance review.
+The tested wired 1080p30 configuration supports a monitored production trial.
+Full Release GUI operation, broader formats/routes, continuous physical audio,
+source-to-panel latency and longer combined-output qualification remain open.
+No new rejection-related runtime fix, buffer/quality/priority change or OMT
+push was made. Both sources/native windows/helpers and all owned telemetry and
+keep-awake jobs stopped; the TV source picker was visually confirmed and Monitor
+was left open with no test source selected.
+
+Evidence is retained under ignored `build/WiredThreeOutput-20261024/`, with source
+records under eucaly's `three-output-20261024/arm-64k` and `arm-512k` directories.
+
+Eucaly committed the bounded diagnostics, opt-in native fixture and assessment
+at `5935f45`. Its full suite passed 1,020 XCTest cases with six expected opt-in
+skips and zero failures, one Swift Testing case, seven feed tests and 103 release
+workflow checks. The signed Release archive/export and packaged runtime/signature
+checks passed with zero compiler warnings. Those packaging checks are separate
+from a sustained Release GUI test. Local OMT fork commit `c52634a` adds the three
+channel-policy regressions and assessment; it changes no SDK runtime code and
+has not been pushed.
+
 ## Build 4 scope
 
 Build 3 contains compiler-warning repairs and OBS zero-aspect compatibility. Its

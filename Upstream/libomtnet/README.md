@@ -46,6 +46,37 @@ rejected the two network tests, and the permitted rerun passed.
 Local evidence: `build/QuickSwitcher-20261024/Upstream-SocketPool-Before.log`
 and `Upstream-SocketPool-After.log` (ignored machine artifacts).
 
+## Distinguish backpressure from the ownership defect
+
+The separate `channel-tests/ChannelBackpressure.csproj` compiles the actual
+upstream channel, protocol and pool sources under .NET 8. It replaces file
+logging with a no-op, opens loopback sockets only, and does not invoke the
+native codec or discovery. Its synthetic compressed payload tests transport
+byte identity, not video decoding or physical playback.
+
+```sh
+dotnet build Upstream/libomtnet/channel-tests/ChannelBackpressure.csproj \
+  -c Release -p:OMTUpstreamRoot=/absolute/path/to/libomtnet \
+  --artifacts-path /tmp/omt-channel-check
+dotnet /tmp/omt-channel-check/bin/ChannelBackpressure/release/ChannelBackpressure.dll
+```
+
+The three cases verify that an unsubscribed zero return does not increment
+`FramesDropped`; an oversized frame increments it without consuming a slot;
+and a deliberately paused peer fills the four-slot send pool. The next video
+frame is rejected once, all four accepted frames arrive byte-identically when
+reading resumes, all four slots return, and a subsequent frame succeeds. The
+test reads the private pool for assertions but does not mutate its state.
+Socket waits are bounded. Run it with loopback socket permission.
+
+All three cases passed on both the unmodified pinned 1.0.0.19 source and the
+repaired 1.0.0.19 source, as well as the repaired 1.0.0.20 PR branch. Thus bounded
+pressure rejection and recovery are existing SDK policy; they do not require
+Wi-Fi and are distinct from leaking a slot on a null socket or synchronous
+exception. Logs and source hashes are retained under
+`build/WiredThreeOutput-20261024/`. Whole-source .NET 8 compilation reports the
+upstream `Thread.Abort` and rethrow-stack warnings; neither path is invoked.
+
 ## Matched native runtime builds
 
 The comparison uses .NET SDK 8.0.426 arm64 and `libomt` commit
@@ -162,3 +193,53 @@ rejection and occasional sampled full video send buffers remain recorded.
 The larger buffer's necessity on Ethernet was not isolated. This normal-use
 result does not prove the original two warning causes or justify further
 buffer tuning; see [the full scope](../../docs/performance.md#wired-one-ndione-omt-follow-up).
+
+## Rejection investigation and wired native/NDI/OMT comparison
+
+The later investigation retained the old rejection's surrounding full-socket
+samples and 302.824 ms outgoing video-push gap. Source and bundled-codec binary
+review exclude the oversized-frame branch for the fixed 1080p helper; only
+metadata controls return from this TV. Together with the channel regressions,
+the evidence points to bounded send-pool admission under pressure, without a
+demonstrated additional correctness defect. The old rejecting call itself and
+the SDK/OS/network origin of that pressure were not retained.
+
+A matched 64 KiB **plus ownership repair** runtime was built from the same
+1.0.0.19/native-wrapper commits, .NET 8.0.426 and exact NativeAOT dependencies
+as the retained 512 KiB runtime. It replaced the library only in an isolated
+optimized Debug product copy. Eucaly's actual native display, one NDI Monitor
+and one OMT TV ran together; the vendor 512 KiB library stayed unchanged.
+
+The 184.989-second control admitted 29.877380 fps and recorded eight connected
+video rejections. The 605.000-second 512 KiB arm admitted 29.928946 fps with
+zero SDK video rejections and all 23 applicable TV runtime gates passing.
+Both had zero audio route warnings, late packets, timestamp gaps, reconnects
+or decoder-pool stalls. The larger arm's TV renderer separately dropped
+3/17,957 frames (0.016707%) with zero corruption. The operator confirmed the
+native countdown was visible and smooth; this is not a native frame counter.
+
+In a first-pass common movie region around 140–210 seconds, the control had
+2,056 calls/2,048 enqueues/eight rejections, versus 2,057 calls/enqueues and
+zero rejections at 512 KiB. All eight zero returns paired with a one-drop
+counter increase and stable connections. They preceded later unexpected
+Bonjour unit-test-name discoveries; those records alone neither prove a
+competing test nor establish complete historical isolation. The control's
+network capture is partial. See [the detailed comparison](../../docs/performance.md#sdk-rejection-and-parallel-native-output-follow-up).
+
+Retain the ownership repair independently of cable type. The bounded larger
+buffer also has useful wired resilience evidence; Cat6 does not justify
+discarding it as merely a Wi-Fi workaround. Keep its general upstream-default
+proposal separate from the correctness repair and review wider platforms.
+The evidence supports a monitored wired 1080p30 trial, not complete Release GUI,
+all-format, physical-audio or latency qualification. No additional runtime
+tuning, fork/upstream push or PR was made. Raw evidence is ignored under
+`build/WiredThreeOutput-20261024/`.
+
+Local fork commit `c52634a` retains a self-contained copy under
+`tests/ChannelBackpressure/`, alongside the wired assessment. Its three cases
+also passed from that checkout; `dotnet run --project
+tests/ChannelBackpressure/ChannelBackpressure.csproj -c Release` uses its own
+upstream sources by default. This adds tests/documentation, with no SDK runtime
+change or push. Eucaly's follow-up is committed separately at `5935f45`; its
+full test suite and signed Release package checks passed while the live
+comparison remains an optimized Debug-host result.
