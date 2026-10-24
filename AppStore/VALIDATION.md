@@ -359,6 +359,20 @@ is recorded in `upload-retry-1.log`; `build-5-internal-testing.png` shows versio
 1.0.0 (5) testing in the internal group. No external testing or App Review
 submission was performed.
 
+## Post-upload source comparison — 25 October 2026
+
+Build 5 already includes the quick source switcher and playback/audio repairs.
+Compared with its source commit `c130164`, the only subsequent app-source change
+is bounded first-media/reconnect event history in `ReceiverBenchmark.swift`.
+It runs only with explicit benchmark launch arguments; ordinary source selection,
+playback, transport and retry behavior are unchanged. The other changes are
+tests, developer tools and investigation records. The current source passed all
+101 receiver unit tests and an optimized device build during the restart study.
+
+A new TestFlight upload is therefore unnecessary for normal playback testing.
+A later upload containing the additional developer diagnostics must use a new
+build number (6 or higher); build 5 remains the recorded internal distribution.
+
 ## Hardware results and remaining checks
 
 Physical testing resumed on 23 October. Build 1 completed the 30/59.94 cadence

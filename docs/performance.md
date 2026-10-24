@@ -253,10 +253,11 @@ Swift fixture cases and the network-architecture check, with independent review
 cleared. Readiness derives the actual listener and verifies process/run/generation,
 capture budget and watcher state; outage commands recheck generation at execution.
 After that tested commit, an unknown writer changed the stress-test file at
-18:29:21Z, removing the generation fence and result-generation ACK. The owner and
-reviewer did not make that edit. Its diff is preserved untouched; the validated
-harness results apply to `c87e3b7`, while the subsequent working copy is unverified.
-The production runtime is unaffected by this test-only edit.
+18:29:21Z, removing the generation fence and result-generation ACK. The owner,
+reviewer and operator did not make that edit. With the operator's authorization,
+eucaly restored the exact `c87e3b7` fixture; its Git blob matches the tested file
+(`dca9be9b72da2dd69476b2f347ca0bbf6a8acc66`). The unexpected diff remains preserved
+for diagnosis. The production runtime was unaffected by this test-only edit.
 Root added the benchmark's first-media event history and fixed-port/native
 process timing markers. Eleven focused timing tests, all 101 receiver unit
 tests, and the optimized device build/install passed. The TV was restored to

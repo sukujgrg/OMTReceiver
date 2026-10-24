@@ -966,12 +966,17 @@
           "testedCommit": "c87e3b748cbdb2bc4b7039b6c84985f32448ed71",
           "unknownEditUTC": "2026-10-24T18:29:21Z",
           "path": "eucalyTests/Network/OMT/OMTProductionStressTests.swift",
-          "effect": "Unverified edit removes generation fence, queued-race regression and resultGeneration ACK from working copy after tested commit.",
-          "author": "Unknown; eucaly owner and reviewer deny making the edit.",
-          "preservedUntouched": true,
+          "effect": "Unverified edit removed generation fence, queued-race regression and resultGeneration ACK from working copy after tested commit; exact tested fixture subsequently restored.",
+          "author": "Unknown; eucaly owner, reviewer and operator deny making the edit.",
+          "initiallyPreservedUntouched": true,
           "committedByThisInvestigation": false,
           "snapshotRelativeToEucaly": "build/OMTStockSDK-20261024/postcommit-unattributed-stress-diff-20261025.patch",
-          "currentWorkingTreeVerified": false,
+          "restorationAuthorizedByOperator": true,
+          "restorationVerifiedUTC": "2026-10-24T18:41:34Z",
+          "restoredGitBlob": "dca9be9b72da2dd69476b2f347ca0bbf6a8acc66",
+          "currentFixtureMatchesTestedCommit": true,
+          "currentWorkingTreeVerified": true,
+          "verificationScope": "Stress fixture exactly matches tested c87e3b7; eucaly owner handles fresh scoped and CI verification.",
           "productionRuntimeChanged": false
         }
       }
