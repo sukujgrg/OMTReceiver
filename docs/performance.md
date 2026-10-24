@@ -1,6 +1,7 @@
 # Hardware observations
 
 Recorded 23–24 October 2026 on a first-generation Apple TV 4K (A10X), tvOS 26.6.
+Application validation was followed up on 25 October 2026.
 These observations do not establish a general production or NDI performance claim.
 
 ## Current candidate: 1.0.0 (5)
@@ -87,15 +88,26 @@ linger, receiver recreation workaround or speculative SDK patch was added.
 
 The final scoped verification passed 34 executions with one opt-in skip; it
 retained two first-frame observations at 5.211/5.235 seconds as four-second
-diagnostic misses. The full app run executed 1,071 cases with seven skips and
-four failure assertions in two pre-existing keyboard-focus test setups. Both
+diagnostic misses. The initial full app run executed 1,071 cases with seven
+skips and four failure assertions in two pre-existing keyboard-focus test setups. Both
 failed to activate the app/make its window key before their behavior checks;
 read-only session inspection confirmed the local Mac was screen-locked with
 loginwindow in front. All network suites passed, including retained-receiver
 recovery at 5.266 seconds, explicitly marked beyond the four-second target.
-The full run is not counted as passing; keyboard-focus validation remains
-blocked by the locked local session. No unrelated test or activation behavior
-was changed to bypass that condition.
+That locked-session run is retained as a failure. No unrelated test or activation
+behavior was changed to bypass that condition.
+
+On 25 October, after the user unlocked the local Mac, both unchanged focus tests
+passed individually and in the full suite's normal order. The new full
+`make test` run passed: 1,071 XCTest cases executed, seven opt-in skips and zero
+failures, plus the separate one-test Swift Testing suite. Retained-receiver
+first-frame times were 236.219/914.150/5,244.965 ms; the final observation is still
+explicitly a four-second diagnostic miss while meeting the separate eight-second
+functional budget. No source or runtime changes were needed. This closes the
+keyboard-focus validation gap; the reconnect and broader qualification limits
+above remain unchanged.
+Eucaly committed the validation-only follow-up locally as `4b28e73`; its
+application code remains `6ec6155`. Neither commit was pushed.
 
 Eucaly saved the integrated work locally as `6ec6155` (no push). Its final
 `make build` archive/export, finite OMT/NDI runtime checks, deep/strict signatures,

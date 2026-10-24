@@ -735,14 +735,41 @@
           "affectedTests": 2,
           "passed": false,
           "networkSuitesPassed": true,
-          "failureScope": "Existing LibrarySearchNavigationTests and LyricsTextViewTests failed their shared app-active/window-key setup; behavioral assertions not reached. Local Mac confirmed screen-locked; focused keyboard validation blocked pending optional unlock.",
+          "failureScope": "Existing LibrarySearchNavigationTests and LyricsTextViewTests failed shared app-active/window-key setup while the local Mac was screen-locked; behavior assertions were not reached. Both unchanged tests later passed individually and in the unlocked full suite.",
           "retainedReceiverFirstFreshMs": [
             248.663,
             5266.211,
             929.76
           ],
           "fourSecondDiagnosticTargetMetForLateFrame": false,
-          "sourceChangedToBypassFocusFailures": false
+          "sourceChangedToBypassFocusFailures": false,
+          "validationWindow": "2026-10-24, locked local session; preserved failed run"
+        },
+        "fullMakeTestUnlocked": {
+          "date": "2026-10-25",
+          "command": "make test",
+          "executions": 1071,
+          "skipped": 7,
+          "assertionFailures": 0,
+          "passed": true,
+          "additionalSwiftTestingCasesPassed": 1,
+          "XCTestDurationSeconds": 273.621,
+          "bothPreviouslyBlockedFocusTestsPassedIndividuallyAndInFullOrder": true,
+          "sourceOrRuntimeChanged": false,
+          "retainedReceiverFirstFreshMs": [
+            236.219,
+            914.15,
+            5244.965
+          ],
+          "fourSecondDiagnosticTargetMetForLateFrame": false,
+          "eightSecondFunctionalBudgetMet": true,
+          "earlierLockedSessionFailurePreserved": true,
+          "logRelativeToEucaly": "build/OMTStockSDK-20261024/unlocked-full-20261025.log",
+          "logSHA256": "ace0aef32ff641260784680c3730e5c63341af5d736faaba2ea1c5ffda0c6a5a",
+          "makeExitCode": 0,
+          "feedRegressionCasesPassed": 7,
+          "releaseWorkflowCasesPassed": 103,
+          "networkArchitectureCheckPassed": true
         }
       },
       "normalProcessExitComparison": {
@@ -797,9 +824,15 @@
       "independentReviewRemainingActionableFindings": 0,
       "liveNetworkHelpersRemaining": 0,
       "physicalDevicesReleased": true,
-      "fullSuitePassed": false,
-      "fullSuiteLimitation": "Two unchanged keyboard-focus setups blocked by confirmed local screen lock; all network suites passed, seven opt-in cases skipped.",
-      "packageVerificationSHA256": "fa9c56f3c8b08e076d120190c701e08543761445f6279b170aabe1921f804cc5"
+      "fullSuitePassed": true,
+      "fullSuiteLimitation": null,
+      "packageVerificationSHA256": "fa9c56f3c8b08e076d120190c701e08543761445f6279b170aabe1921f804cc5",
+      "fullSuiteExecutions": 1071,
+      "fullSuiteSkippedCases": 7,
+      "fullSuiteFailureCount": 0,
+      "unlockedValidationFollowUpDate": "2026-10-25",
+      "earlierLockedSessionFailurePreserved": true,
+      "validationFollowUpCommit": "4b28e7344386af88ff0226cdbb04e873eac7dd17"
     }
   },
   "eucalyExperimentalRuntimeIntegrationCommit": "23639de"
