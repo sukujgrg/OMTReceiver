@@ -6,14 +6,14 @@ acceptance or physical performance.
 
 | Check | Result |
 | --- | --- |
-| App unit regressions | Build 4: 91 passed, including the interlaced pixel/cadence/surface regressions and existing clock/queue checks. |
-| Normal simulator UI suite | Build 4: source picker and privacy/licence remote navigation passed; two external-sender tests are skipped in this scheme. |
+| App unit regressions | Build 5: 99 passed, including the interlaced, clock/queue, source-switching and audio-diagnostic regressions. |
+| Normal simulator UI suite | Build 5: source picker and privacy/licence remote navigation passed; three external-sender tests are skipped in this scheme. |
 | Official-SDK interoperability | Build 4: progressive fullscreen/Back/Play/Pause and interlaced field-order/statistics/reconnect/disconnect tests passed separately at 1080 input lines. |
 | Final document reader | Build 2 remote scrolling, licence access, Back and focus return passed. The unchanged layout was visually inspected before the playback repair. |
-| Benchmark-tool regressions | All 5 passed. Recovery fixture built with warnings treated as errors; four invalid pause-argument cases rejected. |
+| Benchmark-tool regressions | All 14 Python regressions passed. |
 | Public source preflight | Licence, privacy manifest, metadata, icons and tracked-file pattern checks passed. Raw captures, credentials and developer signing overrides are excluded. |
-| Device Release archive | Build 4: signed generic tvOS archive completed with warnings as errors and zero diagnostics; bundle/resource/arm64/signature checks passed. |
-| Local App Store IPA export | Build 4 export passed its App Store profile, signature and no-debug-entitlement checks. Nothing was uploaded. |
+| Device Release archive | Build 5: unsigned CI archive and signed generic tvOS archive passed packaging checks; signed archive used warnings as errors, with zero diagnostics. |
+| Local App Store IPA export | Build 5 export passed its App Store profile, signature, no-debug-entitlement and matching-dSYM checks. Nothing was uploaded. |
 | Public website | Home, support and privacy pages opened successfully; home and policy layouts were visually inspected. |
 
 The CI workflow also builds with GitHub's Xcode 26 runner. A Swift expression in
@@ -245,7 +245,8 @@ Evidence is under ignored `build/QuickSwitcher-20261024/`, including
 The earlier failed UI-focus attempts, sleeping-device launch and test-fixture
 race remain preserved separately. Existing local Xcode formatting/signing-team
 edits were retained; their signing-team value triggers the public-source identity
-audit and must not be published. No new App Store publishing action was requested.
+audit and must not be published. The tracked assignments were subsequently removed
+in the repository release cleanup below. No new App Store publishing action was requested.
 
 The benchmark-tool suite now has 12 passing regressions, including external
 sources, expected audio/format checks and bounded recovery controls. The local
@@ -303,6 +304,37 @@ Debug test host, so this adds scoped hardware evidence rather than Release GUI
 or general production qualification. The rejection-path review and three
 actual-source channel regressions are retained in
 [the follow-up](../docs/performance.md#sdk-rejection-and-parallel-native-output-follow-up).
+
+### Repository release cleanup
+
+The generated project now contains no developer-specific signing-team assignments.
+The original team remains in the ignored `Config/Signing.local.xcconfig`, inherited
+by Debug and Release. Provenance records retain checkout directory names instead
+of absolute machine paths. Signing instructions now use the ignored override.
+
+`make project site check` passes, including the unchanged public-source audit and
+all 14 tooling regressions. The project, both schemes and six generated site files
+match their generators; repeated generation is byte-identical. Normalizing Xcode's
+list/string formatting showed that the only effective project changes are removal
+of the two target-level team assignments. The fresh simulator suite passed 99 unit
+tests and two UI tests, with three expected external-sender skips. Simulator and
+unsigned/signed Release archive logs contain zero compiler warnings or errors.
+
+Fresh build-5 unsigned and signed archives passed resource, arm64 and bundle
+checks. The App Store IPA export passed distribution-profile, signature,
+disabled-debugging and matching-dSYM checks. Evidence is under ignored
+`build/ReleaseCleanup-20261024/`:
+
+- `Tests.xcresult` and `tests.log` — simulator suite with warnings treated as errors.
+- `Unsigned/OMTReceiver.xcarchive` — the unsigned CI archive and its `archive.log`.
+- `Signed/OMTReceiver.xcarchive` — signed Release archive and its `archive.log`.
+- `Export/OMTReceiver.ipa` — local App Store export with `export.log`.
+- `assessment.json` and `generated-check.json` — packaging and reproducibility results.
+
+The IPA SHA-256 is
+`8f701d60389ee75a4328c565bb7e3c99e2c9f2bdd9b8d9d9735599c03c246f53`.
+These are local release checks. No TestFlight upload, Apple server-side validation
+or new physical playback qualification was performed during this cleanup.
 
 ## Hardware results and remaining checks
 

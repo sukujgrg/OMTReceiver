@@ -13,7 +13,7 @@ completed local checks and artifact locations.
 ## Source and local checks
 
 `VERSION` is the marketing-version source; `BUILD_NUMBER` is the default numeric
-build. The current preparation is 1.0.0 (4). Advance the build number for each
+build. The current preparation is 1.0.0 (5). Advance the build number for each
 new App Store Connect upload; do not reuse a previously uploaded version/build.
 
 ```sh
@@ -36,11 +36,12 @@ The minimum SDK guidance was checked against [Apple's current requirements](http
 
 ## Signing and local IPA export
 
-Choose your development team in Xcode or create the ignored file
-`Config/Signing.local.xcconfig` with `DEVELOPMENT_TEAM =` followed by your own
-team identifier. Do not commit a real signing override, certificate, private key,
-provisioning profile or App Store Connect authentication key. The checked-in
-Signing.xcconfig includes the local override when it exists.
+Set your development team in the ignored file `Config/Signing.local.xcconfig`
+with `DEVELOPMENT_TEAM =` followed by your own team identifier. The checked-in
+Signing.xcconfig includes this local override for both Debug and Release.
+Keep team assignments out of the generated project so `make project` preserves
+reproducible public settings. Keep certificates, private keys, provisioning
+profiles and App Store Connect authentication keys outside Git.
 
 ```sh
 make archive

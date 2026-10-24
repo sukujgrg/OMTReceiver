@@ -1,683 +1,121 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = {
-	};
+	classes = {};
 	objectVersion = 56;
 	objects = {
-
-/* Begin PBXBuildFile section */
-		03FC15E4AA5BDA898B0BA23D /* OMTReceiver/Playback/ReceiverTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66BADF2A77DC26DECBEA927 /* OMTReceiver/Playback/ReceiverTimeline.swift */; };
-		09F6F52602A26DEA86CDE4C8 /* OMTReceiver/UI/ReceiverRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731467F1BA5845C0B43BC1A9 /* OMTReceiver/UI/ReceiverRootView.swift */; };
-		0BEFE079DB5BD720EE23C44F /* OMTReceiverTests/ReceiverSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78EE2D5FB2E0E09960BD2714 /* OMTReceiverTests/ReceiverSessionTests.swift */; };
-		0C3565C1AA5D06016DDFD894 /* OMTReceiverUITests/ReceiverInterfaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58CAD05580181EECA9FDD9F1 /* OMTReceiverUITests/ReceiverInterfaceTests.swift */; };
-		37AA968B1A281088868060E8 /* Vendor/libvmx/src/vmxcodec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94E1A280E1D82909E0F5FBE4 /* Vendor/libvmx/src/vmxcodec.cpp */; };
-		395C95F54B072C07CE99A3B2 /* OMTReceiver/Playback/ReceiverVideoCadence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0B0C7D08A90F9010FFCCA6 /* OMTReceiver/Playback/ReceiverVideoCadence.swift */; };
-		47CA318A36221C0B03208ED3 /* OMTReceiver/Transport/OMTProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4137B97411E9500B03F615E /* OMTReceiver/Transport/OMTProtocol.swift */; };
-		4B8794CD36F64124FADAFAB2 /* OMTReceiver/Codec/OMTVMXDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 34E34E2610C7679FE20D591F /* OMTReceiver/Codec/OMTVMXDecoder.cpp */; };
-		4D7780784F30D6C181753066 /* OMTReceiver/Resources/GettingStarted.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3949C6134D419FE1D4EF8363 /* OMTReceiver/Resources/GettingStarted.txt */; };
-		4D8AD733791BD657BC437D27 /* Vendor/libvmx/src/vmxcodec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BD8C8877C66AFAD20D4BAF0F /* Vendor/libvmx/src/vmxcodec_arm.cpp */; };
-		5449605F6D0F662AAAA9392B /* OMTReceiver/Resources/ThirdPartyNotices.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4F6A5B1F53A7D855FD997965 /* OMTReceiver/Resources/ThirdPartyNotices.txt */; };
-		68CEBEB2F250828B23F4CBFA /* OMTReceiverTests/ReceiverVideoCadenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CFC7E7C0407DD776136DF0C /* OMTReceiverTests/ReceiverVideoCadenceTests.swift */; };
-		716E9590E60B3AFA6E62BF18 /* OMTReceiver/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E3132B46F05FCF63ECC5D23F /* OMTReceiver/Assets.xcassets */; };
-		72DD0B5E83DB70E40AC56203 /* OMTReceiver/Transport/OMTDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A271A95946FE1449E69A61CA /* OMTReceiver/Transport/OMTDiscovery.swift */; };
-		74C0DF6AFD64CE61F05654D2 /* OMTReceiver/Diagnostics/ReceiverBenchmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA086E82CECB7BEA8F96F24 /* OMTReceiver/Diagnostics/ReceiverBenchmark.swift */; };
-		8D5A3A012C83C6BAD24AA657 /* OMTReceiverTests/ReceiverVideoQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8642BD4243CD47EFF03201BE /* OMTReceiverTests/ReceiverVideoQueueTests.swift */; };
-		91746F9B302E40F2F64994E7 /* OMTReceiver/ReceiverApplicationResources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDA1DEFBEF30681833D990A /* OMTReceiver/ReceiverApplicationResources.swift */; };
-		9567AB299B1268EE845BAEA3 /* OMTReceiver/Playback/FPA1AudioDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605F466CA74EDF10C5C15E02 /* OMTReceiver/Playback/FPA1AudioDecoder.swift */; };
-		9BF955D1EAE1646B7ADCF5CA /* OMTReceiverTests/ReceiverCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9384F304FC94D26E64FB26E /* OMTReceiverTests/ReceiverCodecTests.swift */; };
-		9C5288704DE46C63AA943260 /* OMTReceiverTests/ReceiverBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56047CDC6AA4649F6F74B985 /* OMTReceiverTests/ReceiverBenchmarkTests.swift */; };
-		9E91F03BADC6DD333AD1FE50 /* OMTReceiverTests/ReceiverInterlacedCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57D6734DC137A6517AC786EF /* OMTReceiverTests/ReceiverInterlacedCodecTests.swift */; };
-		A2FC747A81E1733F71EEEBD2 /* OMTReceiverTests/OMTTransportQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 609DA5FC2AD5B7610A2E8414 /* OMTReceiverTests/OMTTransportQueueTests.swift */; };
-		B479AE2A960FAE2983C0549E /* OMTReceiver/UI/AppInformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD094602DCBE7258277DB67 /* OMTReceiver/UI/AppInformationView.swift */; };
-		BCF022C69202E79A8435CBEE /* OMTReceiver/Playback/ReceiverPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 089342606D4768B7409CA996 /* OMTReceiver/Playback/ReceiverPlayback.swift */; };
-		C7E85F574C490A7134ADBDBE /* OMTReceiver/OMTReceiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F3D362471D565E0C21E3F7 /* OMTReceiver/OMTReceiverApp.swift */; };
-		CC116CA9C2E427AD067F3E98 /* OMTReceiver/Core/OMTTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ADB86156E5EC3DC1030035 /* OMTReceiver/Core/OMTTypes.swift */; };
-		E3ABD033FB4E6A021D61D931 /* OMTReceiverTests/ReceiverCodecThreadTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C13CF7843904C752A61D619 /* OMTReceiverTests/ReceiverCodecThreadTests.mm */; };
-		E64319A43281319216C7BA7A /* OMTReceiverTests/OMTProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3EFD69A217770C7B8ED4FF /* OMTReceiverTests/OMTProtocolTests.swift */; };
-		E9ED0325E7DBBBAB6D7D1918 /* OMTReceiverTests/ReceiverInterlacedNativeTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = B56176C88E6E8D09B20930E9 /* OMTReceiverTests/ReceiverInterlacedNativeTests.mm */; };
-		ED8C2E0187BDE158FD1AC6DC /* OMTReceiver/PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F9582FB1D16ABC13815328E8 /* OMTReceiver/PrivacyInfo.xcprivacy */; };
-		F51D688782945406818D0D1C /* OMTReceiver/Codec/VMXFrameDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A167341F1E11B62D7FC91C3 /* OMTReceiver/Codec/VMXFrameDecoder.swift */; };
-		F5A375913416E2AC6E40AB8C /* OMTReceiverTests/ReceiverCodecSaveTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = D52F5A7766A818250539FC61 /* OMTReceiverTests/ReceiverCodecSaveTests.mm */; };
-		F6105EAB8DB8B827D2E35F0B /* OMTReceiverTests/ReceiverPlaybackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE6E8F48A4BCC9AD4A65E897 /* OMTReceiverTests/ReceiverPlaybackTests.swift */; };
-		F83B70379284A8D7756D145E /* OMTReceiver/Transport/OMTConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B56C3CD50E205BA83127237 /* OMTReceiver/Transport/OMTConnection.swift */; };
-		FEDED1054C4BD9347471718D /* OMTReceiver/ReceiverSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF67AE31C3CBE0B9F015CA24 /* OMTReceiver/ReceiverSession.swift */; };
-		FF7482F4FF6801AC0EA666AC /* OMTReceiver/Resources/PrivacyPolicy.txt in Resources */ = {isa = PBXBuildFile; fileRef = C1E4338FC1130557FEB74107 /* OMTReceiver/Resources/PrivacyPolicy.txt */; };
-		FF8393713FABEA24A6CE3D5E /* OMTReceiver/Playback/ReceiverVideoQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A42D5C152EA6703E3CFE4C /* OMTReceiver/Playback/ReceiverVideoQueue.swift */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		EEE53D504AFCC8D4B0AA715A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F75109BEB4DD8800DA6B45F8;
-			remoteInfo = OMTReceiver;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXFileReference section */
-		089342606D4768B7409CA996 /* OMTReceiver/Playback/ReceiverPlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Playback/ReceiverPlayback.swift; sourceTree = "<group>"; };
-		0D0B0C7D08A90F9010FFCCA6 /* OMTReceiver/Playback/ReceiverVideoCadence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Playback/ReceiverVideoCadence.swift; sourceTree = "<group>"; };
-		120423DBB0FA47E1CF13983C /* Config/Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Signing.xcconfig; sourceTree = "<group>"; };
-		1B56C3CD50E205BA83127237 /* OMTReceiver/Transport/OMTConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Transport/OMTConnection.swift; sourceTree = "<group>"; };
-		1C13CF7843904C752A61D619 /* OMTReceiverTests/ReceiverCodecThreadTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OMTReceiverTests/ReceiverCodecThreadTests.mm; sourceTree = "<group>"; };
-		27A42D5C152EA6703E3CFE4C /* OMTReceiver/Playback/ReceiverVideoQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Playback/ReceiverVideoQueue.swift; sourceTree = "<group>"; };
-		2DDA1DEFBEF30681833D990A /* OMTReceiver/ReceiverApplicationResources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/ReceiverApplicationResources.swift; sourceTree = "<group>"; };
-		34E34E2610C7679FE20D591F /* OMTReceiver/Codec/OMTVMXDecoder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = OMTReceiver/Codec/OMTVMXDecoder.cpp; sourceTree = "<group>"; };
-		3949C6134D419FE1D4EF8363 /* OMTReceiver/Resources/GettingStarted.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OMTReceiver/Resources/GettingStarted.txt; sourceTree = "<group>"; };
-		3DD094602DCBE7258277DB67 /* OMTReceiver/UI/AppInformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/UI/AppInformationView.swift; sourceTree = "<group>"; };
-		4E3EFD69A217770C7B8ED4FF /* OMTReceiverTests/OMTProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/OMTProtocolTests.swift; sourceTree = "<group>"; };
-		4E783A9E10D2A8ABA38CD11C /* OMTReceiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OMTReceiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4F6A5B1F53A7D855FD997965 /* OMTReceiver/Resources/ThirdPartyNotices.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OMTReceiver/Resources/ThirdPartyNotices.txt; sourceTree = "<group>"; };
-		56047CDC6AA4649F6F74B985 /* OMTReceiverTests/ReceiverBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/ReceiverBenchmarkTests.swift; sourceTree = "<group>"; };
-		57D6734DC137A6517AC786EF /* OMTReceiverTests/ReceiverInterlacedCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/ReceiverInterlacedCodecTests.swift; sourceTree = "<group>"; };
-		58CAD05580181EECA9FDD9F1 /* OMTReceiverUITests/ReceiverInterfaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverUITests/ReceiverInterfaceTests.swift; sourceTree = "<group>"; };
-		605F466CA74EDF10C5C15E02 /* OMTReceiver/Playback/FPA1AudioDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Playback/FPA1AudioDecoder.swift; sourceTree = "<group>"; };
-		609DA5FC2AD5B7610A2E8414 /* OMTReceiverTests/OMTTransportQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/OMTTransportQueueTests.swift; sourceTree = "<group>"; };
-		6C7CCDEB3609F1FAA874E941 /* OMTReceiverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OMTReceiverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		731467F1BA5845C0B43BC1A9 /* OMTReceiver/UI/ReceiverRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/UI/ReceiverRootView.swift; sourceTree = "<group>"; };
-		78EE2D5FB2E0E09960BD2714 /* OMTReceiverTests/ReceiverSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/ReceiverSessionTests.swift; sourceTree = "<group>"; };
-		7CFC7E7C0407DD776136DF0C /* OMTReceiverTests/ReceiverVideoCadenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/ReceiverVideoCadenceTests.swift; sourceTree = "<group>"; };
-		8642BD4243CD47EFF03201BE /* OMTReceiverTests/ReceiverVideoQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/ReceiverVideoQueueTests.swift; sourceTree = "<group>"; };
-		91BA5FB818035E243182FD23 /* OMTReceiver/Codec/OMTReceiver-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OMTReceiver/Codec/OMTReceiver-Bridging-Header.h"; sourceTree = "<group>"; };
-		94E1A280E1D82909E0F5FBE4 /* Vendor/libvmx/src/vmxcodec.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Vendor/libvmx/src/vmxcodec.cpp; sourceTree = "<group>"; };
-		9A167341F1E11B62D7FC91C3 /* OMTReceiver/Codec/VMXFrameDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Codec/VMXFrameDecoder.swift; sourceTree = "<group>"; };
-		9B7BED31F6F48AD5D908B2BC /* OMTReceiverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OMTReceiverUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		9CA086E82CECB7BEA8F96F24 /* OMTReceiver/Diagnostics/ReceiverBenchmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Diagnostics/ReceiverBenchmark.swift; sourceTree = "<group>"; };
-		A271A95946FE1449E69A61CA /* OMTReceiver/Transport/OMTDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Transport/OMTDiscovery.swift; sourceTree = "<group>"; };
-		AA4ACA445B3FBAF47CDE31AC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		B4137B97411E9500B03F615E /* OMTReceiver/Transport/OMTProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Transport/OMTProtocol.swift; sourceTree = "<group>"; };
-		B56176C88E6E8D09B20930E9 /* OMTReceiverTests/ReceiverInterlacedNativeTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OMTReceiverTests/ReceiverInterlacedNativeTests.mm; sourceTree = "<group>"; };
-		B6BCC373F2120F03737EFAC9 /* OMTReceiver/Codec/OMTVMXDecoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OMTReceiver/Codec/OMTVMXDecoder.h; sourceTree = "<group>"; };
-		B9216BFF98B076DBE62A15E0 /* Vendor/libvmx/LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Vendor/libvmx/LICENSE.txt; sourceTree = "<group>"; };
-		BD8C8877C66AFAD20D4BAF0F /* Vendor/libvmx/src/vmxcodec_arm.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Vendor/libvmx/src/vmxcodec_arm.cpp; sourceTree = "<group>"; };
-		C1E4338FC1130557FEB74107 /* OMTReceiver/Resources/PrivacyPolicy.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OMTReceiver/Resources/PrivacyPolicy.txt; sourceTree = "<group>"; };
-		C3ADB86156E5EC3DC1030035 /* OMTReceiver/Core/OMTTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Core/OMTTypes.swift; sourceTree = "<group>"; };
-		CEF448872E59FFE043943228 /* OMTReceiver/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = OMTReceiver/Info.plist; sourceTree = "<group>"; };
-		D52F5A7766A818250539FC61 /* OMTReceiverTests/ReceiverCodecSaveTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OMTReceiverTests/ReceiverCodecSaveTests.mm; sourceTree = "<group>"; };
-		DF67AE31C3CBE0B9F015CA24 /* OMTReceiver/ReceiverSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/ReceiverSession.swift; sourceTree = "<group>"; };
-		E3132B46F05FCF63ECC5D23F /* OMTReceiver/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = OMTReceiver/Assets.xcassets; sourceTree = "<group>"; };
-		E8F3D362471D565E0C21E3F7 /* OMTReceiver/OMTReceiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/OMTReceiverApp.swift; sourceTree = "<group>"; };
-		E9384F304FC94D26E64FB26E /* OMTReceiverTests/ReceiverCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/ReceiverCodecTests.swift; sourceTree = "<group>"; };
-		EE6E8F48A4BCC9AD4A65E897 /* OMTReceiverTests/ReceiverPlaybackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiverTests/ReceiverPlaybackTests.swift; sourceTree = "<group>"; };
-		F66BADF2A77DC26DECBEA927 /* OMTReceiver/Playback/ReceiverTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMTReceiver/Playback/ReceiverTimeline.swift; sourceTree = "<group>"; };
-		F9582FB1D16ABC13815328E8 /* OMTReceiver/PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = OMTReceiver/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-/* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		7561BFB015D8F536760CB671 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXGroup section */
-		0F2612BBE722F8B97292B1A7 /* UI Tests */ = {
-			isa = PBXGroup;
-			children = (
-				58CAD05580181EECA9FDD9F1 /* OMTReceiverUITests/ReceiverInterfaceTests.swift */,
-			);
-			name = "UI Tests";
-			sourceTree = "<group>";
-		};
-		870B3294C0CBD48AF6BBCC1B = {
-			isa = PBXGroup;
-			children = (
-				96DC7B6B5526E30EFB51C316 /* Application */,
-				E717C295FF9827DFF805D88B /* Tests */,
-				0F2612BBE722F8B97292B1A7 /* UI Tests */,
-				BC680D32C38B5C7B17604822 /* VMX Codec (MIT) */,
-				AA4ACA445B3FBAF47CDE31AC /* README.md */,
-				120423DBB0FA47E1CF13983C /* Config/Signing.xcconfig */,
-				FBDC4F23F93125BBEEAE800C /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		96DC7B6B5526E30EFB51C316 /* Application */ = {
-			isa = PBXGroup;
-			children = (
-				34E34E2610C7679FE20D591F /* OMTReceiver/Codec/OMTVMXDecoder.cpp */,
-				9A167341F1E11B62D7FC91C3 /* OMTReceiver/Codec/VMXFrameDecoder.swift */,
-				C3ADB86156E5EC3DC1030035 /* OMTReceiver/Core/OMTTypes.swift */,
-				9CA086E82CECB7BEA8F96F24 /* OMTReceiver/Diagnostics/ReceiverBenchmark.swift */,
-				E8F3D362471D565E0C21E3F7 /* OMTReceiver/OMTReceiverApp.swift */,
-				605F466CA74EDF10C5C15E02 /* OMTReceiver/Playback/FPA1AudioDecoder.swift */,
-				089342606D4768B7409CA996 /* OMTReceiver/Playback/ReceiverPlayback.swift */,
-				F66BADF2A77DC26DECBEA927 /* OMTReceiver/Playback/ReceiverTimeline.swift */,
-				0D0B0C7D08A90F9010FFCCA6 /* OMTReceiver/Playback/ReceiverVideoCadence.swift */,
-				27A42D5C152EA6703E3CFE4C /* OMTReceiver/Playback/ReceiverVideoQueue.swift */,
-				2DDA1DEFBEF30681833D990A /* OMTReceiver/ReceiverApplicationResources.swift */,
-				DF67AE31C3CBE0B9F015CA24 /* OMTReceiver/ReceiverSession.swift */,
-				1B56C3CD50E205BA83127237 /* OMTReceiver/Transport/OMTConnection.swift */,
-				A271A95946FE1449E69A61CA /* OMTReceiver/Transport/OMTDiscovery.swift */,
-				B4137B97411E9500B03F615E /* OMTReceiver/Transport/OMTProtocol.swift */,
-				3DD094602DCBE7258277DB67 /* OMTReceiver/UI/AppInformationView.swift */,
-				731467F1BA5845C0B43BC1A9 /* OMTReceiver/UI/ReceiverRootView.swift */,
-				91BA5FB818035E243182FD23 /* OMTReceiver/Codec/OMTReceiver-Bridging-Header.h */,
-				B6BCC373F2120F03737EFAC9 /* OMTReceiver/Codec/OMTVMXDecoder.h */,
-				CEF448872E59FFE043943228 /* OMTReceiver/Info.plist */,
-				E3132B46F05FCF63ECC5D23F /* OMTReceiver/Assets.xcassets */,
-				F9582FB1D16ABC13815328E8 /* OMTReceiver/PrivacyInfo.xcprivacy */,
-				3949C6134D419FE1D4EF8363 /* OMTReceiver/Resources/GettingStarted.txt */,
-				C1E4338FC1130557FEB74107 /* OMTReceiver/Resources/PrivacyPolicy.txt */,
-				4F6A5B1F53A7D855FD997965 /* OMTReceiver/Resources/ThirdPartyNotices.txt */,
-			);
-			name = Application;
-			sourceTree = "<group>";
-		};
-		BC680D32C38B5C7B17604822 /* VMX Codec (MIT) */ = {
-			isa = PBXGroup;
-			children = (
-				94E1A280E1D82909E0F5FBE4 /* Vendor/libvmx/src/vmxcodec.cpp */,
-				BD8C8877C66AFAD20D4BAF0F /* Vendor/libvmx/src/vmxcodec_arm.cpp */,
-				B9216BFF98B076DBE62A15E0 /* Vendor/libvmx/LICENSE.txt */,
-			);
-			name = "VMX Codec (MIT)";
-			sourceTree = "<group>";
-		};
-		E717C295FF9827DFF805D88B /* Tests */ = {
-			isa = PBXGroup;
-			children = (
-				4E3EFD69A217770C7B8ED4FF /* OMTReceiverTests/OMTProtocolTests.swift */,
-				609DA5FC2AD5B7610A2E8414 /* OMTReceiverTests/OMTTransportQueueTests.swift */,
-				56047CDC6AA4649F6F74B985 /* OMTReceiverTests/ReceiverBenchmarkTests.swift */,
-				D52F5A7766A818250539FC61 /* OMTReceiverTests/ReceiverCodecSaveTests.mm */,
-				E9384F304FC94D26E64FB26E /* OMTReceiverTests/ReceiverCodecTests.swift */,
-				1C13CF7843904C752A61D619 /* OMTReceiverTests/ReceiverCodecThreadTests.mm */,
-				57D6734DC137A6517AC786EF /* OMTReceiverTests/ReceiverInterlacedCodecTests.swift */,
-				B56176C88E6E8D09B20930E9 /* OMTReceiverTests/ReceiverInterlacedNativeTests.mm */,
-				EE6E8F48A4BCC9AD4A65E897 /* OMTReceiverTests/ReceiverPlaybackTests.swift */,
-				78EE2D5FB2E0E09960BD2714 /* OMTReceiverTests/ReceiverSessionTests.swift */,
-				7CFC7E7C0407DD776136DF0C /* OMTReceiverTests/ReceiverVideoCadenceTests.swift */,
-				8642BD4243CD47EFF03201BE /* OMTReceiverTests/ReceiverVideoQueueTests.swift */,
-			);
-			name = Tests;
-			sourceTree = "<group>";
-		};
-		FBDC4F23F93125BBEEAE800C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				4E783A9E10D2A8ABA38CD11C /* OMTReceiver.app */,
-				6C7CCDEB3609F1FAA874E941 /* OMTReceiverTests.xctest */,
-				9B7BED31F6F48AD5D908B2BC /* OMTReceiverUITests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-/* End PBXGroup section */
-
-/* Begin PBXNativeTarget section */
-		794AAC98ACE6EB716B86C3A5 /* OMTReceiverUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 43B3EEFD7E6773C458696A2C /* Build configuration list for PBXNativeTarget "OMTReceiverUITests" */;
-			buildPhases = (
-				F9ACDEB529017EFC18F5E60A /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AA912C4D9FBD473D0F05C6A5 /* PBXTargetDependency */,
-			);
-			name = OMTReceiverUITests;
-			productName = OMTReceiverUITests;
-			productReference = 9B7BED31F6F48AD5D908B2BC /* OMTReceiverUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
-		C062A5A4A7F4F37DD90F54CB /* OMTReceiverTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 7456573A07C28463D34C2FFC /* Build configuration list for PBXNativeTarget "OMTReceiverTests" */;
-			buildPhases = (
-				77A03FEE20FE96AD9384861E /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AA912C4D9FBD473D0F05C6A5 /* PBXTargetDependency */,
-			);
-			name = OMTReceiverTests;
-			productName = OMTReceiverTests;
-			productReference = 6C7CCDEB3609F1FAA874E941 /* OMTReceiverTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		F75109BEB4DD8800DA6B45F8 /* OMTReceiver */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 268D2D29669C504AD910B275 /* Build configuration list for PBXNativeTarget "OMTReceiver" */;
-			buildPhases = (
-				949D493B91791558E87BC5D7 /* Sources */,
-				7561BFB015D8F536760CB671 /* Frameworks */,
-				0189424A5A60FED329FA868E /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = OMTReceiver;
-			productName = OMTReceiver;
-			productReference = 4E783A9E10D2A8ABA38CD11C /* OMTReceiver.app */;
-			productType = "com.apple.product-type.application";
-		};
-/* End PBXNativeTarget section */
-
-/* Begin PBXProject section */
-		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
-			isa = PBXProject;
-			attributes = {
-				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2710;
-				TargetAttributes = {
-					794AAC98ACE6EB716B86C3A5 = {
-						CreatedOnToolsVersion = 27.1;
-						TestTargetID = F75109BEB4DD8800DA6B45F8;
-					};
-					C062A5A4A7F4F37DD90F54CB = {
-						CreatedOnToolsVersion = 27.1;
-						TestTargetID = F75109BEB4DD8800DA6B45F8;
-					};
-					F75109BEB4DD8800DA6B45F8 = {
-						CreatedOnToolsVersion = 27.1;
-					};
-				};
-			};
-			buildConfigurationList = 6650A2B5E24FA7522CE6B81C /* Build configuration list for PBXProject "OMTReceiver" */;
-			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = en;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-				Base,
-			);
-			mainGroup = 870B3294C0CBD48AF6BBCC1B;
-			productRefGroup = FBDC4F23F93125BBEEAE800C /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				F75109BEB4DD8800DA6B45F8 /* OMTReceiver */,
-				C062A5A4A7F4F37DD90F54CB /* OMTReceiverTests */,
-				794AAC98ACE6EB716B86C3A5 /* OMTReceiverUITests */,
-			);
-		};
-/* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		0189424A5A60FED329FA868E /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				716E9590E60B3AFA6E62BF18 /* OMTReceiver/Assets.xcassets in Resources */,
-				ED8C2E0187BDE158FD1AC6DC /* OMTReceiver/PrivacyInfo.xcprivacy in Resources */,
-				4D7780784F30D6C181753066 /* OMTReceiver/Resources/GettingStarted.txt in Resources */,
-				FF7482F4FF6801AC0EA666AC /* OMTReceiver/Resources/PrivacyPolicy.txt in Resources */,
-				5449605F6D0F662AAAA9392B /* OMTReceiver/Resources/ThirdPartyNotices.txt in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		77A03FEE20FE96AD9384861E /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				E64319A43281319216C7BA7A /* OMTReceiverTests/OMTProtocolTests.swift in Sources */,
-				A2FC747A81E1733F71EEEBD2 /* OMTReceiverTests/OMTTransportQueueTests.swift in Sources */,
-				9C5288704DE46C63AA943260 /* OMTReceiverTests/ReceiverBenchmarkTests.swift in Sources */,
-				F5A375913416E2AC6E40AB8C /* OMTReceiverTests/ReceiverCodecSaveTests.mm in Sources */,
-				9BF955D1EAE1646B7ADCF5CA /* OMTReceiverTests/ReceiverCodecTests.swift in Sources */,
-				E3ABD033FB4E6A021D61D931 /* OMTReceiverTests/ReceiverCodecThreadTests.mm in Sources */,
-				9E91F03BADC6DD333AD1FE50 /* OMTReceiverTests/ReceiverInterlacedCodecTests.swift in Sources */,
-				E9ED0325E7DBBBAB6D7D1918 /* OMTReceiverTests/ReceiverInterlacedNativeTests.mm in Sources */,
-				F6105EAB8DB8B827D2E35F0B /* OMTReceiverTests/ReceiverPlaybackTests.swift in Sources */,
-				0BEFE079DB5BD720EE23C44F /* OMTReceiverTests/ReceiverSessionTests.swift in Sources */,
-				68CEBEB2F250828B23F4CBFA /* OMTReceiverTests/ReceiverVideoCadenceTests.swift in Sources */,
-				8D5A3A012C83C6BAD24AA657 /* OMTReceiverTests/ReceiverVideoQueueTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		949D493B91791558E87BC5D7 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4B8794CD36F64124FADAFAB2 /* OMTReceiver/Codec/OMTVMXDecoder.cpp in Sources */,
-				F51D688782945406818D0D1C /* OMTReceiver/Codec/VMXFrameDecoder.swift in Sources */,
-				CC116CA9C2E427AD067F3E98 /* OMTReceiver/Core/OMTTypes.swift in Sources */,
-				74C0DF6AFD64CE61F05654D2 /* OMTReceiver/Diagnostics/ReceiverBenchmark.swift in Sources */,
-				C7E85F574C490A7134ADBDBE /* OMTReceiver/OMTReceiverApp.swift in Sources */,
-				9567AB299B1268EE845BAEA3 /* OMTReceiver/Playback/FPA1AudioDecoder.swift in Sources */,
-				BCF022C69202E79A8435CBEE /* OMTReceiver/Playback/ReceiverPlayback.swift in Sources */,
-				03FC15E4AA5BDA898B0BA23D /* OMTReceiver/Playback/ReceiverTimeline.swift in Sources */,
-				395C95F54B072C07CE99A3B2 /* OMTReceiver/Playback/ReceiverVideoCadence.swift in Sources */,
-				FF8393713FABEA24A6CE3D5E /* OMTReceiver/Playback/ReceiverVideoQueue.swift in Sources */,
-				91746F9B302E40F2F64994E7 /* OMTReceiver/ReceiverApplicationResources.swift in Sources */,
-				FEDED1054C4BD9347471718D /* OMTReceiver/ReceiverSession.swift in Sources */,
-				F83B70379284A8D7756D145E /* OMTReceiver/Transport/OMTConnection.swift in Sources */,
-				72DD0B5E83DB70E40AC56203 /* OMTReceiver/Transport/OMTDiscovery.swift in Sources */,
-				47CA318A36221C0B03208ED3 /* OMTReceiver/Transport/OMTProtocol.swift in Sources */,
-				B479AE2A960FAE2983C0549E /* OMTReceiver/UI/AppInformationView.swift in Sources */,
-				09F6F52602A26DEA86CDE4C8 /* OMTReceiver/UI/ReceiverRootView.swift in Sources */,
-				37AA968B1A281088868060E8 /* Vendor/libvmx/src/vmxcodec.cpp in Sources */,
-				4D8AD733791BD657BC437D27 /* Vendor/libvmx/src/vmxcodec_arm.cpp in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F9ACDEB529017EFC18F5E60A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				0C3565C1AA5D06016DDFD894 /* OMTReceiverUITests/ReceiverInterfaceTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		AA912C4D9FBD473D0F05C6A5 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F75109BEB4DD8800DA6B45F8 /* OMTReceiver */;
-			targetProxy = EEE53D504AFCC8D4B0AA715A /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin XCBuildConfiguration section */
-		00F209874A1F7309F6DCEAA7 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 120423DBB0FA47E1CF13983C /* Config/Signing.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = E5N29VFW8T;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				LM_SKIP_METADATA_EXTRACTION = YES;
-				OMT_RUN_INTERLACED_INTEROP = 0;
-				OMT_RUN_INTEROP = 0;
-				ONLY_ACTIVE_ARCH = NO;
-				SDKROOT = appletvos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_STRICT_CONCURRENCY = targeted;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 17.0;
-			};
-			name = Release;
-		};
-		04B042A5E7A3FDC0670ED689 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(inherited)",
-					"-fdeclspec",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.suku.OMTReceiverTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OMTReceiver.app/OMTReceiver";
-			};
-			name = Release;
-		};
-		DF53765BF9D03B65CB04A4C8 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(inherited)",
-					"-fdeclspec",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.suku.OMTReceiverTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OMTReceiver.app/OMTReceiver";
-			};
-			name = Debug;
-		};
-		ED8772ADEC3A6C25161BC957 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 120423DBB0FA47E1CF13983C /* Config/Signing.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = E5N29VFW8T;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				LM_SKIP_METADATA_EXTRACTION = YES;
-				OMT_RUN_INTERLACED_INTEROP = 0;
-				OMT_RUN_INTEROP = 0;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = appletvos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_COMPILATION_MODE = incremental;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_STRICT_CONCURRENCY = targeted;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 17.0;
-			};
-			name = Debug;
-		};
-		ED8847D51DE6E0D4EADA35AA /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				GENERATE_INFOPLIST_FILE = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.suku.OMTReceiverUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_TARGET_NAME = OMTReceiver;
-			};
-			name = Debug;
-		};
-		F72D4F08E84CA4C7F809A7CF /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
-				ENABLE_PREVIEWS = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GENERATE_INFOPLIST_FILE = NO;
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Vendor/libvmx/src",
-					"$(SRCROOT)/OMTReceiver/Codec",
-				);
-				INFOPLIST_FILE = OMTReceiver/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(inherited)",
-					"-fdeclspec",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.suku.OMTReceiver;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "OMTReceiver/Codec/OMTReceiver-Bridging-Header.h";
-			};
-			name = Release;
-		};
-		F8975E934DA2067E0E497395 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
-				ENABLE_PREVIEWS = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GENERATE_INFOPLIST_FILE = NO;
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Vendor/libvmx/src",
-					"$(SRCROOT)/OMTReceiver/Codec",
-				);
-				INFOPLIST_FILE = OMTReceiver/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(inherited)",
-					"-fdeclspec",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.suku.OMTReceiver;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "OMTReceiver/Codec/OMTReceiver-Bridging-Header.h";
-			};
-			name = Debug;
-		};
-		F9214DA8E96B6B2035CF9A7D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				GENERATE_INFOPLIST_FILE = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.suku.OMTReceiverUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_TARGET_NAME = OMTReceiver;
-			};
-			name = Release;
-		};
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		268D2D29669C504AD910B275 /* Build configuration list for PBXNativeTarget "OMTReceiver" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F8975E934DA2067E0E497395 /* Debug */,
-				F72D4F08E84CA4C7F809A7CF /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		43B3EEFD7E6773C458696A2C /* Build configuration list for PBXNativeTarget "OMTReceiverUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				ED8847D51DE6E0D4EADA35AA /* Debug */,
-				F9214DA8E96B6B2035CF9A7D /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		6650A2B5E24FA7522CE6B81C /* Build configuration list for PBXProject "OMTReceiver" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				ED8772ADEC3A6C25161BC957 /* Debug */,
-				00F209874A1F7309F6DCEAA7 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		7456573A07C28463D34C2FFC /* Build configuration list for PBXNativeTarget "OMTReceiverTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				DF53765BF9D03B65CB04A4C8 /* Debug */,
-				04B042A5E7A3FDC0670ED689 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-/* End XCConfigurationList section */
+		34E34E2610C7679FE20D591F = { isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "OMTReceiver/Codec/OMTVMXDecoder.cpp"; sourceTree = "<group>"; };
+		9A167341F1E11B62D7FC91C3 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Codec/VMXFrameDecoder.swift"; sourceTree = "<group>"; };
+		C3ADB86156E5EC3DC1030035 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Core/OMTTypes.swift"; sourceTree = "<group>"; };
+		9CA086E82CECB7BEA8F96F24 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Diagnostics/ReceiverBenchmark.swift"; sourceTree = "<group>"; };
+		E8F3D362471D565E0C21E3F7 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/OMTReceiverApp.swift"; sourceTree = "<group>"; };
+		605F466CA74EDF10C5C15E02 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Playback/FPA1AudioDecoder.swift"; sourceTree = "<group>"; };
+		089342606D4768B7409CA996 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Playback/ReceiverPlayback.swift"; sourceTree = "<group>"; };
+		F66BADF2A77DC26DECBEA927 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Playback/ReceiverTimeline.swift"; sourceTree = "<group>"; };
+		0D0B0C7D08A90F9010FFCCA6 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Playback/ReceiverVideoCadence.swift"; sourceTree = "<group>"; };
+		27A42D5C152EA6703E3CFE4C = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Playback/ReceiverVideoQueue.swift"; sourceTree = "<group>"; };
+		2DDA1DEFBEF30681833D990A = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/ReceiverApplicationResources.swift"; sourceTree = "<group>"; };
+		DF67AE31C3CBE0B9F015CA24 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/ReceiverSession.swift"; sourceTree = "<group>"; };
+		1B56C3CD50E205BA83127237 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Transport/OMTConnection.swift"; sourceTree = "<group>"; };
+		A271A95946FE1449E69A61CA = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Transport/OMTDiscovery.swift"; sourceTree = "<group>"; };
+		B4137B97411E9500B03F615E = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/Transport/OMTProtocol.swift"; sourceTree = "<group>"; };
+		3DD094602DCBE7258277DB67 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/UI/AppInformationView.swift"; sourceTree = "<group>"; };
+		731467F1BA5845C0B43BC1A9 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiver/UI/ReceiverRootView.swift"; sourceTree = "<group>"; };
+		94E1A280E1D82909E0F5FBE4 = { isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "Vendor/libvmx/src/vmxcodec.cpp"; sourceTree = "<group>"; };
+		BD8C8877C66AFAD20D4BAF0F = { isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "Vendor/libvmx/src/vmxcodec_arm.cpp"; sourceTree = "<group>"; };
+		4E3EFD69A217770C7B8ED4FF = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/OMTProtocolTests.swift"; sourceTree = "<group>"; };
+		609DA5FC2AD5B7610A2E8414 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/OMTTransportQueueTests.swift"; sourceTree = "<group>"; };
+		56047CDC6AA4649F6F74B985 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/ReceiverBenchmarkTests.swift"; sourceTree = "<group>"; };
+		D52F5A7766A818250539FC61 = { isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "OMTReceiverTests/ReceiverCodecSaveTests.mm"; sourceTree = "<group>"; };
+		E9384F304FC94D26E64FB26E = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/ReceiverCodecTests.swift"; sourceTree = "<group>"; };
+		1C13CF7843904C752A61D619 = { isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "OMTReceiverTests/ReceiverCodecThreadTests.mm"; sourceTree = "<group>"; };
+		57D6734DC137A6517AC786EF = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/ReceiverInterlacedCodecTests.swift"; sourceTree = "<group>"; };
+		B56176C88E6E8D09B20930E9 = { isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "OMTReceiverTests/ReceiverInterlacedNativeTests.mm"; sourceTree = "<group>"; };
+		EE6E8F48A4BCC9AD4A65E897 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/ReceiverPlaybackTests.swift"; sourceTree = "<group>"; };
+		78EE2D5FB2E0E09960BD2714 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/ReceiverSessionTests.swift"; sourceTree = "<group>"; };
+		7CFC7E7C0407DD776136DF0C = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/ReceiverVideoCadenceTests.swift"; sourceTree = "<group>"; };
+		8642BD4243CD47EFF03201BE = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverTests/ReceiverVideoQueueTests.swift"; sourceTree = "<group>"; };
+		58CAD05580181EECA9FDD9F1 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OMTReceiverUITests/ReceiverInterfaceTests.swift"; sourceTree = "<group>"; };
+		91BA5FB818035E243182FD23 = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OMTReceiver/Codec/OMTReceiver-Bridging-Header.h"; sourceTree = "<group>"; };
+		B6BCC373F2120F03737EFAC9 = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OMTReceiver/Codec/OMTVMXDecoder.h"; sourceTree = "<group>"; };
+		E3132B46F05FCF63ECC5D23F = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "OMTReceiver/Assets.xcassets"; sourceTree = "<group>"; };
+		120423DBB0FA47E1CF13983C = { isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "Config/Signing.xcconfig"; sourceTree = "<group>"; };
+		F9582FB1D16ABC13815328E8 = { isa = PBXFileReference; lastKnownFileType = text.xml; path = "OMTReceiver/PrivacyInfo.xcprivacy"; sourceTree = "<group>"; };
+		3949C6134D419FE1D4EF8363 = { isa = PBXFileReference; lastKnownFileType = text; path = "OMTReceiver/Resources/GettingStarted.txt"; sourceTree = "<group>"; };
+		C1E4338FC1130557FEB74107 = { isa = PBXFileReference; lastKnownFileType = text; path = "OMTReceiver/Resources/PrivacyPolicy.txt"; sourceTree = "<group>"; };
+		4F6A5B1F53A7D855FD997965 = { isa = PBXFileReference; lastKnownFileType = text; path = "OMTReceiver/Resources/ThirdPartyNotices.txt"; sourceTree = "<group>"; };
+		CEF448872E59FFE043943228 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "OMTReceiver/Info.plist"; sourceTree = "<group>"; };
+		AA4ACA445B3FBAF47CDE31AC = { isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "README.md"; sourceTree = "<group>"; };
+		B9216BFF98B076DBE62A15E0 = { isa = PBXFileReference; lastKnownFileType = text; path = "Vendor/libvmx/LICENSE.txt"; sourceTree = "<group>"; };
+		4E783A9E10D2A8ABA38CD11C = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OMTReceiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C7CCDEB3609F1FAA874E941 = { isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OMTReceiverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9B7BED31F6F48AD5D908B2BC = { isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OMTReceiverUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B8794CD36F64124FADAFAB2 = { isa = PBXBuildFile; fileRef = 34E34E2610C7679FE20D591F; };
+		F51D688782945406818D0D1C = { isa = PBXBuildFile; fileRef = 9A167341F1E11B62D7FC91C3; };
+		CC116CA9C2E427AD067F3E98 = { isa = PBXBuildFile; fileRef = C3ADB86156E5EC3DC1030035; };
+		74C0DF6AFD64CE61F05654D2 = { isa = PBXBuildFile; fileRef = 9CA086E82CECB7BEA8F96F24; };
+		C7E85F574C490A7134ADBDBE = { isa = PBXBuildFile; fileRef = E8F3D362471D565E0C21E3F7; };
+		9567AB299B1268EE845BAEA3 = { isa = PBXBuildFile; fileRef = 605F466CA74EDF10C5C15E02; };
+		BCF022C69202E79A8435CBEE = { isa = PBXBuildFile; fileRef = 089342606D4768B7409CA996; };
+		03FC15E4AA5BDA898B0BA23D = { isa = PBXBuildFile; fileRef = F66BADF2A77DC26DECBEA927; };
+		395C95F54B072C07CE99A3B2 = { isa = PBXBuildFile; fileRef = 0D0B0C7D08A90F9010FFCCA6; };
+		FF8393713FABEA24A6CE3D5E = { isa = PBXBuildFile; fileRef = 27A42D5C152EA6703E3CFE4C; };
+		91746F9B302E40F2F64994E7 = { isa = PBXBuildFile; fileRef = 2DDA1DEFBEF30681833D990A; };
+		FEDED1054C4BD9347471718D = { isa = PBXBuildFile; fileRef = DF67AE31C3CBE0B9F015CA24; };
+		F83B70379284A8D7756D145E = { isa = PBXBuildFile; fileRef = 1B56C3CD50E205BA83127237; };
+		72DD0B5E83DB70E40AC56203 = { isa = PBXBuildFile; fileRef = A271A95946FE1449E69A61CA; };
+		47CA318A36221C0B03208ED3 = { isa = PBXBuildFile; fileRef = B4137B97411E9500B03F615E; };
+		B479AE2A960FAE2983C0549E = { isa = PBXBuildFile; fileRef = 3DD094602DCBE7258277DB67; };
+		09F6F52602A26DEA86CDE4C8 = { isa = PBXBuildFile; fileRef = 731467F1BA5845C0B43BC1A9; };
+		37AA968B1A281088868060E8 = { isa = PBXBuildFile; fileRef = 94E1A280E1D82909E0F5FBE4; };
+		4D8AD733791BD657BC437D27 = { isa = PBXBuildFile; fileRef = BD8C8877C66AFAD20D4BAF0F; };
+		949D493B91791558E87BC5D7 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (4B8794CD36F64124FADAFAB2, F51D688782945406818D0D1C, CC116CA9C2E427AD067F3E98, 74C0DF6AFD64CE61F05654D2, C7E85F574C490A7134ADBDBE, 9567AB299B1268EE845BAEA3, BCF022C69202E79A8435CBEE, 03FC15E4AA5BDA898B0BA23D, 395C95F54B072C07CE99A3B2, FF8393713FABEA24A6CE3D5E, 91746F9B302E40F2F64994E7, FEDED1054C4BD9347471718D, F83B70379284A8D7756D145E, 72DD0B5E83DB70E40AC56203, 47CA318A36221C0B03208ED3, B479AE2A960FAE2983C0549E, 09F6F52602A26DEA86CDE4C8, 37AA968B1A281088868060E8, 4D8AD733791BD657BC437D27,); runOnlyForDeploymentPostprocessing = 0; };
+		E64319A43281319216C7BA7A = { isa = PBXBuildFile; fileRef = 4E3EFD69A217770C7B8ED4FF; };
+		A2FC747A81E1733F71EEEBD2 = { isa = PBXBuildFile; fileRef = 609DA5FC2AD5B7610A2E8414; };
+		9C5288704DE46C63AA943260 = { isa = PBXBuildFile; fileRef = 56047CDC6AA4649F6F74B985; };
+		F5A375913416E2AC6E40AB8C = { isa = PBXBuildFile; fileRef = D52F5A7766A818250539FC61; };
+		9BF955D1EAE1646B7ADCF5CA = { isa = PBXBuildFile; fileRef = E9384F304FC94D26E64FB26E; };
+		E3ABD033FB4E6A021D61D931 = { isa = PBXBuildFile; fileRef = 1C13CF7843904C752A61D619; };
+		9E91F03BADC6DD333AD1FE50 = { isa = PBXBuildFile; fileRef = 57D6734DC137A6517AC786EF; };
+		E9ED0325E7DBBBAB6D7D1918 = { isa = PBXBuildFile; fileRef = B56176C88E6E8D09B20930E9; };
+		F6105EAB8DB8B827D2E35F0B = { isa = PBXBuildFile; fileRef = EE6E8F48A4BCC9AD4A65E897; };
+		0BEFE079DB5BD720EE23C44F = { isa = PBXBuildFile; fileRef = 78EE2D5FB2E0E09960BD2714; };
+		68CEBEB2F250828B23F4CBFA = { isa = PBXBuildFile; fileRef = 7CFC7E7C0407DD776136DF0C; };
+		8D5A3A012C83C6BAD24AA657 = { isa = PBXBuildFile; fileRef = 8642BD4243CD47EFF03201BE; };
+		77A03FEE20FE96AD9384861E = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (E64319A43281319216C7BA7A, A2FC747A81E1733F71EEEBD2, 9C5288704DE46C63AA943260, F5A375913416E2AC6E40AB8C, 9BF955D1EAE1646B7ADCF5CA, E3ABD033FB4E6A021D61D931, 9E91F03BADC6DD333AD1FE50, E9ED0325E7DBBBAB6D7D1918, F6105EAB8DB8B827D2E35F0B, 0BEFE079DB5BD720EE23C44F, 68CEBEB2F250828B23F4CBFA, 8D5A3A012C83C6BAD24AA657,); runOnlyForDeploymentPostprocessing = 0; };
+		0C3565C1AA5D06016DDFD894 = { isa = PBXBuildFile; fileRef = 58CAD05580181EECA9FDD9F1; };
+		F9ACDEB529017EFC18F5E60A = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (0C3565C1AA5D06016DDFD894,); runOnlyForDeploymentPostprocessing = 0; };
+		716E9590E60B3AFA6E62BF18 = { isa = PBXBuildFile; fileRef = E3132B46F05FCF63ECC5D23F; };
+		ED8C2E0187BDE158FD1AC6DC = { isa = PBXBuildFile; fileRef = F9582FB1D16ABC13815328E8; };
+		4D7780784F30D6C181753066 = { isa = PBXBuildFile; fileRef = 3949C6134D419FE1D4EF8363; };
+		FF7482F4FF6801AC0EA666AC = { isa = PBXBuildFile; fileRef = C1E4338FC1130557FEB74107; };
+		5449605F6D0F662AAAA9392B = { isa = PBXBuildFile; fileRef = 4F6A5B1F53A7D855FD997965; };
+		0189424A5A60FED329FA868E = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (716E9590E60B3AFA6E62BF18, ED8C2E0187BDE158FD1AC6DC, 4D7780784F30D6C181753066, FF7482F4FF6801AC0EA666AC, 5449605F6D0F662AAAA9392B,); runOnlyForDeploymentPostprocessing = 0; };
+		7561BFB015D8F536760CB671 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		96DC7B6B5526E30EFB51C316 = { isa = PBXGroup; name = Application; children = (34E34E2610C7679FE20D591F, 9A167341F1E11B62D7FC91C3, C3ADB86156E5EC3DC1030035, 9CA086E82CECB7BEA8F96F24, E8F3D362471D565E0C21E3F7, 605F466CA74EDF10C5C15E02, 089342606D4768B7409CA996, F66BADF2A77DC26DECBEA927, 0D0B0C7D08A90F9010FFCCA6, 27A42D5C152EA6703E3CFE4C, 2DDA1DEFBEF30681833D990A, DF67AE31C3CBE0B9F015CA24, 1B56C3CD50E205BA83127237, A271A95946FE1449E69A61CA, B4137B97411E9500B03F615E, 3DD094602DCBE7258277DB67, 731467F1BA5845C0B43BC1A9, 91BA5FB818035E243182FD23, B6BCC373F2120F03737EFAC9, CEF448872E59FFE043943228, E3132B46F05FCF63ECC5D23F, F9582FB1D16ABC13815328E8, 3949C6134D419FE1D4EF8363, C1E4338FC1130557FEB74107, 4F6A5B1F53A7D855FD997965,); sourceTree = "<group>"; };
+		E717C295FF9827DFF805D88B = { isa = PBXGroup; name = Tests; children = (4E3EFD69A217770C7B8ED4FF, 609DA5FC2AD5B7610A2E8414, 56047CDC6AA4649F6F74B985, D52F5A7766A818250539FC61, E9384F304FC94D26E64FB26E, 1C13CF7843904C752A61D619, 57D6734DC137A6517AC786EF, B56176C88E6E8D09B20930E9, EE6E8F48A4BCC9AD4A65E897, 78EE2D5FB2E0E09960BD2714, 7CFC7E7C0407DD776136DF0C, 8642BD4243CD47EFF03201BE,); sourceTree = "<group>"; };
+		0F2612BBE722F8B97292B1A7 = { isa = PBXGroup; name = "UI Tests"; children = (58CAD05580181EECA9FDD9F1,); sourceTree = "<group>"; };
+		BC680D32C38B5C7B17604822 = { isa = PBXGroup; name = "VMX Codec (MIT)"; children = (94E1A280E1D82909E0F5FBE4, BD8C8877C66AFAD20D4BAF0F, B9216BFF98B076DBE62A15E0,); sourceTree = "<group>"; };
+		FBDC4F23F93125BBEEAE800C = { isa = PBXGroup; name = Products; children = (4E783A9E10D2A8ABA38CD11C, 6C7CCDEB3609F1FAA874E941, 9B7BED31F6F48AD5D908B2BC,); sourceTree = "<group>"; };
+		870B3294C0CBD48AF6BBCC1B = { isa = PBXGroup; children = (96DC7B6B5526E30EFB51C316, E717C295FF9827DFF805D88B, 0F2612BBE722F8B97292B1A7, BC680D32C38B5C7B17604822, AA4ACA445B3FBAF47CDE31AC, 120423DBB0FA47E1CF13983C, FBDC4F23F93125BBEEAE800C,); sourceTree = "<group>"; };
+		ED8772ADEC3A6C25161BC957 = { isa = XCBuildConfiguration; baseConfigurationReference = 120423DBB0FA47E1CF13983C; buildSettings = { ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = "YES"; CLANG_ANALYZER_NONNULL = "YES"; CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = "YES_AGGRESSIVE"; CLANG_CXX_LANGUAGE_STANDARD = "c++17"; CLANG_CXX_LIBRARY = "libc++"; CLANG_ENABLE_MODULES = "YES"; CLANG_ENABLE_OBJC_ARC = "YES"; CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = "YES"; CLANG_WARN_BOOL_CONVERSION = "YES"; CLANG_WARN_COMMA = "YES"; CLANG_WARN_CONSTANT_CONVERSION = "YES"; CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = "YES"; CLANG_WARN_DIRECT_OBJC_ISA_USAGE = "YES_ERROR"; CLANG_WARN_DOCUMENTATION_COMMENTS = "YES"; CLANG_WARN_EMPTY_BODY = "YES"; CLANG_WARN_ENUM_CONVERSION = "YES"; CLANG_WARN_INFINITE_RECURSION = "YES"; CLANG_WARN_INT_CONVERSION = "YES"; CLANG_WARN_NON_LITERAL_NULL_CONVERSION = "YES"; CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = "YES"; CLANG_WARN_OBJC_LITERAL_CONVERSION = "YES"; CLANG_WARN_OBJC_ROOT_CLASS = "YES_ERROR"; CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = "YES"; CLANG_WARN_RANGE_LOOP_ANALYSIS = "YES"; CLANG_WARN_STRICT_PROTOTYPES = "YES"; CLANG_WARN_SUSPICIOUS_MOVE = "YES"; CLANG_WARN_UNGUARDED_AVAILABILITY = "YES_AGGRESSIVE"; CLANG_WARN_UNREACHABLE_CODE = "YES"; CLANG_WARN__DUPLICATE_METHOD_MATCH = "YES"; DEAD_CODE_STRIPPING = "YES"; DEBUG_INFORMATION_FORMAT = "dwarf"; ENABLE_STRICT_OBJC_MSGSEND = "YES"; ENABLE_TESTABILITY = "YES"; ENABLE_USER_SCRIPT_SANDBOXING = "YES"; GCC_NO_COMMON_BLOCKS = "YES"; GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1 $(inherited)"; GCC_WARN_64_TO_32_BIT_CONVERSION = "YES"; GCC_WARN_ABOUT_RETURN_TYPE = "YES_ERROR"; GCC_WARN_UNDECLARED_SELECTOR = "YES"; GCC_WARN_UNINITIALIZED_AUTOS = "YES_AGGRESSIVE"; GCC_WARN_UNUSED_FUNCTION = "YES"; GCC_WARN_UNUSED_VARIABLE = "YES"; LM_SKIP_METADATA_EXTRACTION = "YES"; OMT_RUN_INTERLACED_INTEROP = "0"; OMT_RUN_INTEROP = "0"; ONLY_ACTIVE_ARCH = "YES"; SDKROOT = "appletvos"; STRING_CATALOG_GENERATE_SYMBOLS = "YES"; SUPPORTED_PLATFORMS = "appletvos appletvsimulator"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)"; SWIFT_COMPILATION_MODE = "incremental"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_STRICT_CONCURRENCY = "targeted"; SWIFT_VERSION = "5.0"; TARGETED_DEVICE_FAMILY = "3"; TVOS_DEPLOYMENT_TARGET = "17.0"; }; name = Debug; };
+		00F209874A1F7309F6DCEAA7 = { isa = XCBuildConfiguration; baseConfigurationReference = 120423DBB0FA47E1CF13983C; buildSettings = { ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = "YES"; CLANG_ANALYZER_NONNULL = "YES"; CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = "YES_AGGRESSIVE"; CLANG_CXX_LANGUAGE_STANDARD = "c++17"; CLANG_CXX_LIBRARY = "libc++"; CLANG_ENABLE_MODULES = "YES"; CLANG_ENABLE_OBJC_ARC = "YES"; CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = "YES"; CLANG_WARN_BOOL_CONVERSION = "YES"; CLANG_WARN_COMMA = "YES"; CLANG_WARN_CONSTANT_CONVERSION = "YES"; CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = "YES"; CLANG_WARN_DIRECT_OBJC_ISA_USAGE = "YES_ERROR"; CLANG_WARN_DOCUMENTATION_COMMENTS = "YES"; CLANG_WARN_EMPTY_BODY = "YES"; CLANG_WARN_ENUM_CONVERSION = "YES"; CLANG_WARN_INFINITE_RECURSION = "YES"; CLANG_WARN_INT_CONVERSION = "YES"; CLANG_WARN_NON_LITERAL_NULL_CONVERSION = "YES"; CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = "YES"; CLANG_WARN_OBJC_LITERAL_CONVERSION = "YES"; CLANG_WARN_OBJC_ROOT_CLASS = "YES_ERROR"; CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = "YES"; CLANG_WARN_RANGE_LOOP_ANALYSIS = "YES"; CLANG_WARN_STRICT_PROTOTYPES = "YES"; CLANG_WARN_SUSPICIOUS_MOVE = "YES"; CLANG_WARN_UNGUARDED_AVAILABILITY = "YES_AGGRESSIVE"; CLANG_WARN_UNREACHABLE_CODE = "YES"; CLANG_WARN__DUPLICATE_METHOD_MATCH = "YES"; DEAD_CODE_STRIPPING = "YES"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; ENABLE_STRICT_OBJC_MSGSEND = "YES"; ENABLE_USER_SCRIPT_SANDBOXING = "YES"; GCC_NO_COMMON_BLOCKS = "YES"; GCC_WARN_64_TO_32_BIT_CONVERSION = "YES"; GCC_WARN_ABOUT_RETURN_TYPE = "YES_ERROR"; GCC_WARN_UNDECLARED_SELECTOR = "YES"; GCC_WARN_UNINITIALIZED_AUTOS = "YES_AGGRESSIVE"; GCC_WARN_UNUSED_FUNCTION = "YES"; GCC_WARN_UNUSED_VARIABLE = "YES"; LM_SKIP_METADATA_EXTRACTION = "YES"; OMT_RUN_INTERLACED_INTEROP = "0"; OMT_RUN_INTEROP = "0"; ONLY_ACTIVE_ARCH = "NO"; SDKROOT = "appletvos"; STRING_CATALOG_GENERATE_SYMBOLS = "YES"; SUPPORTED_PLATFORMS = "appletvos appletvsimulator"; SWIFT_COMPILATION_MODE = "wholemodule"; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_STRICT_CONCURRENCY = "targeted"; SWIFT_VERSION = "5.0"; TARGETED_DEVICE_FAMILY = "3"; TVOS_DEPLOYMENT_TARGET = "17.0"; }; name = Release; };
+		6650A2B5E24FA7522CE6B81C = { isa = XCConfigurationList; buildConfigurations = (ED8772ADEC3A6C25161BC957, 00F209874A1F7309F6DCEAA7,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		F8975E934DA2067E0E497395 = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = ""; CODE_SIGN_STYLE = "Automatic"; CURRENT_PROJECT_VERSION = "5"; ENABLE_PREVIEWS = "YES"; GCC_OPTIMIZATION_LEVEL = "3"; GENERATE_INFOPLIST_FILE = "NO"; HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/Vendor/libvmx/src $(SRCROOT)/OMTReceiver/Codec"; INFOPLIST_FILE = "OMTReceiver/Info.plist"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = "1.0.0"; OTHER_CPLUSPLUSFLAGS = "$(inherited) -fdeclspec"; PRODUCT_BUNDLE_IDENTIFIER = "com.suku.OMTReceiver"; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = "YES"; SWIFT_OBJC_BRIDGING_HEADER = "OMTReceiver/Codec/OMTReceiver-Bridging-Header.h"; }; name = Debug; };
+		F72D4F08E84CA4C7F809A7CF = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = ""; CODE_SIGN_STYLE = "Automatic"; CURRENT_PROJECT_VERSION = "5"; ENABLE_PREVIEWS = "YES"; GCC_OPTIMIZATION_LEVEL = "3"; GENERATE_INFOPLIST_FILE = "NO"; HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/Vendor/libvmx/src $(SRCROOT)/OMTReceiver/Codec"; INFOPLIST_FILE = "OMTReceiver/Info.plist"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = "1.0.0"; OTHER_CPLUSPLUSFLAGS = "$(inherited) -fdeclspec"; PRODUCT_BUNDLE_IDENTIFIER = "com.suku.OMTReceiver"; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = "YES"; SWIFT_OBJC_BRIDGING_HEADER = "OMTReceiver/Codec/OMTReceiver-Bridging-Header.h"; }; name = Release; };
+		268D2D29669C504AD910B275 = { isa = XCConfigurationList; buildConfigurations = (F8975E934DA2067E0E497395, F72D4F08E84CA4C7F809A7CF,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		DF53765BF9D03B65CB04A4C8 = { isa = XCBuildConfiguration; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = "Automatic"; GENERATE_INFOPLIST_FILE = "YES"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks"; OTHER_CPLUSPLUSFLAGS = "$(inherited) -fdeclspec"; PRODUCT_BUNDLE_IDENTIFIER = "com.suku.OMTReceiverTests"; PRODUCT_NAME = "$(TARGET_NAME)"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OMTReceiver.app/OMTReceiver"; }; name = Debug; };
+		04B042A5E7A3FDC0670ED689 = { isa = XCBuildConfiguration; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = "Automatic"; GENERATE_INFOPLIST_FILE = "YES"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks"; OTHER_CPLUSPLUSFLAGS = "$(inherited) -fdeclspec"; PRODUCT_BUNDLE_IDENTIFIER = "com.suku.OMTReceiverTests"; PRODUCT_NAME = "$(TARGET_NAME)"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OMTReceiver.app/OMTReceiver"; }; name = Release; };
+		7456573A07C28463D34C2FFC = { isa = XCConfigurationList; buildConfigurations = (DF53765BF9D03B65CB04A4C8, 04B042A5E7A3FDC0670ED689,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		ED8847D51DE6E0D4EADA35AA = { isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_STYLE = "Automatic"; GENERATE_INFOPLIST_FILE = "YES"; PRODUCT_BUNDLE_IDENTIFIER = "com.suku.OMTReceiverUITests"; PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = "OMTReceiver"; }; name = Debug; };
+		F9214DA8E96B6B2035CF9A7D = { isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_STYLE = "Automatic"; GENERATE_INFOPLIST_FILE = "YES"; PRODUCT_BUNDLE_IDENTIFIER = "com.suku.OMTReceiverUITests"; PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = "OMTReceiver"; }; name = Release; };
+		43B3EEFD7E6773C458696A2C = { isa = XCConfigurationList; buildConfigurations = (ED8847D51DE6E0D4EADA35AA, F9214DA8E96B6B2035CF9A7D,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		EEE53D504AFCC8D4B0AA715A = { isa = PBXContainerItemProxy; containerPortal = 98F54143AB4E86B28C3AFEE0; proxyType = 1; remoteGlobalIDString = F75109BEB4DD8800DA6B45F8; remoteInfo = OMTReceiver; };
+		AA912C4D9FBD473D0F05C6A5 = { isa = PBXTargetDependency; target = F75109BEB4DD8800DA6B45F8; targetProxy = EEE53D504AFCC8D4B0AA715A; };
+		F75109BEB4DD8800DA6B45F8 = { isa = PBXNativeTarget; buildConfigurationList = 268D2D29669C504AD910B275; buildPhases = (949D493B91791558E87BC5D7, 7561BFB015D8F536760CB671, 0189424A5A60FED329FA868E,); buildRules = (); dependencies = (); name = OMTReceiver; productName = OMTReceiver; productReference = 4E783A9E10D2A8ABA38CD11C; productType = "com.apple.product-type.application"; };
+		C062A5A4A7F4F37DD90F54CB = { isa = PBXNativeTarget; buildConfigurationList = 7456573A07C28463D34C2FFC; buildPhases = (77A03FEE20FE96AD9384861E,); buildRules = (); dependencies = (AA912C4D9FBD473D0F05C6A5,); name = OMTReceiverTests; productName = OMTReceiverTests; productReference = 6C7CCDEB3609F1FAA874E941; productType = "com.apple.product-type.bundle.unit-test"; };
+		794AAC98ACE6EB716B86C3A5 = { isa = PBXNativeTarget; buildConfigurationList = 43B3EEFD7E6773C458696A2C; buildPhases = (F9ACDEB529017EFC18F5E60A,); buildRules = (); dependencies = (AA912C4D9FBD473D0F05C6A5,); name = OMTReceiverUITests; productName = OMTReceiverUITests; productReference = 9B7BED31F6F48AD5D908B2BC; productType = "com.apple.product-type.bundle.ui-testing"; };
+		98F54143AB4E86B28C3AFEE0 = { isa = PBXProject; attributes = { BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 2710; TargetAttributes = { F75109BEB4DD8800DA6B45F8 = { CreatedOnToolsVersion = 27.1; }; C062A5A4A7F4F37DD90F54CB = { CreatedOnToolsVersion = 27.1; TestTargetID = F75109BEB4DD8800DA6B45F8; }; 794AAC98ACE6EB716B86C3A5 = { CreatedOnToolsVersion = 27.1; TestTargetID = F75109BEB4DD8800DA6B45F8; }; }; }; buildConfigurationList = 6650A2B5E24FA7522CE6B81C; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = 870B3294C0CBD48AF6BBCC1B; productRefGroup = FBDC4F23F93125BBEEAE800C; projectDirPath = ""; projectRoot = ""; targets = (F75109BEB4DD8800DA6B45F8, C062A5A4A7F4F37DD90F54CB, 794AAC98ACE6EB716B86C3A5,); };
 	};
-	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+	rootObject = 98F54143AB4E86B28C3AFEE0;
 }

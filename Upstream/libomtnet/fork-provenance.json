@@ -1,6 +1,6 @@
 {
   "forkURL": "https://github.com/sukujgrg/libomtnet",
-  "localPath": "/Users/suku/github/openmediatransport/libomtnet",
+  "checkoutDirectory": "libomtnet",
   "activeBranch": "codex/omt-send-stability",
   "prBranch": {
     "name": "codex/omt-send-stability",
@@ -19,7 +19,7 @@
     "managedSDKVersion": "1.0.0.19"
   },
   "nativeWrapper": {
-    "localPath": "/Users/suku/github/openmediatransport/libomt",
+    "checkoutDirectory": "libomt",
     "commit": "bb4b67be8e5964f1017592b9fc5406495e704e5d",
     "changes": false
   },

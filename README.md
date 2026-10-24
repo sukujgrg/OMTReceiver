@@ -8,9 +8,10 @@ not an official OMT product. It has no dependency on eucaly or another host app.
 
 ## Build and install
 
-Open **OMTReceiver.xcodeproj** in Xcode, select the **OMTReceiver** scheme and
-choose your development team under Signing & Capabilities. Pair your Apple TV
-using Xcode's Device Hub (or Devices and Simulators on older Xcode versions),
+Set your development team in the ignored `Config/Signing.local.xcconfig` as
+described in [the distribution guide](AppStore/README.md). Open
+**OMTReceiver.xcodeproj** in Xcode and select the **OMTReceiver** scheme. Pair your
+Apple TV using Xcode's Device Hub (or Devices and Simulators on older Xcode versions),
 select it as the run destination and press Run. Allow local-network access if
 prompted. The app targets **tvOS 17 or later**, arm64, including the first Apple
 TV 4K's A10X. No package manager, .NET runtime or external tvOS SDK is needed.
