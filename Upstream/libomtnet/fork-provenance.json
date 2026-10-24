@@ -974,9 +974,13 @@
           "restorationAuthorizedByOperator": true,
           "restorationVerifiedUTC": "2026-10-24T18:41:34Z",
           "restoredGitBlob": "dca9be9b72da2dd69476b2f347ca0bbf6a8acc66",
-          "currentFixtureMatchesTestedCommit": true,
-          "currentWorkingTreeVerified": true,
-          "verificationScope": "Stress fixture exactly matches tested c87e3b7; eucaly owner handles fresh scoped and CI verification.",
+          "restoredFixtureMatchedTestedCommit": true,
+          "restorationOfflinePythonCasesPassed": 24,
+          "restorationOfflineSwiftCasesPassed": 4,
+          "sameRollbackRecurredUTC": "2026-10-24T18:42:33Z",
+          "writerIdentified": false,
+          "workingCopyStabilityEstablished": false,
+          "verificationScope": "Restored fixture matched tested c87e3b7 and passed fresh scoped checks; subsequent identical rollback remains unattributed. Verification applies to committed fixture bytes, not continued stability of another process's working-copy writes.",
           "productionRuntimeChanged": false
         }
       }

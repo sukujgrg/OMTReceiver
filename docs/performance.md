@@ -257,7 +257,11 @@ After that tested commit, an unknown writer changed the stress-test file at
 reviewer and operator did not make that edit. With the operator's authorization,
 eucaly restored the exact `c87e3b7` fixture; its Git blob matches the tested file
 (`dca9be9b72da2dd69476b2f347ca0bbf6a8acc66`). The unexpected diff remains preserved
-for diagnosis. The production runtime was unaffected by this test-only edit.
+for diagnosis. Fresh checks passed 24 Python and four Swift cases, but the same
+rollback recurred at `18:42:33Z`. Its writer remains unidentified. These checks
+apply to the committed, restored fixture; they do not establish that another
+process will leave the local working copy unchanged. The production runtime was
+unaffected by this test-only edit.
 Root added the benchmark's first-media event history and fixed-port/native
 process timing markers. Eleven focused timing tests, all 101 receiver unit
 tests, and the optimized device build/install passed. The TV was restored to

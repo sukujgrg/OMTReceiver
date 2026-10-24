@@ -373,6 +373,12 @@ A new TestFlight upload is therefore unnecessary for normal playback testing.
 A later upload containing the additional developer diagnostics must use a new
 build number (6 or higher); build 5 remains the recorded internal distribution.
 
+The fresh [GitHub validation run for `a6f071a`](https://github.com/sukujgrg/OMTReceiver/actions/runs/40121905285)
+passed all 101 receiver unit tests, both ordinary remote-navigation UI tests,
+source/tool checks, the unsigned tvOS device archive and resource/packaging
+validation. Three tests requiring an external sender remained opt-in. The
+corresponding public-pages deployment also passed.
+
 ## Hardware results and remaining checks
 
 Physical testing resumed on 23 October. Build 1 completed the 30/59.94 cadence
