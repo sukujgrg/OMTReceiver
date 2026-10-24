@@ -2,9 +2,26 @@
 
 These patches apply to `openmediatransport/libomtnet` v1.0.0.19, commit
 `5395139d45cf47bf9f90364bf68f9960183e7638`. They are local work authorized for the
-OMTReceiver/eucaly stability investigation. Nothing has been pushed upstream.
+OMTReceiver/eucaly stability investigation. Two focused upstream PRs are now open;
+the retained experimental patches below remain investigation evidence.
 The tvOS receiver does not link this managed sender implementation; these files
 are not an app build dependency.
+
+## Upstream pull requests (24 October 2026)
+
+- [#62: Return send slots when socket submission fails](https://github.com/openmediatransport/libomtnet/pull/62).
+  Independent ownership repair with four regression cases; original code fails
+  the null/disposed-socket cases, patched code passes all four.
+- [#63: Add a configurable TCP send buffer for new senders](https://github.com/openmediatransport/libomtnet/pull/63).
+  Adds `NetworkSendBufferSize` through existing settings APIs, retains the 64 KiB
+  default, and includes five settings regression cases. The PR cites the wired
+  comparison as motivation for opt-in tuning, not a universal 512 KiB default.
+
+Each PR is one independent commit against upstream `7d29031` (SDK 1.0.0.20).
+Both build `netstandard2.0` and `net40` in Release with zero warnings/errors, and
+pass the three bounded channel-pressure/recovery checks. Only these two focused
+branches were pushed to the fork; the combined investigation branch remains
+local. No packaged SDK or receiver runtime changed when opening the PRs.
 
 ## Independent repairs and buffer candidates
 
@@ -144,7 +161,8 @@ Both branches passed the four real-socket regressions; managed SDK builds had
 zero warnings/errors. The tested release's two runtime source files match the
 original build byte-for-byte. Test sources are excluded from the SDK compile.
 `STABILITY_NOTES.md` in the fork records limits and rebuild instructions.
-**No repair commits were pushed to the fork or upstream, and no PR was opened.**
+At the end of that initial investigation, no repair commits had been pushed and
+no PR had been opened. The subsequent focused PRs are listed above.
 
 ## Read actual macOS socket buffers
 

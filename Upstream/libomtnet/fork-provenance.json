@@ -7,10 +7,11 @@
     "commit": "c52634ab59f777bac00244245b716b2948415af5",
     "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
     "managedSDKVersion": "1.0.0.20",
-    "runtimeRepairCommit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032",
+    "runtimeRepairCommit": "7ddfc84936a796a2d42732c72c5f10edaf7160ad",
     "documentationOnlyFollowUpCommit": "e21b3d515fdfe92ae3aee12a29dda31f7d1249dc",
     "wiredDocumentationFollowUpCommit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76",
-    "videoRejectionFollowUpCommit": "c52634ab59f777bac00244245b716b2948415af5"
+    "videoRejectionFollowUpCommit": "c52634ab59f777bac00244245b716b2948415af5",
+    "bufferExperimentCommit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032"
   },
   "testedSDKBranch": {
     "name": "codex/omt-sdk-1.0.0.19-stability",
@@ -25,8 +26,8 @@
   },
   "regressionCasesPassedPerBranch": 4,
   "managedBuilds": "netstandard2.0, zero warnings/errors",
-  "changesPushed": false,
-  "pullRequestOpened": false,
+  "changesPushed": true,
+  "pullRequestOpened": true,
   "eucalyIntegrationCommit": "23639de",
   "eucalyAudioDiagnosticsCommit": "97d4009c86b1d8bc03cfa28a7b17fd9f47368657",
   "hardwareQualificationPassed": false,
@@ -170,5 +171,46 @@
     "compilerWarnings": 0,
     "packaged512KiBRuntimePreserved": true,
     "sourceLiveTestWasReleaseGUI": false
+  },
+  "pushedBranches": [
+    "codex/fix-send-slot-leak",
+    "codex/configurable-send-buffer"
+  ],
+  "combinedInvestigationBranchPushed": false,
+  "upstreamPullRequests": [
+    {
+      "url": "https://github.com/openmediatransport/libomtnet/pull/62",
+      "branch": "codex/fix-send-slot-leak",
+      "commit": "4525a7ec50ddab79522b0971380baff756f216cf",
+      "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
+      "regressionCasesPassed": 4,
+      "originalCasesFailed": 2
+    },
+    {
+      "url": "https://github.com/openmediatransport/libomtnet/pull/63",
+      "branch": "codex/configurable-send-buffer",
+      "commit": "374e8642861c0ff674fa9e93dae86b14193aa333",
+      "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
+      "regressionCasesPassed": 5,
+      "defaultSendBufferBytes": 65536,
+      "acceptedSendBufferBytes": [
+        65536,
+        4194304
+      ],
+      "setting": "NetworkSendBufferSize"
+    }
+  ],
+  "upstreamPRValidation": {
+    "sdkTargets": [
+      "netstandard2.0",
+      "net40"
+    ],
+    "configuration": "Release",
+    "buildWarnings": 0,
+    "buildErrors": 0,
+    "boundedChannelCasesPassedPerBranch": 3,
+    "platform": "macOS arm64, .NET 8.0.426",
+    "hardwareRetestedForPRs": false,
+    "packagedRuntimeChanged": false
   }
 }
