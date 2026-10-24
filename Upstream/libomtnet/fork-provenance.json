@@ -4,14 +4,15 @@
   "activeBranch": "codex/omt-send-stability",
   "prBranch": {
     "name": "codex/omt-send-stability",
-    "commit": "c52634ab59f777bac00244245b716b2948415af5",
+    "commit": "cf36623036504bb944923fa8999b07c3f66bb242",
     "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
     "managedSDKVersion": "1.0.0.20",
     "runtimeRepairCommit": "7ddfc84936a796a2d42732c72c5f10edaf7160ad",
     "documentationOnlyFollowUpCommit": "e21b3d515fdfe92ae3aee12a29dda31f7d1249dc",
     "wiredDocumentationFollowUpCommit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76",
     "videoRejectionFollowUpCommit": "c52634ab59f777bac00244245b716b2948415af5",
-    "bufferExperimentCommit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032"
+    "bufferExperimentCommit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032",
+    "stockReassessmentDocumentationCommit": "cf36623036504bb944923fa8999b07c3f66bb242"
   },
   "testedSDKBranch": {
     "name": "codex/omt-sdk-1.0.0.19-stability",
@@ -28,7 +29,7 @@
   "managedBuilds": "netstandard2.0, zero warnings/errors",
   "changesPushed": true,
   "pullRequestOpened": true,
-  "eucalyIntegrationCommit": "23639de",
+  "eucalyIntegrationCommit": "6ec6155732c4976c5a7a1ffc2c1a09560b584021",
   "eucalyAudioDiagnosticsCommit": "97d4009c86b1d8bc03cfa28a7b17fd9f47368657",
   "hardwareQualificationPassed": false,
   "hardwareLimitations": [
@@ -37,7 +38,8 @@
     "Extra NDI media flow reproducibly caused late audio/audible gaps on prior Wi-Fi sender path; physical component unisolated",
     "Wired normal-use20min case passed applicable gates; original warning causes unproven and NDIclient changed",
     "Original overload interval lacked valid aligned audio socket queue capture; later wired single-NDI snapshots have sampling/batch gaps; no further buffer tuning",
-    "Later605s native/NDI/OMT wired case passed all23gates; supports a monitored1080p30trial, not broad production sign-off."
+    "Later605s native/NDI/OMT wired case passed all23gates; supports a monitored1080p30trial, not broad production sign-off.",
+    "Current gigabit stock-SDK initial strict one-shot run failed cadence; final phase-clock 605-second run passed all 23 unchanged runtime gates. Native rapid reconnect can take about 5.05 seconds and exceeds the four-second DEBUG diagnostic budget; broader production qualification remains incomplete."
   ],
   "wiredNormalUseComparison": {
     "receiverRunID": "21C655CD-F073-4571-A1C6-8023DE37DE6A",
@@ -92,8 +94,8 @@
     "bundledCodecCapacityChecksVerified": true,
     "newSDKCorrectnessBugDemonstrated": false,
     "upstreamMasterChecked": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
-    "ownershipRepairStillNeeded": true,
-    "bufferDecision": "Retain bounded512KiB locally with wired resilience evidence; review broad upstream default separately from ownership repair."
+    "ownershipRepairStillNeeded": null,
+    "bufferDecision": "Fresh final stock64KiB native/NDI/OMT605s output run passes all23gates after application pacing repair. Neither rejected transport patch is established as required; native retained-receiver regression assessed separately."
   },
   "wiredThreeOutputComparison": {
     "sourceBuildMode": "Optimized Debug (-O) test host, real native OutputWindowDestination/shared player and network helpers; not Release GUI qualification.",
@@ -184,7 +186,9 @@
       "commit": "4525a7ec50ddab79522b0971380baff756f216cf",
       "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
       "regressionCasesPassed": 4,
-      "originalCasesFailed": 2
+      "originalCasesFailed": 2,
+      "state": "CLOSED",
+      "currentAssessment": "Internal invariant does not demonstrate persistent public-API capacity loss."
     },
     {
       "url": "https://github.com/openmediatransport/libomtnet/pull/63",
@@ -197,7 +201,9 @@
         65536,
         4194304
       ],
-      "setting": "NetworkSendBufferSize"
+      "setting": "NetworkSendBufferSize",
+      "state": "CLOSED",
+      "currentAssessment": "64 KiB is deliberate upstream policy; investigate and correct application pacing before buffer tuning."
     }
   ],
   "upstreamPRValidation": {
@@ -212,5 +218,589 @@
     "platform": "macOS arm64, .NET 8.0.426",
     "hardwareRetestedForPRs": false,
     "packagedRuntimeChanged": false
-  }
+  },
+  "stockSDKReassessment": {
+    "date": "2026-10-24",
+    "changesPushed": false,
+    "upstreamReplyOrReportPosted": false,
+    "receiverRuntimeChanged": false,
+    "publicAPILifecycle": [
+      {
+        "sdk": "1.0.0.19",
+        "commit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+        "pristine": true,
+        "casesPassed": 3,
+        "cyclesPassed": 24,
+        "durationSeconds": 18.6487088,
+        "videoDrops": 0,
+        "audioDrops": 0,
+        "traceCalls": 1390,
+        "traceOmissions": 0
+      },
+      {
+        "sdk": "1.0.0.20",
+        "commit": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
+        "pristine": true,
+        "casesPassed": 3,
+        "cyclesPassed": 24,
+        "durationSeconds": 18.2092286,
+        "videoDrops": 0,
+        "audioDrops": 0,
+        "traceCalls": 1372,
+        "traceOmissions": 0
+      }
+    ],
+    "lifecycleScope": "Compiled public OMTSend/OMTReceive/OMTDiscoveryServer, real VMX/FPA1, loopback320x180. Receiver disposal, receiver SIGKILL/replacement, sender restart with persistent receiver. Fresh A/V and public connection cleanup; no internal-source linking or pool inspection.",
+    "lifecycleLimits": "No send/pool exception log entries observed; rare synchronous failure races, throughput and memory are not exhausted. No persistent capacity-loss failure reproduced.",
+    "eucalyPacing": {
+      "problem": "Fixed-phase repeating timer can bunch SDK calls after owner-queue stalls.",
+      "realStockSDKBeforeMinimumEntryGapMs": 5.626459,
+      "injectedOwnerQueueDelayMs": 95,
+      "repair": "Final guarded one-shot scheduling on nominal 30 Hz phase, actual-entry floor 32.333333 ms (existing 1 ms allowance), stale opportunities skipped; audio clock, timestamps and buffer leases preserved. Initial strict entry-anchored policy retained as a failed intermediate arm.",
+      "unchangedPostFixSourceSeconds": 60.0406,
+      "unchangedPostFixSourceCalls": 1796,
+      "unchangedPostFixSourceFPS": 29.923191,
+      "unchangedPostFixMinimumEntryGapMs": 33.348333,
+      "unchangedPostFixMaximumEntryGapMs": 51.535542,
+      "historicEightRejectionCauseEstablished": false,
+      "historicRejectImmediatePredecessorGapMs": [
+        33.26,
+        33.4
+      ],
+      "finalPolicy": "Nominal30Hz phase, guarded one-shot deadlines, actual-entry minimum32.333333ms (unchanged1ms jitter allowance); stale opportunities skipped, audio clock and leases retained.",
+      "finalFocusedCasesPassed": 11,
+      "finalLocalSDKFPS": 29.949955,
+      "finalLocalSDKMinimumEntryGapMs": 32.365042,
+      "finalLocalSDKMaximumEntryGapMs": 78.131542,
+      "ordinaryWakeDriftBeforeFPS": 29.365847468
+    },
+    "audioFrameMetadataProbe": {
+      "affectedStockSDKs": [
+        "1.0.0.19",
+        "1.0.0.20"
+      ],
+      "inputXML": "<epoch>00000001</epoch>",
+      "wireMetadataBytes": 24,
+      "receivedMetadataZeroed": true,
+      "expectedFirstPCMWord": 0,
+      "actualFirstPCMWord": 1869636924,
+      "actualFirstPCMWordHex": "0x6f70653c",
+      "eucalyUsesAudioFrameMetadata": false,
+      "relatedToVideoRejectionsOrAudioWarnings": false,
+      "SDKSourceChanged": false,
+      "probeRetainedSeparately": true
+    },
+    "physicalTestTopology": {
+      "senderLink": "1000baseT full duplex, en0, Wi-Fi inactive",
+      "remoteNDILink": "1000baseT full duplex, en6; prior historical tests used100Mbps",
+      "receivers": "One native Dell P2721Q window, one remote NDI Monitor, one OMT Apple TV",
+      "source": "1080p30 Medium VMX, stereo48k FPA1; optimized Debug actual eucaly output path",
+      "SDKSourceCommit": "5395139d45cf47bf9f90364bf68f9960183e7638",
+      "nativeWrapperCommit": "bb4b67be8e5964f1017592b9fc5406495e704e5d",
+      "stockRuntimeSHA256": "d55a2a4ab39b597284a9f7f77660f21331004525d10c3ef675642afbbcbeeb57",
+      "codecSHA256": "8a69beac08f040851a88dfd1127b8a4d0141ce3864c56d66e4c08cd287883f37",
+      "runtimeLabelsAuthoritative": false,
+      "runtimeLabelNote": "Preserved physical helper text still names +eucaly.1; exact runtime hash/manifests establish unmodified SDK identity.",
+      "matchedToHistoricalBufferComparison": false,
+      "commonInputSHA256": "1578bc4ae077a81fad6492a6c0b34d024f77d3870e11045a253b58df443e5507",
+      "limits": [
+        "No extra NDI probe overlapped Monitor.",
+        "Native evidence is window/readiness/shared-player progression, not presented-frame cadence.",
+        "No continuous listening or physical source-to-panel latency measurement.",
+        "Initial strict one-shot result is distinct from any later local scheduling repair."
+      ]
+    },
+    "physicalTimerComparison": {
+      "old-timer": {
+        "runID": "5567709E-710B-4A99-AA42-75AC11A44B0F",
+        "intervalSeconds": 184.9945101244375,
+        "videoFramesAdmitted": 5538,
+        "videoAdmissionFPS": 29.936023486723123,
+        "audioPacketsAdmitted": 9250,
+        "audioLatePackets": 0,
+        "audioInsideRouteHorizon": 0,
+        "audioTimestampDiscontinuities": 0,
+        "audioTimelineResets": 0,
+        "videoTimelineResets": 0,
+        "poolStalls": 0,
+        "attempts": 1,
+        "failures": [],
+        "memoryAfterWarmupMiB": {
+          "minimum": 52.563323974609375,
+          "maximum": 52.969573974609375,
+          "earlyMean": 52.84717814127604,
+          "lateMean": 52.87321980794271,
+          "changeInMeans": 0.026041666666671404,
+          "postWarmupSampleCount": 13
+        },
+        "nativeRenderer": {
+          "available": true,
+          "durationSeconds": 179.99624554160982,
+          "totalFrames": 5388,
+          "droppedFrames": 1,
+          "corruptedFrames": 0,
+          "optimizedCompositingFrames": 5384,
+          "dropPercent": 0.01855976243504083,
+          "estimatedDisplayedFPS": 29.92840202744498,
+          "meanAccumulatedFrameDelayMs": 1.856320772229441e-08
+        },
+        "allRuntimeTargetsMet": false,
+        "failedRuntimeTargets": [
+          "postWarmupMemoryGrowthBelow20MiB"
+        ],
+        "passedRuntimeTargetCount": 22
+      },
+      "fixed-timer": {
+        "runID": "F0C63DCB-965D-4ACF-A48A-AA620436CC73",
+        "intervalSeconds": 484.9936408335343,
+        "videoFramesAdmitted": 14475,
+        "videoAdmissionFPS": 29.845752152796358,
+        "audioPacketsAdmitted": 24250,
+        "audioLatePackets": 0,
+        "audioInsideRouteHorizon": 0,
+        "audioTimestampDiscontinuities": 0,
+        "audioTimelineResets": 0,
+        "videoTimelineResets": 0,
+        "poolStalls": 0,
+        "attempts": 1,
+        "failures": [],
+        "memoryAfterWarmupMiB": {
+          "minimum": 48.09449768066406,
+          "maximum": 53.57887268066406,
+          "earlyMean": 53.20777893066406,
+          "lateMean": 53.25074768066406,
+          "changeInMeans": 0.04296875,
+          "postWarmupSampleCount": 74
+        },
+        "nativeRenderer": {
+          "available": true,
+          "durationSeconds": 479.997336207889,
+          "totalFrames": 14325,
+          "droppedFrames": 0,
+          "corruptedFrames": 0,
+          "optimizedCompositingFrames": 14321,
+          "dropPercent": 0.0,
+          "estimatedDisplayedFPS": 29.843915620806232,
+          "meanAccumulatedFrameDelayMs": 1.0471204188481676e-08
+        },
+        "allRuntimeTargetsMet": false,
+        "failedRuntimeTargets": [
+          "admissionAtLeastTargetMinus0_1FPS",
+          "outputSamplesAtLeastTargetMinus0_1FPS"
+        ],
+        "passedRuntimeTargetCount": 21
+      },
+      "scope": "Fresh gigabit topology, unmodified .19; repeating timer versus initial strict one-shot repair. Final revised phase-clock hardware run is recorded separately in finalPhasePhysicalOutput."
+    },
+    "physicalDeviceRootCleanupAtUTC": "2026-10-24T09:50:25Z",
+    "physicalDeviceHardStopUTC": "2026-10-24T09:54:27Z",
+    "allOwnedPhysicalSourceJobsStoppedNormally": true,
+    "physicalSourceCleanupAtUTC": "2026-10-24T09:50:29Z",
+    "allPhysicalKeepAwakeJobsStopped": true,
+    "OBSReference": {
+      "repository": "https://github.com/openmediatransport/omtplugin",
+      "commit": "b6356ee5adeb1be7ab2c6257ae588447cc99fbf8",
+      "sourceManifestSHA256": "f88d644089a6ded64c1ec9a1d044335039edcb5da2059e03379c874ccccdcf28",
+      "findings": [
+        "OBS raw audio/video callbacks call public OMTSend.Send with original callback timestamps divided by100; output has no independent pacing timer or resend queue.",
+        "Normal stop ends OBS data capture before sender disposal.",
+        "Receive worker continues polling one public receiver across timeouts and stops before disposal."
+      ],
+      "limits": "Source reference only, not a performance run or proof of shipped SDK identity; eucaly retains independent audio and NDI buffer contracts."
+    },
+    "physicalSourceTraceAnalysisSHA256": "a310c5dbaf36219071efa195b3dccceaecdd9cb73a5629f264c1bee7e3d53752",
+    "physicalSourceTraceComparison": {
+      "old-timer": {
+        "sourceRunID": "C862DD99-BB3B-4007-962C-9E50E70E265A",
+        "commonMovieCheckpoints": {
+          "firstUTC": "2026-10-24T09:38:23Z",
+          "lastUTC": "2026-10-24T09:39:32Z",
+          "firstHost100ns": 289601884162,
+          "lastHost100ns": 290292487731,
+          "firstPlayerSeconds": 140.11155014,
+          "lastPlayerSeconds": 209.171573968,
+          "checkpointSpanSeconds": 69.0603569
+        },
+        "OMTWholeSourceLifetime": {
+          "calls": 12750,
+          "spanSeconds": 425.633441916,
+          "entryFramesPerSecond": 29.95300355773279,
+          "minimumEntryGapMilliseconds": 9.787833,
+          "medianEntryGapMilliseconds": 33.334166,
+          "p95EntryGapMilliseconds": 34.161042,
+          "p99EntryGapMilliseconds": 34.31625,
+          "maximumEntryGapMilliseconds": 171.78475,
+          "gapsBelowUnchanged32_333333msFloor": 82,
+          "gapsOver40Milliseconds": 26,
+          "gapsOver66_666667Milliseconds": 8
+        },
+        "OMTFirstCommonMovieRange": {
+          "calls": 2067,
+          "spanSeconds": 69.033871542,
+          "entryFramesPerSecond": 29.927337897354516,
+          "minimumEntryGapMilliseconds": 19.788542,
+          "medianEntryGapMilliseconds": 33.337271,
+          "p95EntryGapMilliseconds": 34.189875,
+          "p99EntryGapMilliseconds": 34.302375,
+          "maximumEntryGapMilliseconds": 144.811625,
+          "gapsBelowUnchanged32_333333msFloor": 10,
+          "gapsOver40Milliseconds": 6,
+          "gapsOver66_666667Milliseconds": 2,
+          "zeroReturnCalls": 0,
+          "callsWithReturnValue": 2067
+        },
+        "OMTTraceValid": true,
+        "OMTOverflowCount": 0
+      },
+      "fixed-timer": {
+        "sourceRunID": "8A36A43D-33C0-4602-90F0-8E5ADCE0565B",
+        "commonMovieCheckpoints": {
+          "firstUTC": "2026-10-24T09:43:29Z",
+          "lastUTC": "2026-10-24T09:44:38Z",
+          "firstHost100ns": 292657040347,
+          "lastHost100ns": 293348772217,
+          "firstPlayerSeconds": 140.180349801,
+          "lastPlayerSeconds": 209.353594941,
+          "checkpointSpanSeconds": 69.173187
+        },
+        "OMTWholeSourceLifetime": {
+          "calls": 16569,
+          "spanSeconds": 555.08222775,
+          "entryFramesPerSecond": 29.847830054220285,
+          "minimumEntryGapMilliseconds": 33.347792,
+          "medianEntryGapMilliseconds": 33.383958,
+          "p95EntryGapMilliseconds": 33.409625,
+          "p99EntryGapMilliseconds": 33.433667,
+          "maximumEntryGapMilliseconds": 223.268583,
+          "gapsBelowUnchanged32_333333msFloor": 0,
+          "gapsOver40Milliseconds": 43,
+          "gapsOver66_666667Milliseconds": 20
+        },
+        "OMTFirstCommonMovieRange": {
+          "calls": 2066,
+          "spanSeconds": 69.153459583,
+          "entryFramesPerSecond": 29.86112354251094,
+          "minimumEntryGapMilliseconds": 33.359458,
+          "medianEntryGapMilliseconds": 33.383459,
+          "p95EntryGapMilliseconds": 33.408792,
+          "p99EntryGapMilliseconds": 33.428958,
+          "maximumEntryGapMilliseconds": 149.134833,
+          "gapsBelowUnchanged32_333333msFloor": 0,
+          "gapsOver40Milliseconds": 5,
+          "gapsOver66_666667Milliseconds": 2,
+          "zeroReturnCalls": 0,
+          "callsWithReturnValue": 2066
+        },
+        "OMTTraceValid": true,
+        "OMTOverflowCount": 0
+      }
+    },
+    "physicalLongGapAttribution": {
+      "scope": "Initial strict one-shot whole-source lifetime, live calls only; not a later fixed policy.",
+      "gapsAbove40Milliseconds": 43,
+      "largestEntryGapMs": 223.268583,
+      "precedingSynchronousSDKBoundaryMs": 223.235041,
+      "precedingObservationMs": 0.007625,
+      "afterPrecedingTickToNextTickMs": 0.02,
+      "componentCauseIsolated": false,
+      "interpretation": "Largest gaps are primarily inside the synchronous runtime.sendVideo boundary, separate from reproduced ordinary-wake drift; no codec, bridge or OS defect established."
+    },
+    "finalPhasePhysicalOutput": {
+      "runID": "37172895-F66C-4D1F-9717-83D6F47BBA73",
+      "intervalSeconds": 605.0005622087047,
+      "videoFramesAdmitted": 18096,
+      "videoAdmissionFPS": 29.910716006504295,
+      "audioPacketsAdmitted": 30251,
+      "audioLatePackets": 0,
+      "audioInsideRouteHorizon": 0,
+      "audioTimestampDiscontinuities": 0,
+      "audioTimelineResets": 0,
+      "videoTimelineResets": 0,
+      "poolStalls": 0,
+      "attempts": 1,
+      "failures": [],
+      "memoryAfterWarmupMiB": {
+        "minimum": 48.26637268066406,
+        "maximum": 53.17262268066406,
+        "earlyMean": 52.8809560139974,
+        "lateMean": 51.2442372639974,
+        "changeInMeans": -1.63671875,
+        "postWarmupSampleCount": 97
+      },
+      "nativeRenderer": {
+        "available": true,
+        "durationSeconds": 599.9971396252513,
+        "totalFrames": 17946,
+        "droppedFrames": 1,
+        "corruptedFrames": 0,
+        "optimizedCompositingFrames": 17938,
+        "dropPercent": 0.0055722723726735765,
+        "estimatedDisplayedFPS": 29.908475915748802,
+        "meanAccumulatedFrameDelayMs": 4.550942695272592e-08
+      },
+      "runtimeTargets": {
+        "collectionCompleted": true,
+        "noCollectionErrors": true,
+        "nativeRendererMetricsAvailable": true,
+        "requestedDurationReached": true,
+        "oneConnectionAttempt": true,
+        "noReportedFailures": true,
+        "allSamplesPlaying": true,
+        "admissionAtLeastTargetMinus0_1FPS": true,
+        "advertisedFrameRateMatchesTarget": true,
+        "noAudioAdmittedAfterItsPTS": true,
+        "noAudioAdmittedInsideRouteHorizon": true,
+        "noAudioTimestampDiscontinuities": true,
+        "noTimelineResets": true,
+        "noDecoderPoolStalls": true,
+        "noSampledVideoStallOverTwoSeconds": true,
+        "noSeriousOrCriticalThermalState": true,
+        "postWarmupMemoryGrowthBelow20MiB": true,
+        "advertisedScanModeMatchesTarget": true,
+        "outputSamplesAtLeastTargetMinus0_1FPS": true,
+        "expectedAudioIsAdvancing": true,
+        "nativeRendererCoverageAtLeast95Percent": true,
+        "nativeRendererNoCorruptedFrames": true,
+        "nativeRendererDropRateBelow0_1Percent": true
+      },
+      "allRuntimeTargetsMet": true,
+      "sourceRunID": "29F8C026-D17B-4A85-99BE-70DEC8E9071A",
+      "helperSHA256": "613e41367e87a4af977d1ae0db326a3ae50e3f5d75bd2d98f5a128cb599f22a0",
+      "sourceCleanupAtUTC": "2026-10-24T10:41:06Z",
+      "sourceCleanup": "Normal authorized automatic retirement; explicit finish unacknowledged.",
+      "physicalAwakeCleanupAtUTC": "2026-10-24T10:41:00Z",
+      "hardDeadlineUTC": "2026-10-24T10:41:36Z",
+      "scope": "605-second steady-output screening: all 23 targets passed. Separate native retained-receiver tests observed recovery after approximately 5.05 seconds, exceeding the four-second DEBUG diagnostic target."
+    },
+    "finalPhaseSourceTrace": {
+      "analysisSHA256": "62d16f28b7972f2e2c8ce4d91706f01081c8eebc32efe15bda8fe447e60297cc",
+      "commonCheckpoints": {
+        "firstUTC": "2026-10-24T10:31:57Z",
+        "lastUTC": "2026-10-24T10:33:05Z",
+        "firstHost100ns": 321736332621,
+        "lastHost100ns": 322420116228,
+        "firstPlayerSeconds": 140.775113679,
+        "lastPlayerSeconds": 209.15312024
+      },
+      "OMTWholeLifetime": {
+        "calls": 23889,
+        "spanSeconds": 798.400010916,
+        "entryFPS": 29.919839270284363,
+        "minimumMS": 32.354125,
+        "medianMS": 33.333042,
+        "p95MS": 33.354375,
+        "maximumMS": 181.021167,
+        "below32_333333MS": 0,
+        "over40MS": 60,
+        "over66_666667MS": 31
+      },
+      "OMTCommonMovieRange": {
+        "calls": 2049,
+        "spanSeconds": 68.345886292,
+        "entryFPS": 29.965227040149188,
+        "minimumMS": 32.366375,
+        "medianMS": 33.333104500000005,
+        "p95MS": 33.353292,
+        "maximumMS": 105.351,
+        "below32_333333MS": 0,
+        "over40MS": 5,
+        "over66_666667MS": 2,
+        "zeroReturns": 0
+      },
+      "NDIWholeLifetime": {
+        "calls": 23539,
+        "spanSeconds": 786.066693458,
+        "entryFPS": 29.944024083317363,
+        "minimumMS": 32.352333,
+        "medianMS": 33.333125,
+        "p95MS": 33.354708,
+        "maximumMS": 186.891625,
+        "below32_333333MS": 0,
+        "over40MS": 30,
+        "over66_666667MS": 20
+      },
+      "OMTTraceValid": true,
+      "NDITraceValid": true
+    },
+    "publicDirectURLManaged": {
+      "1.0.0.19": {
+        "senderObjects": {
+          "passed": true,
+          "cycles": 8,
+          "firstFreshMs": [
+            18.8907,
+            985.586,
+            994.5488,
+            984.5065,
+            992.4772,
+            990.5429,
+            984.309,
+            987.1028
+          ],
+          "scope": "Public managed APIs; video-only persistent direct URL, exact listener reuse, real1080p UYVY/VMX decodedBGRA, no frame metadata or audio. Four-second recovery target, eight-second diagnostic ceiling. No private state inspection or SDK edits."
+        },
+        "senderProcesses": {
+          "passed": true,
+          "cycles": 8,
+          "firstFreshMs": [
+            26.2273,
+            445.1617,
+            445.6135,
+            487.2572,
+            444.7008,
+            447.734,
+            449.6627,
+            441.3611
+          ],
+          "scope": "Public managed APIs; persistent video-only receiver, same direct URL, new sender subprocess per cycle; real1080p UYVY/VMX decodedBGRA, no metadata/audio. Four-second first-frame target, eight-second diagnostic ceiling; absolute monotonic timestamps."
+        }
+      },
+      "1.0.0.20": {
+        "senderObjects": {
+          "passed": true,
+          "cycles": 8,
+          "firstFreshMs": [
+            20.8558,
+            1030.1723,
+            993.5453,
+            989.1195,
+            947.0497,
+            986.2268,
+            983.451,
+            991.1173
+          ],
+          "scope": "Public managed APIs; video-only persistent direct URL, exact listener reuse, real1080p UYVY/VMX decodedBGRA, no frame metadata or audio. Four-second recovery target, eight-second diagnostic ceiling. No private state inspection or SDK edits."
+        },
+        "senderProcesses": {
+          "passed": true,
+          "cycles": 8,
+          "firstFreshMs": [
+            27.6932,
+            903.1772,
+            448.7726,
+            442.2049,
+            477.2307,
+            442.6659,
+            448.6032,
+            477.6696
+          ],
+          "scope": "Public managed APIs; persistent video-only receiver, same direct URL, new sender subprocess per cycle; real1080p UYVY/VMX decodedBGRA, no metadata/audio. Four-second first-frame target, eight-second diagnostic ceiling; absolute monotonic timestamps."
+        }
+      }
+    },
+    "nativeRetainedReceiverRegression": {
+      "state": "Delayed public native recovery reproduced; no permanent capacity loss demonstrated",
+      "observedFailure": "Native helper retained video-only receiver can exceed its ordinary four-second DEBUG probe budget after rapid sender-process replacement. Minimal public C-API probe recovered without receiver recreation after 5.139 seconds, then 5.054 seconds with child descriptor inheritance excluded.",
+      "earlyCountExhaustionHypothesisDisproved": true,
+      "managedObjectAndProcessCasesPassed": true,
+      "nativeCAPIReproductionPending": false,
+      "nativeCAPIReproduction": {
+        "SDK": "Unmodified 1.0.0.19",
+        "URL": "One fixed loopback URL, same listener reused by fresh sender subprocesses",
+        "decodedVideo": "1920x1080 BGRA, real VMX from opaque UYVY, no metadata or audio",
+        "stopSequence": "Same opaque UYVY terminal picture, send_destroy, omt_shutdown, _exit(0)",
+        "descriptorInheritanceExcluded": true,
+        "firstFreshMs": [
+          10.12525,
+          1073.713875,
+          997.696125,
+          5054.156708
+        ],
+        "fourSecondDiagnosticTargetPassed": false,
+        "recoveredWithinEightSecondObservation": true,
+        "receiverRecreated": false,
+        "normalExitSingleVariableComparisonCompleted": true,
+        "reportSHA256": "e3b9bbd818825157d975d8bc05e7c3ccedd98a3294d44f6d0b1ef6eb0ab4eb4a"
+      },
+      "SDKTimingContext": "OMTChannel five-second TCP keepalive idle and one-second BeginConnect retry; exact component causing the observed delay is not isolated.",
+      "applicationBudget": "Existing four-second DEBUG probe request budget retained; new functional retained-receiver fixture opts into a separate eight-second budget and reports first-fresh timing/four-second target separately. Scoped functional checks passed, including measured late recoveries; no four-second pass is inferred.",
+      "shippingScope": "Eucaly currently ships an OMT sender; this is a DEBUG incoming loopback probe, not a production incoming-receiver timeout or upstream API SLA.",
+      "SDKSourceChanged": false,
+      "senderLingerAdded": false,
+      "eucalyFocusedFunctionalVerification": {
+        "executions": 34,
+        "optInSkips": 1,
+        "failures": 0,
+        "lateFirstFreshMs": [
+          5210.847,
+          5235.105
+        ],
+        "fourSecondDiagnosticTargetMetForThoseFrames": false,
+        "eightSecondFunctionalBudgetMet": true,
+        "retainedReceiverRecreated": false,
+        "fullMakeTest": {
+          "executions": 1071,
+          "skipped": 7,
+          "assertionFailures": 4,
+          "affectedTests": 2,
+          "passed": false,
+          "networkSuitesPassed": true,
+          "failureScope": "Existing LibrarySearchNavigationTests and LyricsTextViewTests failed their shared app-active/window-key setup; behavioral assertions not reached. Local Mac confirmed screen-locked; focused keyboard validation blocked pending optional unlock.",
+          "retainedReceiverFirstFreshMs": [
+            248.663,
+            5266.211,
+            929.76
+          ],
+          "fourSecondDiagnosticTargetMetForLateFrame": false,
+          "sourceChangedToBypassFocusFailures": false
+        }
+      },
+      "normalProcessExitComparison": {
+        "onlyChangedOption": "Omitted --immediate-exit; same opaque terminal picture, one fresh frame, public native receiver and clean child FDs",
+        "completedCycles": 8,
+        "firstFreshMs": [
+          14.395292,
+          964.146708,
+          960.232083,
+          968.13375,
+          968.192417,
+          987.384542,
+          958.076625,
+          5105.404625
+        ],
+        "fourSecondDiagnosticTargetPassed": false,
+        "sameReceiverRecoveredWithoutRecreation": true,
+        "helperExitPathChangeSupported": false,
+        "reportSHA256": "239e5775f8909952dd0927c49b69d483d74bbf5d9ed2bf3de8d83539e1aa0679"
+      }
+    },
+    "rootFinalValidation": {
+      "pythonRunnersSyntax": "Passed",
+      "provenanceJSON": "Valid",
+      "nativeCStrictCompiler": "Passed -std=c11 -O2 -Wall -Wextra -Werror; current source hash matches tested executable manifest",
+      "managedSenderProcessCases": "8 cycles passed on both .19/.20; current C# source hashes match tested files",
+      "originalPublicApiProjectAfterSubprojectExclusion": "Release build passed, zero warnings/errors",
+      "receiverAppRuntimeChanged": false,
+      "newPhysicalDeviceTestsPending": false
+    },
+    "rootHarnessCommits": [
+      "6c2f37b",
+      "225629c"
+    ],
+    "eucalyFinalIntegrationCommit": "6ec6155732c4976c5a7a1ffc2c1a09560b584021",
+    "eucalyFinalIntegration": {
+      "branch": "codex/omt-output-stability",
+      "commit": "6ec6155732c4976c5a7a1ffc2c1a09560b584021",
+      "remoteUnchangedAt": "a5892b3c3f89ca62c5bc04a82cc718fac5eecd49",
+      "workingTreeClean": true,
+      "pushed": false,
+      "SDKSourceVersion": "1.0.0.19, unmodified",
+      "SDKRuntimeSHA256": "d55a2a4ab39b597284a9f7f77660f21331004525d10c3ef675642afbbcbeeb57",
+      "signedMakeBuildPassed": true,
+      "packageVerificationPassed": true,
+      "stockSDKExecutableTextMatchesPackage": true,
+      "allThirteenVendorHashesVerified": true,
+      "finiteOMTAndNDIRuntimeChecksPassed": true,
+      "deepStrictSignaturesPassed": true,
+      "agentConfigurationChecksPassed": true,
+      "productionHarnessChecksPassed": 8,
+      "independentReviewRemainingActionableFindings": 0,
+      "liveNetworkHelpersRemaining": 0,
+      "physicalDevicesReleased": true,
+      "fullSuitePassed": false,
+      "fullSuiteLimitation": "Two unchanged keyboard-focus setups blocked by confirmed local screen lock; all network suites passed, seven opt-in cases skipped.",
+      "packageVerificationSHA256": "fa9c56f3c8b08e076d120190c701e08543761445f6279b170aabe1921f804cc5"
+    }
+  },
+  "eucalyExperimentalRuntimeIntegrationCommit": "23639de"
 }

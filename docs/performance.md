@@ -23,6 +23,158 @@ path and basic playback, not sustained performance or physical audible/panel
 continuity. The coordinated eucaly results below use its real output path and
 supplied video files. Earlier sustained figures below belong to build 2.
 
+### Stock SDK and application pacing reassessment
+
+The maintainer closed libomtnet PRs
+[#62](https://github.com/openmediatransport/libomtnet/pull/62) and
+[#63](https://github.com/openmediatransport/libomtnet/pull/63), questioning the
+public-API impact of the slot test and recommending investigation of sender
+pacing. The earlier recommendation below to retain both transport patches is
+superseded by this reassessment. No push or upstream reply was made during it.
+
+Pristine SDK 1.0.0.19 (`5395139`) and 1.0.0.20 (`7d29031`) each passed 24
+public-API recovery cycles: eight receiver disposals/recreations, eight receiver
+process kills/replacements and eight sender restarts with a persistent receiver
+reconnecting by name. The harness uses the compiled library, real VMX/FPA1,
+private loopback discovery and decoded A/V freshness checks. There were zero
+media-channel drops and no omitted call records. No send/pool exception occurred;
+the runs do not exhaust rare synchronous-failure races, qualify memory or test
+full-rate transport. No persistent capacity-loss failure was reproduced.
+See [the reproducible harness](../Upstream/libomtnet/public-api-tests/README.md).
+
+Eucaly's actual submission worker had a separate pacing bug: a delayed repeating
+timer could issue closely spaced SDK calls while catching up. A bounded 95 ms
+owner-queue stall reproduced a 5.626459 ms interval between real stock-SDK video
+entries. Recording adapters also reproduced sub-frame intervals while preserving
+the synchronous and borrowed-buffer contracts. Eucaly's agent replaced the
+repeating timer with guarded one-shot scheduling. The final policy preserves a
+nominal 30 Hz phase while enforcing the existing 32.333333 ms actual-entry floor
+(one frame period minus the unchanged 1 ms jitter allowance). It skips obsolete
+opportunities after stalls. Actual host timestamps, the audio clock, queue bounds
+and NDI buffer leases are preserved.
+
+The initial strict entry-anchored repair passed a short local check but failed
+the longer physical cadence screen below. A valid actual-worker regression then
+showed ordinary sub-millisecond wake lateness accumulating to 29.365847 fps.
+The final phase policy passes that unchanged 29.9 fps gate and all 11 focused
+cases; its separate local stock-SDK check recorded 1,797 calls at 29.949955 fps,
+with 32.365042–78.131542 ms spacing and complete positive-return traces. The historical
+eight rejection calls had immediate-predecessor spacing of 33.26–33.40 ms; the new
+finding does not establish their cause.
+
+Managed public-API direct-URL tests with both sender-object and sender-process
+replacement passed eight cycles per SDK version. A separate native-helper
+sequence missed its four-second DEBUG probe budget after rapid source restarts.
+A minimal program using only the public native C API reproduced delayed recovery
+at 5.139 seconds, then 5.054 seconds with child descriptor inheritance excluded.
+The latter run's preceding cycles recovered at 10/1,074/998 ms. One persistent
+receiver resumed fresh decoded video without recreation; there is no reproduced
+permanent capacity loss. These arms send the same opaque terminal picture,
+destroy the sender, shut down the SDK and immediately exit the source process.
+A single-variable comparison with normal process exit also recovered late at
+5.105 seconds on its eighth cycle, after seven recoveries in 14–987 ms. Changing
+the helper's exit path is not supported by these results.
+
+The existing four-second loopback budget is a DEBUG diagnostic, not an SDK
+reconnect guarantee or a production incoming-receiver timeout (eucaly currently
+ships an OMT sender). Eucaly's new functional retained-receiver fixture uses a
+separate eight-second recovery budget based on the SDK's five-second keepalive,
+one-second connect retry and slack, while reporting first-frame timing against
+the original four-second target separately. Ordinary probes retain their
+original budget. This does not turn the observed four-second misses into passes,
+identify the precise delay mechanism, or qualify all disconnect races. No sender
+linger, receiver recreation workaround or speculative SDK patch was added.
+
+The final scoped verification passed 34 executions with one opt-in skip; it
+retained two first-frame observations at 5.211/5.235 seconds as four-second
+diagnostic misses. The full app run executed 1,071 cases with seven skips and
+four failure assertions in two pre-existing keyboard-focus test setups. Both
+failed to activate the app/make its window key before their behavior checks;
+read-only session inspection confirmed the local Mac was screen-locked with
+loginwindow in front. All network suites passed, including retained-receiver
+recovery at 5.266 seconds, explicitly marked beyond the four-second target.
+The full run is not counted as passing; keyboard-focus validation remains
+blocked by the locked local session. No unrelated test or activation behavior
+was changed to bypass that condition.
+
+Eucaly saved the integrated work locally as `6ec6155` (no push). Its final
+`make build` archive/export, finite OMT/NDI runtime checks, deep/strict signatures,
+vendor hashes/notices and stock-SDK executable-text comparison all passed after
+the DEBUG recovery-budget change. The application working tree is clean. Root
+reproducers are committed separately; this investigation does not change the
+OMTReceiver runtime. Neither the SDK fork nor upstream received a new push or
+reply during this reassessment.
+
+A separate audio-frame-metadata probe fails on both stock SDK versions: XML
+metadata overwrites the first PCM words, and the advertised metadata tail is
+zero. Eucaly supplies no audio frame metadata, so this does not affect its
+current output path or explain the historical warnings/rejections. The separate
+failing probe is retained; the stock source remains unchanged.
+
+The fresh wired comparison used gigabit Ethernet at both Macs (the remote Mac
+had previously negotiated 100 Mbps), one GUI NDI Monitor, one native Dell window
+and this OMT TV. All arms used the same unmodified 1.0.0.19 build, codec, movie
+and optimized Debug application path, with different submission-worker timers.
+This topology is not a matched repeat of the historical buffer comparison.
+The first pair's preserved helpers still label the runtime `+eucaly.1`; identical
+stock runtime SHA-256 values and product manifests establish its actual identity.
+The final helper has the corrected stock version label.
+
+The full source traces captured natural old-timer OMT gaps as short as 9.788 ms;
+the initial strict repair's minimum was 33.348 ms. In approximate first-pass
+movie ranges 140–210 seconds, the old timer had 2,067 positive SDK calls at
+29.927338 fps, versus 2,066 at 29.861124 fps after the initial repair. The actual
+checkpoint boundaries differ slightly; these are source entry rates, not TV or
+native presentation counts.
+
+| Receiver observation | Repeating timer | Initial strict one-shot | Final phase clock |
+| --- | ---: | ---: | ---: |
+| Measured interval | 184.995 s | 484.994 s | 605.001 s |
+| Video admission | 29.936023 fps | 29.845752 fps | 29.910716 fps |
+| Admitted audio blocks | 9,250 | 24,250 | 30,251 |
+| Route warnings / late audio / timestamp gaps | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| Connection attempts / failures | 1 / 0 | 1 / 0 | 1 / 0 |
+| Post-warmup memory mean change | +0.026 MiB; 13 samples | +0.043 MiB; 74 samples | −1.637 MiB; 97 samples |
+| Separate TV renderer drops / frames | 1 / 5,388 | 0 / 14,325 | 1 / 17,946 |
+| Applicable runtime targets met | 22 / 23 | 21 / 23 | 23 / 23 |
+
+The short control lacks the required 24 memory samples; its memory target is
+unestablished. The longer initial repair fails both video admission and output
+sample cadence targets at the unchanged 29.9 fps threshold. It does not pass the
+combined screen. Sender counters place the cadence deficit before delivery,
+with zero observed SDK video drops. The strict deadline can accumulate timer
+wake delays. The largest source entry gap, 223.269 ms, includes 223.235 ms inside
+the preceding synchronous video-send boundary; it is not primarily timer wait.
+The bridge, SDK, codec or OS origin of that stall is not isolated. The final phase
+run passes all 23 runtime targets with the same stock runtime. Its complete source
+trace has 23,889 live OMT calls, minimum spacing 32.354125 ms and zero entries below
+the unchanged floor. The first actual post-seek common range has 2,049 positive
+OMT calls at 29.965227 fps. Its checkpoint boundaries differ from the first pair.
+None of the arms has audio timeline resets or decoder pool stalls; the final
+renderer has zero corrupted frames. These are bounded steady-output results,
+not a reconnect pass or general production sign-off.
+Native-window readiness and shared-player progress do not measure
+native scanout cadence; continuous listening and physical latency were not
+measured.
+
+Both first-pass movie regions around 140–210 seconds fall inside the retained TV
+intervals. The seek ACKs occur after the TV baselines (09:37:39Z for the control,
+09:42:45Z for the initial repair), so these are not intervals starting exactly
+at movie position 100. All owned source windows/helpers and physical keep-awake
+jobs stopped normally by 09:50:29Z, before the 09:54:27Z device deadline; the TV
+was restored to the ordinary app and Monitor was set to None.
+
+The newly authorized final run's seek ACK is 10:31:12Z, after its 10:30:38Z TV
+baseline. Its first actual post-seek common checkpoints cover movie positions
+140.775–209.153 seconds. Physical keep-awake jobs and Monitor subscription were
+released by 10:41:00Z; source windows/helpers retired normally at their authorized
+automatic cutoff of 10:41:06Z, before the 10:41:36Z hard deadline. The explicit
+finish request was not acknowledged before automatic retirement.
+
+Evidence is under ignored `build/StockSDK-20261024/` and eucaly's
+`build/OMTStockSDK-20261024/`. The remaining historical observations retain their
+original runtime, network and measurement scope.
+
 ### Eucaly dual-output stability investigation
 
 The real eucaly OutputCoordinator, shared player/audio pipeline and independent
@@ -448,9 +600,11 @@ None and reselecting the same source restored 1080p30 reception without changing
 eucaly, native output or helper generations. This preflight issue is retained
 separately; no speculative application/SDK repair was made for it.
 
-The recommendation is to retain the ownership repair and bounded 512 KiB runtime
-locally. The ownership repair is an independent upstream correctness fix; a
-general buffer-default change merits separate platform/performance review.
+At that stage the recommendation was to retain the ownership repair and bounded
+512 KiB runtime. The stock-SDK reassessment above supersedes that recommendation:
+the internal slot invariant does not demonstrate persistent public-API capacity
+loss, and application pacing requires correction before attributing a need for
+larger buffers.
 The tested wired 1080p30 configuration supports a monitored production trial.
 Full Release GUI operation, broader formats/routes, continuous physical audio,
 source-to-panel latency and longer combined-output qualification remain open.

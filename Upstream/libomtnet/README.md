@@ -2,12 +2,19 @@
 
 These patches apply to `openmediatransport/libomtnet` v1.0.0.19, commit
 `5395139d45cf47bf9f90364bf68f9960183e7638`. They are local work authorized for the
-OMTReceiver/eucaly stability investigation. Two focused upstream PRs are now open;
-the retained experimental patches below remain investigation evidence.
+OMTReceiver/eucaly stability investigation. The two focused upstream PRs were
+closed by the maintainer. The retained experimental patches below are historical
+investigation evidence, not demonstrated production requirements.
 The tvOS receiver does not link this managed sender implementation; these files
 are not an app build dependency.
 
 ## Upstream pull requests (24 October 2026)
+
+Both PRs are closed. The maintainer asked for a public-API failure reproduction
+for #62 and identified application pacing and the deliberate 64 KiB burst bound
+for #63. Our internal pool tests demonstrated an isolated slot invariant, not
+persistent loss of capacity after normal channel disposal. Earlier conclusions
+that either patch was required were too strong.
 
 - [#62: Return send slots when socket submission fails](https://github.com/openmediatransport/libomtnet/pull/62).
   Independent ownership repair with four regression cases; original code fails
@@ -22,6 +29,75 @@ Both build `netstandard2.0` and `net40` in Release with zero warnings/errors, an
 pass the three bounded channel-pressure/recovery checks. Only these two focused
 branches were pushed to the fork; the combined investigation branch remains
 local. No packaged SDK or receiver runtime changed when opening the PRs.
+
+## Stock SDK reassessment
+
+The [public-API harness](public-api-tests/README.md) references the compiled,
+pristine SDK, uses real VMX/FPA1 codecs and a private loopback discovery server,
+and retains complete bounded call traces. SDK 1.0.0.19 (`5395139`) and 1.0.0.20
+(`7d29031`) each passed 24 cycles: eight receiver disposals/recreations, eight
+receiver process terminations/replacements and eight sender restarts with the
+receiver reconnecting by name. Fresh decoded A/V, public connection cleanup
+and zero media-channel drops were observed. No send/pool exceptions occurred;
+these tests do not exhaust rare synchronous-failure races or qualify throughput.
+No persistent public-API capacity-loss failure was reproduced.
+
+Eucaly's old repeating timer could submit closely spaced frames after owner-queue
+stalls. A finite 95 ms stall produced a 5.626459 ms interval between real stock-SDK
+entries. Eucaly's agent replaced it with guarded one-shot scheduling on a nominal
+30 Hz phase, retaining source timestamps and the audio clock. Calls respect the
+existing 32.333333 ms actual-entry floor (one period minus the unchanged 1 ms
+jitter allowance), and obsolete opportunities are skipped. Eleven focused
+checks passed; a separate local stock-SDK check delivered 29.949955 fps with
+minimum spacing 32.365042 ms. The historical eight rejection
+calls had immediate predecessor intervals of 33.26–33.40 ms, so this finding
+does not establish their cause.
+
+The fresh gigabit native/NDI/OMT comparison kept the SDK unmodified. The old
+timer admitted 29.936023 fps over 184.995 seconds; the initial strict one-shot
+repair admitted 29.845752 fps over 484.994 seconds and failed the unchanged
+29.9 fps screen. The final phase policy admitted 29.910716 fps over 605.001
+seconds and passed all 23 applicable runtime targets. It had zero SDK video
+drops, audio timing warnings, timeline resets, decoder-pool stalls or reconnects;
+the separate TV renderer dropped 1/17,946 frames with no corruption and memory
+was stable. The earlier strict policy accumulated ordinary timer wake lateness;
+long individual synchronous send stalls are separate and their component cause
+is not isolated. Neither historical transport patch is established as necessary.
+The remote Mac now negotiates gigabit, so these runs are not matched repeats of
+the historical 100 Mbps buffer comparison. See
+[the detailed physical results](../../docs/performance.md#stock-sdk-and-application-pacing-reassessment).
+
+Separate direct-URL managed tests passed eight sender-object and eight sender-
+process replacements on each stock version with one retained video receiver.
+A minimal public native C-API probe also reproduced a delayed reconnect: after
+an opaque terminal picture, sender destruction, SDK shutdown and immediate
+process exit, the same receiver recovered at 5.054 seconds. That misses the
+four-second DEBUG probe target, but does not reproduce permanent capacity loss.
+The SDK's five-second keepalive and connection retry timing inform a separate
+functional recovery budget; they do not establish the exact cause of the delay.
+The reproducer retains its failing four-second target and eight-second
+diagnostic ceiling. No SDK source patch was added for this finding.
+The corresponding normal-process-exit arm also recovered late at 5.105 seconds;
+changing the helper's exit path is not supported by this comparison.
+
+A separate public-API audio-metadata probe fails on both stock versions: valid
+XML overwrites the PCM prefix and the metadata tail is zero. Eucaly supplies
+no audio frame metadata; this is unrelated to the rejection and warning
+investigation. The failing probe is retained separately, without changing the
+stock SDK or opening another upstream report.
+
+### OBS plugin reference
+
+The upstream [OBS output implementation](https://github.com/openmediatransport/omtplugin/blob/b6356ee5adeb1be7ab2c6257ae588447cc99fbf8/src/OBSOutput.cs#L457)
+at `b6356ee` forwards OBS raw audio/video callbacks through public `OMTSend.Send`.
+It preserves callback timestamps (`timestamp / 100`) and the OBS output frame
+rate, with no independent output timer or resend queue. Its normal stop path
+ends OBS data capture before disposing the sender. The
+[receiver worker](https://github.com/openmediatransport/omtplugin/blob/b6356ee5adeb1be7ab2c6257ae588447cc99fbf8/src/OBSReceiveInstance.cs#L331)
+continues polling the same public receiver across receive timeouts; it stops the
+worker before disposal. These are useful media-clock and lifetime references,
+not performance measurements or proof of the SDK version in a shipped plugin.
+Eucaly keeps its independent audio worker and NDI borrowed-buffer contracts.
 
 ## Independent repairs and buffer candidates
 
@@ -39,8 +115,10 @@ the pool when its socket is null or `Socket.SendAsync` throws synchronously.
 The exception is rethrown. Existing successful synchronous and asynchronous
 completion paths still return the event once. The catch only surrounds the
 socket call, avoiding a double return if a completion callback itself throws.
-The unmodified implementation leaked one slot in each failure case. Async
-socket error completion already returned its slot and is not the defect.
+In these direct internal-source tests, the unmodified pool retained one slot in
+each failure case. This does not demonstrate persistent public-API capacity
+loss after channel cleanup. Async socket error completion already returned its
+slot and is not the defect exercised by those tests.
 
 ## Reproduce the ownership regression
 
@@ -199,7 +277,8 @@ See [the retained failure evidence](../../docs/performance.md).
 
 The larger constant also applies to audio. A theoretical buffer capacity is not
 measured backlog; no valid load-period audio queue capture justified another
-size or priority change. The independent pool ownership repair remains valid.
+size or priority change. The internal pool regression alone does not establish
+that its proposed ownership change is needed by callers of the public API.
 Local documentation-only follow-ups in the PR branch record these limits;
 no runtime change, repair push or upstream PR was made in this follow-up.
 
@@ -244,10 +323,11 @@ Bonjour unit-test-name discoveries; those records alone neither prove a
 competing test nor establish complete historical isolation. The control's
 network capture is partial. See [the detailed comparison](../../docs/performance.md#sdk-rejection-and-parallel-native-output-follow-up).
 
-Retain the ownership repair independently of cable type. The bounded larger
-buffer also has useful wired resilience evidence; Cat6 does not justify
-discarding it as merely a Wi-Fi workaround. Keep its general upstream-default
-proposal separate from the correctness repair and review wider platforms.
+That investigation recommended retaining the ownership and buffer patches.
+The stock-SDK reassessment above supersedes that recommendation: neither patch
+is established as a requirement. The earlier larger-buffer result is retained
+as a scoped observation, with application pacing and network topology requiring
+separate evaluation.
 The evidence supports a monitored wired 1080p30 trial, not complete Release GUI,
 all-format, physical-audio or latency qualification. No additional runtime
 tuning, fork/upstream push or PR was made. Raw evidence is ignored under
