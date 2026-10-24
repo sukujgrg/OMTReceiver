@@ -4,11 +4,12 @@
   "activeBranch": "codex/omt-send-stability",
   "prBranch": {
     "name": "codex/omt-send-stability",
-    "commit": "e21b3d515fdfe92ae3aee12a29dda31f7d1249dc",
+    "commit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76",
     "base": "7d29031ff3f355ffa1f0cd08ee24d02e258445dd",
     "managedSDKVersion": "1.0.0.20",
     "runtimeRepairCommit": "18fa2dd9f94a85f112173727222d8e3bf9e6d032",
-    "documentationOnlyFollowUpCommit": "e21b3d515fdfe92ae3aee12a29dda31f7d1249dc"
+    "documentationOnlyFollowUpCommit": "e21b3d515fdfe92ae3aee12a29dda31f7d1249dc",
+    "wiredDocumentationFollowUpCommit": "21fcb93ba7d6a527d87e7c9d711778b825ed7e76"
   },
   "testedSDKBranch": {
     "name": "codex/omt-sdk-1.0.0.19-stability",
@@ -29,11 +30,32 @@
   "eucalyAudioDiagnosticsCommit": "97d4009c86b1d8bc03cfa28a7b17fd9f47368657",
   "hardwareQualificationPassed": false,
   "hardwareLimitations": [
-    "29.898023fps below unchanged29.9fps gate",
-    "2 route-horizon warnings without late audio",
-    "physical panel latency/audible continuity not measured",
-    "Extra NDI media flow reproducibly causes late audio and audible gaps on Wi-Fi sender path",
-    "Exact physical network/vendor component and matched Ethernet behavior unisolated",
-    "No valid load-period audio socket queue capture; no further buffer tuning"
-  ]
+    "Original clean Wi-Fi run:29.898023fps below unchanged29.9fps gate and2route-horizonwarnings withoutlateaudio",
+    "Physical panel latency and full-run Apple TV audible continuity unmeasured; remoteNDIMaclisteningconfirmationhasunspecifiedduration",
+    "Extra NDI media flow reproducibly caused late audio/audible gaps on prior Wi-Fi sender path; physical component unisolated",
+    "Wired normal-use20min case passed applicable gates; original warning causes unproven and NDIclient changed",
+    "Original overload interval lacked valid aligned audio socket queue capture; later wired single-NDI snapshots have sampling/batch gaps; no further buffer tuning"
+  ],
+  "wiredNormalUseComparison": {
+    "receiverRunID": "21C655CD-F073-4571-A1C6-8023DE37DE6A",
+    "sourceRunID": "827606ED-E6AA-484A-BBCB-F2FB078E245A",
+    "intervalSeconds": 1205.0012977086008,
+    "videoAdmissionFPS": 29.977561077063203,
+    "applicableRuntimeGates": 23,
+    "allApplicableRuntimeGatesPassed": true,
+    "audioHorizonWarnings": 0,
+    "lateAudioPackets": 0,
+    "audioTimestampGaps": 0,
+    "videoSDKRejections": 1,
+    "nativeVideoDrops": 4,
+    "nativeVideoFrames": 35973,
+    "senderLink": "1000baseT full-duplex; en0; Wi-Fi inactive",
+    "remoteNDILink": "100baseTX full-duplex; en6",
+    "receivers": "one audible GUI NDI Monitor and one OMT TV; no overlapping native NDI probe",
+    "sourceSDKChanged": false,
+    "strictOriginalWarningReproduction": false,
+    "limits": "Original two warning packets lack stage traces; NDI client differs from original native-probe run; no complete physical playout/latency qualification.",
+    "eucalyBuildMode": "Optimized Debug (-O) test host; real OutputCoordinator/shared player/helpers, not Release GUI"
+  },
+  "eucalyWiredEvidenceCommit": "2ffcabb9d65e295e4cd94f905f42d9bbf205dbc3"
 }

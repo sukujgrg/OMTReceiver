@@ -206,8 +206,8 @@ def main():
         manifest['collectionResult'] = 'complete'
     except (RuntimeError, OSError, subprocess.TimeoutExpired, KeyboardInterrupt) as error:
         manifest['collectionResult'] = 'incomplete'
-        manifest['error'] = str(error)
-        print(f'Benchmark incomplete: {error}', flush=True)
+        manifest['error'] = str(error) or type(error).__name__
+        print(f"Benchmark incomplete: {manifest['error']}", flush=True)
     finally:
         if launched and manifest.get('collectionResult') != 'complete':
             # Preserve the five-second history before restoring the ordinary app,

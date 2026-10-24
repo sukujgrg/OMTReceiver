@@ -214,8 +214,9 @@ source enqueue and before receiver parser completion on this Wi-Fi sender path.
 Parser callbacks are not physical NIC-arrival measurements: SDK queues, sender
 and receiver OS scheduling, the access point and radio path remain unisolated.
 The RTT increase supports transport pressure, not a Wi-Fi-only diagnosis.
-A matched wired comparison has not been performed; the operator has no cable
-for this sender Mac. Further saturation repeats cannot resolve that attribution.
+A matched wired comparison had not been performed at this point; the operator
+had no cable for this sender Mac. Further saturation repeats could not resolve
+that attribution. The later wired normal-use result below has its own scope.
 The original two small warnings fit part of this pattern but lack exact
 affected-packet records, so their cause remains unproven. Existing short
 loopback regressions do not reproduce this full source workload, and no matched
@@ -230,6 +231,127 @@ Hardware collectors, sources and helpers exited; the ordinary receiver launch
 was restored and the operator's NDI Monitor was left open. The final failed
 alignment and all successful/failing load evidence remain separate under
 `AudioTiming-20261024/`. No OMT upstream repair or documentation commit was pushed.
+
+### Wired one-NDI/one-OMT follow-up
+
+On 24 October, the sender was connected at `192.168.1.27` through `en0`,
+negotiated at 1000baseT full-duplex. Its Wi-Fi interface was inactive and had
+no IPv4 address. Both OMT lanes to TV address `192.168.1.5` and the NDI media
+flow to remote Mac `192.168.1.25` were observed on sender `en0`. The remote
+Mac's route used Ethernet `en6`, but its link negotiated at **100baseTX
+full-duplex**, including after the operator reseated its cable. The adapter
+advertised gigabit or faster support. This is a downstream capacity constraint;
+a cable's Cat6 label does not establish a gigabit negotiated link.
+
+The restored 4K test asset was byte-identical to the earlier input:
+SHA-256 `1578bc4ae077a81fad6492a6c0b34d024f77d3870e11045a253b58df443e5507`,
+328,913,440 bytes, 313.003 seconds, H.264 3840×2160 at 30 fps with stereo
+48 kHz AAC. The output stayed 1080p30 Medium VMX/stereo 48 kHz FPA1, with the
+same local SDK repair, 512 KiB setting and playback margins. The TV used the
+exact previous signed build-5 Release binary. Eucaly exercised its real
+OutputCoordinator/shared player/audio helpers through an optimized Debug (`-O`)
+test host, rather than a signed Release GUI qualification. A distinct NDI test
+name prevented the already-open Monitor from
+silently attaching alongside the owned probe. No additional receiver load was
+added. The operator confirmed that one NDI receiver and one OMT receiver were
+the intended normal configuration.
+
+The initial automated Home preflight timed out before playback while the TV
+showed its screensaver. The exact previously tested signed Release app was
+restored; the operator dismissed the screensaver, and a fresh screenshot showed
+the source picker. This setup failure is retained separately. A short wired
+readiness collector then completed 94.995 measured seconds without audio faults.
+The first native-NDI/TV baseline was deliberately interrupted at the operator's
+request for audible Mac playback. The native probe uses no audio device; it was
+stopped before selecting the new source in NDI Video Monitor. Its interrupted
+collector remains incomplete with an explicit planned-client-change record.
+
+The fresh audible-Monitor/TV collector launched around 12:00:52 Sydney time.
+Its first/last measured playing reports were at 12:00:59 and 12:21:04, spanning
+**1,205.001 seconds** in one TV process and connection attempt. All **23
+applicable runtime gates passed**, without changing their thresholds:
+
+| Observation | Result |
+| --- | --- |
+| Admitted video | 36,123 frames, 29.977561 fps |
+| Native renderer window | 1,200.007 s; 4 drops / 35,973 frames (0.011119%); zero corruption |
+| Audio admitted in measured interval | 60,251 blocks |
+| Route-horizon warnings / late audio / timestamp gaps | 0 / 0 / 0 |
+| Reconnects, failures, pool stalls, timeline resets | Zero |
+| Minimum audio lead, including warmup | 137.531 ms, above the unchanged 101.333 ms route horizon |
+| Post-warmup memory | 48.20–53.33 MiB; early-to-late mean change −0.286 MiB |
+| Thermal state | Nominal |
+| Collection errors | Zero; full series retained and ordinary launch restored |
+
+The operator twice confirmed clean audio from NDI Monitor through the remote
+MacBook Pro speakers, with mute off and the existing system volume at 44%.
+The follow-up wording was “Clean throughout the time I listened.” Listening
+duration was not quantified. This is NDI physical-listening evidence, not a
+continuous observation of every minute or proof of Apple TV audible continuity.
+The TV summary deliberately retains `audibleContinuityVerifiedForThisRun=false`.
+
+All 60,251 measured source audio blocks paired through application/IPC/helper
+stages. OMT returned a positive enqueue result for every block: 59,815 returns
+of 7,720 bytes and 436 valid 40-byte silent-channel frames. There were no
+audio-channel SDK drop observations. Full source traces had regular 960-sample
+steps, no malformed rows, duplicate stages or trace overflow. This establishes
+recorded enqueue/processing continuity, not physical delivery of every block.
+
+One video SDK rejection first appeared at 12:19:07 and remained a cumulative
+count of one. It is retained even though the receiver's aggregate gates passed.
+A separate 29.254 fps five-second interval near an EOF/rewind had four additional
+playback coalescences; both SDKs continued submitting 30 frames across the source
+checkpoint interval and the video drop count was still zero there. That counter
+can include compressed-queue skips or a decoded batch producing no admitted
+samples, so it does not identify one replacement site. No source reset or audio
+fault accompanied either observation.
+
+In a stable interior window, 1,168 network snapshots each showed exactly one
+NDI UDP media flow. Its accounted send rate averaged 67.68 Mbps and peaked at
+90.42 Mbps in the sampled intervals; these are flow counters, not physical
+wire-delivery or link-capacity measurements. OMT mean TCP RTT was 4.30 ms for
+video and 7.03 ms for audio, with maxima of 31.28 and 11.28 ms. Socket send-buffer
+occupancy was sampled 11,629 times per lane: video reached its 512 KiB high-water
+in 12 samples; audio never did and its maximum was 23,160 bytes. Sample batches
+had gaps up to 0.858 seconds, and shorter unseen peaks remain possible. TCP
+retransmitted-byte counters also increased; the wired path was not pressure-free.
+The header trace retained TCP push/control packets only, with zero capture-kernel
+drops. It is not a complete ACK history or a receiver-NIC arrival trace.
+
+The receiver retained all 33 exceptional timing events across its exported
+series without any route-horizon event. Its maximum parser-callback gap was
+81.724 ms: that packet matched a positive OMT return, a 0.099 ms instrumented SDK span and
+27.518 ms source return age. The largest playback wait was 64.093 ms, with
+148.043 ms lead still remaining at admission. The whole source trace's largest
+instrumented OMT call was 10.479 ms, so selected sub-millisecond calls are not
+the whole-run maximum. These joins distinguish source submission from later
+processing variation, including receiver-local waiting. They do not prove that
+the original two small warning packets had the same cause. No new
+socket-buffer, playback-delay, quality or timestamp change was justified.
+
+The stopped native probe separately retained 425.889 seconds: zero audio
+timecode gaps, SDK dequeue drops, invalid blocks or capture errors, but a
+323.619 ms maximum capture-return pause. Its output contains no PCM and no
+speaker playback. That pause is not a NIC-arrival measurement or proof of an
+audible gap. Its four metadata files were fetched only after the test source
+stopped, avoiding a bulk transfer competing on the remote 100 Mbps link.
+
+Evidence is under ignored `build/WiredAudio-20261024/`, with matching source
+traces in eucaly's `wired-20261024/source-01/analysis-transport/`. Source, helpers,
+owned samplers and keep-awake processes exited; the TV returned to ordinary
+launch and NDI Monitor was left open. The collector now names an empty-message
+interruption as `KeyboardInterrupt` instead of leaving its error reason blank.
+Its 14 Python tooling regressions passed. Eucaly committed the fixture and
+evidence follow-up at `2ffcabb`; its optimized build, seven relevant offline
+tests, controlled source run, syntax checks and final independent review passed.
+
+This supports the tested one-NDI/one-OMT normal-use configuration. It is a
+20-minute 1080p30 result, not a new 30-minute/60 fps or complete production
+qualification. The original warnings did not recur. Their exact cause remains
+unproven: the old packets lacked stage traces, and the full audible run used
+GUI Monitor rather than the native NDI client used for the original two events.
+The remote 100 Mbps limit also remains explicit. No OMT fork/upstream change
+was pushed and no further runtime tuning was applied.
 
 ## Build 4 scope
 

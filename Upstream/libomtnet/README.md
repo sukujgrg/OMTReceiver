@@ -151,5 +151,14 @@ See [the retained failure evidence](../../docs/performance.md).
 The larger constant also applies to audio. A theoretical buffer capacity is not
 measured backlog; no valid load-period audio queue capture justified another
 size or priority change. The independent pool ownership repair remains valid.
-A local documentation-only follow-up commit in the PR branch records these limits;
+Local documentation-only follow-ups in the PR branch record these limits;
 no runtime change, repair push or upstream PR was made in this follow-up.
+
+The later wired sender with one audible NDI Monitor and one OMT TV passed all
+23 applicable runtime gates over 1,205.001 seconds at 29.977561 fps, with zero
+audio timing warnings. The remote NDI Ethernet link remained 100 Mbps. All
+60,251 measured audio blocks had positive OMT enqueue results; one video SDK
+rejection and occasional sampled full video send buffers remain recorded.
+The larger buffer's necessity on Ethernet was not isolated. This normal-use
+result does not prove the original two warning causes or justify further
+buffer tuning; see [the full scope](../../docs/performance.md#wired-one-ndione-omt-follow-up).

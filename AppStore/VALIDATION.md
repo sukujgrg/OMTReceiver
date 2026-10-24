@@ -275,6 +275,23 @@ later reconnect periods also showed channel rejections. These findings do not
 isolate the physical network or establish the cause of the original two small
 margin warnings. Further buffer or network-priority changes were not justified.
 
+The subsequent wired-sender, single-NDI-Monitor/single-OMT-TV run completed
+1,205.001 seconds at 29.977561 admitted fps. All 23 applicable runtime gates
+passed: no audio route-horizon warnings, late packets, timestamp gaps, failures,
+reconnects or pool stalls. Native renderer counters showed four drops in 35,973
+frames (0.011119%) and zero corruption. The operator confirmed clean remote Mac
+speaker audio for the time they listened; physical TV audio and panel latency
+remain unmeasured. One video SDK rejection is preserved separately.
+
+The sender's media traffic used gigabit Ethernet; the remote NDI Mac's link
+remained 100 Mbps. The input hash and output settings matched the earlier
+asset/settings, but the audible run used GUI Monitor in place of the original
+native NDI probe. The original two warnings did not recur and their exact cause
+remains unproven. The Receiver was the verified signed Release build; eucaly
+used its optimized Debug test host. This 20-minute 1080p30 case does not replace the separate
+30-minute/60 fps or App Store release checks. See the complete
+[wired observations](../docs/performance.md#wired-one-ndione-omt-follow-up).
+
 ## Hardware results and remaining checks
 
 Physical testing resumed on 23 October. Build 1 completed the 30/59.94 cadence
