@@ -961,7 +961,19 @@
           "2026-10-24T18:08:44Z"
         ],
         "allOwnedSourcesAndWatchersRetired": true,
-        "changesPushed": false
+        "changesPushed": false,
+        "eucalyPostValidationWorkingTree": {
+          "testedCommit": "c87e3b748cbdb2bc4b7039b6c84985f32448ed71",
+          "unknownEditUTC": "2026-10-24T18:29:21Z",
+          "path": "eucalyTests/Network/OMT/OMTProductionStressTests.swift",
+          "effect": "Unverified edit removes generation fence, queued-race regression and resultGeneration ACK from working copy after tested commit.",
+          "author": "Unknown; eucaly owner and reviewer deny making the edit.",
+          "preservedUntouched": true,
+          "committedByThisInvestigation": false,
+          "snapshotRelativeToEucaly": "build/OMTStockSDK-20261024/postcommit-unattributed-stress-diff-20261025.patch",
+          "currentWorkingTreeVerified": false,
+          "productionRuntimeChanged": false
+        }
       }
     },
     "rootFinalValidation": {
