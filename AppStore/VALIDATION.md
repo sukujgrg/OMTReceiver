@@ -4,6 +4,10 @@ Current candidate: version 1.0.0 (5). Local checks used Apple Silicon, Xcode 27.
 SDK/simulator. These checks prepare a build; they do not establish App Store
 acceptance or physical performance.
 
+Build 5 was subsequently uploaded to TestFlight for internal testing and is marked
+**Testing** in App Store Connect. The internal distribution record appears below;
+earlier statements about no upload describe the preceding preparation stages.
+
 | Check | Result |
 | --- | --- |
 | App unit regressions | Build 5: 99 passed, including the interlaced, clock/queue, source-switching and audio-diagnostic regressions. |
@@ -13,7 +17,7 @@ acceptance or physical performance.
 | Benchmark-tool regressions | All 14 Python regressions passed. |
 | Public source preflight | Licence, privacy manifest, metadata, icons and tracked-file pattern checks passed. Raw captures, credentials and developer signing overrides are excluded. |
 | Device Release archive | Build 5: unsigned CI archive and signed generic tvOS archive passed packaging checks; signed archive used warnings as errors, with zero diagnostics. |
-| Local App Store IPA export | Build 5 export passed its App Store profile, signature, no-debug-entitlement and matching-dSYM checks. Nothing was uploaded. |
+| Local App Store IPA export | Build 5 export passed its App Store profile, signature, no-debug-entitlement and matching-dSYM checks. The subsequent TestFlight upload is recorded separately below. |
 | Public website | Home, support and privacy pages opened successfully; home and policy layouts were visually inspected. |
 
 The CI workflow also builds with GitHub's Xcode 26 runner. A Swift expression in
@@ -336,6 +340,25 @@ The IPA SHA-256 is
 These are local release checks. No TestFlight upload, Apple server-side validation
 or new physical playback qualification was performed during this cleanup.
 
+### Build 5 internal TestFlight distribution
+
+After cleanup commit `c130164`, the existing signed Release archive was uploaded
+as version 1.0.0 (5), with internal-only distribution enabled and automatic build
+renumbering disabled. App Store Connect app `6826491460` matches bundle identifier
+`com.suku.OMTReceiver`, SKU `OMTReceiver-tvOS` and English (U.S.) primary language.
+
+The first upload stopped because the app record was missing. After registration,
+the retry succeeded and Apple completed processing. App Store Connect now shows
+build 5 as **Internal** and **Testing**, assigned to the **Internal Testers** group
+with the account owner as its one tester. The group uses manual build selection.
+Build number 5 has been used and must not be reused for a later upload.
+
+The upload options, logs, final status and screenshot remain under ignored
+`build/ReleaseCleanup-20261024/TestFlightInternal-Upload/`. The successful upload
+is recorded in `upload-retry-1.log`; `build-5-internal-testing.png` shows version
+1.0.0 (5) testing in the internal group. No external testing or App Review
+submission was performed.
+
 ## Hardware results and remaining checks
 
 Physical testing resumed on 23 October. Build 1 completed the 30/59.94 cadence
@@ -371,4 +394,5 @@ and actual-SDK remote/fullscreen checks passed in the simulator.
 Before submission, complete the publisher's App Store Connect record, private
 review contact, pricing/age/content-rights/trader declarations, final screenshot
 review, physical demo/review resources, and Apple's server-side validation.
-No TestFlight upload or App Review submission has been performed.
+Build 5 is available for internal TestFlight testing as recorded above. No App
+Review submission has been performed.

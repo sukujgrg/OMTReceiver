@@ -13,8 +13,9 @@ completed local checks and artifact locations.
 ## Source and local checks
 
 `VERSION` is the marketing-version source; `BUILD_NUMBER` is the default numeric
-build. The current preparation is 1.0.0 (5). Advance the build number for each
-new App Store Connect upload; do not reuse a previously uploaded version/build.
+build. Version 1.0.0 (5) has been uploaded for internal TestFlight testing.
+Advance the build number for the next App Store Connect upload; do not reuse a
+previously uploaded version/build.
 
 ```sh
 make project site check
