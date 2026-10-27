@@ -14,6 +14,17 @@ struct OMTVideoFrame: Sendable {
     let payload: Data
 }
 
+/// OMT stores both rate terms as signed 32-bit integers. Validate their ratio
+/// without imposing a term size below that wire contract or changing metadata.
+enum OMTFrameRate {
+    static func isValid(numerator: Int, denominator: Int, maximum: Int) -> Bool {
+        let terms = 1...Int(Int32.max)
+        guard terms.contains(numerator), terms.contains(denominator), terms.contains(maximum) else { return false }
+        // The product of two positive Int32 values fits in Int64.
+        return Int64(numerator) <= Int64(denominator) * Int64(maximum)
+    }
+}
+
 /// FPA1 keeps only the active planar Float32 channels on the wire. A missing
 /// channel is silence, and is expanded by the audio renderer, not the transport.
 struct OMTAudioFrame: Sendable {

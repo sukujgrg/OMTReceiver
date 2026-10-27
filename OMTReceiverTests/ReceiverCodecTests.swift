@@ -14,8 +14,9 @@ final class ReceiverCodecTests: XCTestCase {
     // Encoded RGB is deliberately colorful (53,141,211), with alpha zero.
     private let transparent = Data(base64Encoded: "AwMBUAEOAAAABH//gAFL+ACi/gCAf/4MAAAAgCAAgEAAgEAAgCAA")!
 
-    private func frame(_ bytes: Data, flags: UInt32 = 0, width: Int = 32) -> OMTVideoFrame {
-        .init(timestamp: 0, codec: OMTCodec.vmx1, width: width, height: 16, frameRateN: 30, frameRateD: 1,
+    private func frame(_ bytes: Data, flags: UInt32 = 0, width: Int = 32,
+                       numerator: Int = 30, denominator: Int = 1) -> OMTVideoFrame {
+        .init(timestamp: 0, codec: OMTCodec.vmx1, width: width, height: 16, frameRateN: numerator, frameRateD: denominator,
               aspectRatio: 2, flags: flags, colorSpace: 709, payload: bytes)
     }
 
@@ -45,6 +46,64 @@ final class ReceiverCodecTests: XCTestCase {
         let spacing = try XCTUnwrap(CVBufferCopyAttachment(image, kCVImageBufferPixelAspectRatioKey, nil) as? [String: Int])
         XCTAssertEqual(spacing[kCVImageBufferPixelAspectRatioHorizontalSpacingKey as String], 10_000)
         XCTAssertEqual(spacing[kCVImageBufferPixelAspectRatioVerticalSpacingKey as String], 10_000)
+    }
+
+    func testCameraRateParsesDecodesAndKeepsItsExactProgressiveTiming() throws {
+        let timestamp: Int64 = 123_456_789
+        var body = Data()
+        body.omtAppend(OMTCodec.vmx1)
+        for value: Int32 in [32, 16, 3_000_003, 100_000] { body.omtAppend(value) }
+        body.omtAppend(Float(2).bitPattern)
+        body.omtAppend(UInt32(0)); body.omtAppend(Int32(709))
+        body.append(opaque)
+        var bytes = Data([1, 2])
+        bytes.omtAppend(timestamp); bytes.omtAppend(UInt16(0)); bytes.omtAppend(UInt32(body.count))
+        bytes.append(body)
+        var parser = OMTProtocolParser()
+        var parsed: OMTVideoFrame?
+        try parser.append(bytes) { if case .video(let frame) = $0 { parsed = frame } }
+        let source = try XCTUnwrap(parsed)
+        let cadence = try ReceiverVideoCadence(frame: source, fieldOrder: .bottomFirst)
+        let images = try XCTUnwrap(VMXFrameDecoder().decode(source, fields: cadence.samples.map(\.field)))
+        XCTAssertEqual(images.count, 1)
+        XCTAssertEqual(CVPixelBufferGetWidth(images[0]), 32)
+        XCTAssertEqual(CVPixelBufferGetHeight(images[0]), 16)
+        XCTAssertEqual(CVPixelBufferGetPixelFormatType(images[0]), kCVPixelFormatType_422YpCbCr8)
+        XCTAssertEqual(source.frameRateN, 3_000_003)
+        XCTAssertEqual(source.frameRateD, 100_000)
+        XCTAssertEqual(source.timestamp, timestamp)
+        XCTAssertEqual(source.payload, opaque)
+        XCTAssertNil(cadence.samples[0].field)
+        XCTAssertEqual(CMTimeCompare(cadence.samples[0].duration, CMTime(value: 100_000, timescale: 3_000_003)), 0)
+        let sourcePTS = CMTime(value: source.timestamp, timescale: 10_000_000)
+        XCTAssertEqual(CMTimeCompare(CMTimeAdd(sourcePTS, cadence.samples[0].offset), sourcePTS), 0)
+    }
+
+    func testAllPositiveInt32RateTermsDecodeWithinTheSixtyFPSLimit() throws {
+        // Include both former term caps, the signed wire maximum, and a large
+        // exact 60 fps ratio. The codec payload itself remains unchanged.
+        let rates = [(3_000_003, 100_000), (3_000_030, 100_001),
+                     (Int(Int32.max), Int(Int32.max)), (1, Int(Int32.max)),
+                     (2_147_483_640, 35_791_394)]
+        for (n, d) in rates {
+            let image = try XCTUnwrap(VMXFrameDecoder().decode(frame(opaque, numerator: n, denominator: d)), "\(n)/\(d)")
+            XCTAssertEqual(CVPixelBufferGetPixelFormatType(image), kCVPixelFormatType_422YpCbCr8)
+        }
+    }
+
+    func testInvalidDirectModelRateTermsAndExactFPSOverflowFailBeforeDecode() {
+        let beyondInt32 = Int(Int32.max) + 1
+        let rates = [(0, 1), (-1, 1), (30, 0), (30, -1),
+                     (beyondInt32, Int(Int32.max)), (30, beyondInt32),
+                     (Int.max, Int.max), (Int.min, 1), (1, Int.min),
+                     (61, 1), (60_001, 1_000), (2_147_483_641, 35_791_394)]
+        for (n, d) in rates {
+            XCTAssertThrowsError(try VMXFrameDecoder().decode(frame(opaque, numerator: n, denominator: d)), "\(n)/\(d)") { error in
+                guard let failure = error as? PlaybackFailure, case .unsupportedVideo = failure else {
+                    return XCTFail("Invalid frame rate reached the native decoder: \(error)")
+                }
+            }
+        }
     }
 
     func testStraightAndPremultipliedAlphaCompositeOntoOpaqueBlack() throws {
@@ -144,7 +203,7 @@ final class ReceiverCodecTests: XCTestCase {
 
     func testFullHD60AndFractional60UseTheRealSDKDecoder() throws {
         let payload = try officialSDKPayload()
-        for (n, d) in [(60, 1), (60000, 1001), (50, 1), (30, 1)] {
+        for (n, d) in [(60, 1), (60000, 1001), (50, 1), (30, 1), (3_000_003, 100_000)] {
             let image = try XCTUnwrap(VMXFrameDecoder().decode(officialSDKFrame(payload, numerator: n, denominator: d)))
             XCTAssertEqual(CVPixelBufferGetWidth(image), 1920)
             XCTAssertEqual(CVPixelBufferGetHeight(image), 1080)

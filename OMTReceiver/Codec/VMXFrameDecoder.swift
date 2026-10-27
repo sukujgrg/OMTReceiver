@@ -32,11 +32,11 @@ final class VMXFrameDecoder {
     /// field in-place. No extra woven surface reduces native preparation lead.
     /// Allocation pressure returns nil without decoding a partial batch.
     func decode(_ frame: OMTVideoFrame, fields: [Int?]) throws -> [CVPixelBuffer]? {
-        let fps = Double(frame.frameRateN) / Double(max(1, frame.frameRateD))
         let interlaced = frame.flags & 1 != 0
         guard frame.codec == OMTCodec.vmx1, (16...1920).contains(frame.width), frame.width % 2 == 0,
-              (16...1080).contains(frame.height), (1...1_000_000).contains(frame.frameRateN),
-              (1...100_000).contains(frame.frameRateD), fps <= 60, frame.flags & ~UInt32(7) == 0,
+              (16...1080).contains(frame.height),
+              OMTFrameRate.isValid(numerator: frame.frameRateN, denominator: frame.frameRateD, maximum: 60),
+              frame.flags & ~UInt32(7) == 0,
               !interlaced || [480, 576, 1080].contains(frame.height),
               [0, 601, 709].contains(frame.colorSpace), frame.payload.count <= 16 * 1024 * 1024,
               (1...2).contains(fields.count),

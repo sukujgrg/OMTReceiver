@@ -82,8 +82,7 @@ struct OMTProtocolParser {
             let color = body.omtInt(at: 28)
             guard (1...4_096).contains(width), (1...4_096).contains(height),
                   width * height <= 4_096 * 2_160,
-                  (1...1_000_000).contains(numerator), (1...100_000).contains(denominator),
-                  Double(numerator) / Double(denominator) <= 240,
+                  OMTFrameRate.isValid(numerator: numerator, denominator: denominator, maximum: 240),
                   aspect.isFinite, aspect >= 0, aspect <= 100,
                   [0, 601, 709].contains(color), !payload.isEmpty else {
                 throw OMTProtocolError.invalid("invalid video geometry, frame rate or color space.")

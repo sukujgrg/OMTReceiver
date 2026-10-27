@@ -177,6 +177,55 @@ final class OMTProtocolTests: XCTestCase {
         }
     }
 
+    func testSigned32BitVideoRatesPreserveExactTermsTimestampAndPayload() throws {
+        let rates: [(Int32, Int32)] = [
+            (3_000_003, 100_000), // Logitech StreamCam's actual OMT Camera rate.
+            (3_000_030, 100_001), // Both terms exceed the former arbitrary caps.
+            (.max, 10_000_000), (.max, .max), (1, .max),
+            (240, 1), (2_147_483_520, 8_947_848) // Exactly 240 fps, including large terms.
+        ]
+        for (n, d) in rates {
+            let timestamp: UInt64 = 12_345_678_901
+            let bytes = video(timestamp: timestamp, numerator: n, denominator: d,
+                              flags: 0, metadata: "<Frame Rate=\"exact\" />")
+            var parser = OMTProtocolParser()
+            var packets: [OMTPacket] = []
+            // Exercise signed rate parsing across arbitrary transport splits.
+            for byte in bytes { try parser.append(Data([byte])) { packets.append($0) } }
+            XCTAssertEqual(packets.count, 2)
+            guard case .video(let frame) = packets.first else { return XCTFail("Missing video at \(n)/\(d)") }
+            XCTAssertEqual(frame.frameRateN, Int(n))
+            XCTAssertEqual(frame.frameRateD, Int(d))
+            XCTAssertEqual(frame.timestamp, Int64(timestamp))
+            XCTAssertEqual(frame.payload, Data([0x10, 0x20, 0x30, 0x40]))
+            XCTAssertEqual(frame.flags, 0)
+            guard case .metadata(let metadata) = packets.last else { return XCTFail("Missing frame metadata") }
+            XCTAssertEqual(metadata, "<Frame Rate=\"exact\" />")
+            XCTAssertEqual(parser.bufferedByteCount, 0)
+        }
+    }
+
+    func testVideoRateRejectsNonpositiveSignedTermsAndUnsignedHighBitPatterns() {
+        // UInt32 values beyond Int32.max are negative OMT wire terms, not
+        // additional positive rates. Check each term independently.
+        for term in [Int32(0), -1, Int32(bitPattern: 0x8000_0000), Int32(bitPattern: 0xffff_ffff)] {
+            for bytes in [video(numerator: term), video(denominator: term)] {
+                var parser = OMTProtocolParser()
+                XCTAssertThrowsError(try parser.append(bytes) { _ in XCTFail("Invalid signed rate escaped") })
+            }
+        }
+    }
+
+    func testVideoRateRetainsExact240FPSLimitForLargeTerms() {
+        let rates: [(Int32, Int32)] = [(241, 1), (240_001, 1_000), (2_147_483_521, 8_947_848)]
+        for (n, d) in rates {
+            var parser = OMTProtocolParser()
+            XCTAssertThrowsError(try parser.append(video(numerator: n, denominator: d)) { _ in
+                XCTFail("Rate above 240 fps escaped: \(n)/\(d)")
+            })
+        }
+    }
+
     func testOfficialOBSZeroAspectAndColorDefaultsDeriveSquarePixels() throws {
         let dimensions: [(Int32, Int32)] = [(1_280, 720), (32, 16)]
         for (width, height) in dimensions {

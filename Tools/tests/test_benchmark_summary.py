@@ -1,12 +1,38 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
 spec = importlib.util.spec_from_file_location("benchmark_summary", Path(__file__).parents[1] / "summarize-benchmark.py")
 summary = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(summary)
+
+
+class FrameRateCollectorArgumentTests(unittest.TestCase):
+    def check_rate(self, rate, expected_error):
+        # Invalid source deliberately stops preflight before output directories,
+        # connected-device access or launching the official SDK fixture.
+        result = subprocess.run([
+            sys.executable, str(Path(__file__).parents[1] / 'benchmark-apple-tv.py'),
+            '--device', 'unused', '--source', 'invalid', '--output', '/unused', f'--fps={rate}'
+        ], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn(expected_error, result.stderr)
+
+    def test_signed_int32_rate_terms_reach_source_validation(self):
+        for rate in ['3000003/100000', '3000004/100001', '2147483647/100000001',
+                     '2147483647/2147483646', '60', '1']:
+            with self.subTest(rate=rate):
+                self.check_rate(rate, '--source must be')
+
+    def test_invalid_terms_and_actual_rates_stop_before_source_validation(self):
+        for rate in ['2147483648/100000001', '2147483647/2147483648',
+                     '0', '-30/1', '30/0', '1/2', '60001/1000']:
+            with self.subTest(rate=rate):
+                self.check_rate(rate, '--fps must be')
 
 
 class FrameRateSummaryTests(unittest.TestCase):

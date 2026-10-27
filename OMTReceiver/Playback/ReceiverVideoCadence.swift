@@ -23,21 +23,42 @@ struct ReceiverVideoCadence {
     let outputFrameRate: Double
 
     init(frame: OMTVideoFrame, fieldOrder: ReceiverFieldOrder) throws {
-        guard (1...1_000_000).contains(frame.frameRateN), (1...100_000).contains(frame.frameRateD),
-              Double(frame.frameRateN) / Double(frame.frameRateD) <= 60 else {
+        guard OMTFrameRate.isValid(numerator: frame.frameRateN, denominator: frame.frameRateD, maximum: 60) else {
             throw PlaybackFailure.unsupportedVideo
         }
         let interlaced = frame.flags & 1 != 0
         let doubleFields = interlaced && Int64(frame.frameRateN) <= Int64(frame.frameRateD) * 30
         let count = doubleFields ? 2 : 1
-        let duration = CMTime(value: Int64(frame.frameRateD), timescale: Int32(frame.frameRateN * count))
+        let duration = Self.duration(numerator: frame.frameRateN, denominator: frame.frameRateD, count: count)
         outputFrameRate = Double(frame.frameRateN) / Double(frame.frameRateD) * Double(count)
         // Above 30 complete pairs/s, showing both fields would exceed our 60 Hz
         // budget. Keep the chosen first field at the original pair timestamp.
         samples = (0..<count).map { index in
             Sample(field: interlaced ? (fieldOrder.firstField + index) % 2 : nil,
-                   offset: CMTimeMultiply(duration, multiplier: Int32(index)), duration: duration)
+                   // A zero with the duration's timescale could force CMTimeAdd
+                   // to round even the original progressive/first-field PTS.
+                   offset: index == 0 ? .zero : duration, duration: duration)
         }
+    }
+
+    private static func duration(numerator: Int, denominator: Int, count: Int) -> CMTime {
+        // Validated Int32 terms and at most two fields fit safely in Int64.
+        let scale = Int64(numerator) * Int64(count)
+        var a = Int64(denominator), b = scale
+        while b != 0 { (a, b) = (b, a % b) }
+        let value = Int64(denominator) / a
+        let reducedScale = scale / a
+        if let exactScale = Int32(exactly: reducedScale) {
+            return CMTime(value: value, timescale: exactScale)
+        }
+        // Only an irreducible two-field denominator can exceed CMTimeScale.
+        // Round half away from zero at the largest representable timescale:
+        // error <= 1/(2 * Int32.max) seconds (0.233 ns). The product plus
+        // half the denominator fits Int64 for positive Int32 wire terms.
+        let maximumScale = Int64(Int32.max)
+        let roundedValue = (value * maximumScale + reducedScale / 2) / reducedScale
+        return CMTime(value: roundedValue, timescale: Int32.max,
+                      flags: [.valid, .hasBeenRounded], epoch: 0)
     }
 }
 
@@ -77,7 +98,9 @@ struct ReceiverVideoPresentationOrder {
         guard let nextTimestamp else { return true }
         let source = CMTime(value: sourceTimestamp, timescale: 10_000_000)
         let next = CMTime(value: nextTimestamp, timescale: 10_000_000)
-        return CMTimeCompare(CMTimeAdd(source, offset), next) < 0
+        // Compare the relative gap at the wire's exact 100 ns scale. Adding a
+        // field to a large absolute PTS can otherwise force scale reduction.
+        return CMTimeCompare(offset, CMTimeSubtract(next, source)) < 0
     }
 }
 

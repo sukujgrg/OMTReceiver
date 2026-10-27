@@ -45,7 +45,7 @@ def main():
     args = parser.parse_args()
     try:
         rate = Fraction(args.fps)
-        if not 1 <= rate <= 60 or rate.numerator > 1_000_000 or rate.denominator > 100_000:
+        if not 1 <= rate <= 60 or rate.numerator > 2_147_483_647 or rate.denominator > 2_147_483_647:
             raise ValueError()
     except (ValueError, ZeroDivisionError):
         parser.error('--fps must be 1–60 as N or N/D (for example 60 or 60000/1001)')

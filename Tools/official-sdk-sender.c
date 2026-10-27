@@ -176,8 +176,8 @@ static bool parse_options(int argc, char **argv, Options *options) {
                 denominator = strtol(denominator_text, &end, 10);
                 valid = valid && !errno && end != denominator_text;
             }
-            if (!valid || *end || numerator < 1 || numerator > 1000000 || denominator < 1
-                || denominator > 100000 || numerator > 60 * denominator || numerator < denominator) {
+            if (!valid || *end || numerator < 1 || numerator > INT32_MAX || denominator < 1
+                || denominator > INT32_MAX || numerator > 60LL * denominator || numerator < denominator) {
                 fprintf(stderr, "--fps must be 1–60 as an integer or N/D (e.g. 60000/1001).\n");
                 return false;
             }
@@ -406,7 +406,12 @@ int main(int argc, char **argv) {
     int64_t next_report_ns = audio.start_ns + 5000000000LL;
     const uint64_t frame_count = (uint64_t)ceil(options.seconds * options.frame_rate_n / options.frame_rate_d);
     for (uint64_t index = 0; index < frame_count && !atomic_load_explicit(&stop_requested, memory_order_relaxed); ++index) {
-        int64_t timestamp = (int64_t)(index * (uint64_t)TICKS_PER_SECOND * (uint64_t)options.frame_rate_d / (uint64_t)options.frame_rate_n);
+        // Split before multiplying by ticks: full Int32 rate terms can overflow
+        // index * ticks * denominator even during this bounded five-hour run.
+        const uint64_t time_numerator = index * (uint64_t)options.frame_rate_d;
+        const uint64_t rate_numerator = (uint64_t)options.frame_rate_n;
+        int64_t timestamp = (int64_t)((time_numerator / rate_numerator) * (uint64_t)TICKS_PER_SECOND
+            + (time_numerator % rate_numerator) * (uint64_t)TICKS_PER_SECOND / rate_numerator);
         sleep_until(audio.start_ns + timestamp * 100);
         if (atomic_load_explicit(&stop_requested, memory_order_relaxed)) break;
         if (!video_pause_applied && options.video_pause_after > 0
@@ -431,7 +436,7 @@ int main(int argc, char **argv) {
         bool switched = options.switch_scan_after > 0 && (double)timestamp / TICKS_PER_SECOND >= options.switch_scan_after;
         bool interlaced = options.interlaced != switched;
         if (interlaced) {
-            int64_t half_frame = TICKS_PER_SECOND * options.frame_rate_d / (2 * options.frame_rate_n);
+            int64_t half_frame = TICKS_PER_SECOND * options.frame_rate_d / (2LL * options.frame_rate_n);
             make_picture(second_field, background, index * 2 + 1, timestamp + half_frame, options.alpha);
             // The first instant occupies one parity, the later instant the other.
             int later_parity = options.bottom_field_first ? 0 : 1;
