@@ -16,8 +16,9 @@ credentials are needed, and all app controls work with the Siri Remote.
    sender's actual `omt://HOST:PORT`; no developer-specific address is needed.
 4. The source appears full screen. Press Back or Play/Pause to open the source
    strip. Browse with Left/Right and Select a source to switch picture and audio;
-   Back dismisses the strip. Select Settings for mute/reconnect/quality and
-   Disconnect. Disconnect stops reception.
+   Close returns to video; Back opens Settings. Back again leaves the app to the
+   Home Screen. Select Settings for mute/reconnect/quality and Disconnect.
+   Disconnect stops reception.
 5. About opens Getting Started, Privacy Policy and bundled third-party licences.
 
 The app does not provide a hosted stream or connect to a developer backend.
