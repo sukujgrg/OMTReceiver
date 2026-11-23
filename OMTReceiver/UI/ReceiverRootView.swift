@@ -74,10 +74,7 @@ struct ReceiverRootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: receiver.overlay)
-        .onExitCommand(perform: receiver.hasSelection && !showingManualEntry && !showingInformation ? {
-            if receiver.sourcesVisible { receiver.dismissOverlay() }
-            else { receiver.revealSources() }
-        } : nil)
+        .onExitCommand(perform: exitCommandAction)
         .onPlayPauseCommand {
             guard !showingManualEntry, !showingInformation else { return }
             if receiver.overlay == .hidden { receiver.revealSources() }
@@ -212,7 +209,9 @@ struct ReceiverRootView: View {
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("receiver-statistics")
             }
-            Text(receiver.hasSelection ? "Press Back to choose a source. Select Settings in the source strip to return here." : "Choose a source to start watching.")
+            Text(receiver.hasSelection
+                 ? "Press Back to leave the app. Open Sources for the strip, or Full Screen to watch."
+                 : "Choose a source to start watching. Press Back to leave the app.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(48)
@@ -254,6 +253,19 @@ struct ReceiverRootView: View {
             showingManualEntry = false
         } catch {
             manualError = error.localizedDescription
+        }
+    }
+
+    /// Walks up the overlay hierarchy. `nil` at `.controls` lets the system exit to Home.
+    private var exitCommandAction: (() -> Void)? {
+        guard receiver.hasSelection, !showingManualEntry, !showingInformation else { return nil }
+        switch receiver.overlay {
+        case .hidden:
+            return { receiver.revealSources() }
+        case .sources:
+            return { receiver.revealControls() }
+        case .controls:
+            return nil
         }
     }
 }
@@ -326,7 +338,7 @@ private struct ReceiverSourceSwitcher: View {
                     }
                 }
             }
-            Text("Select to switch · Back to return to video · Favourite the current source to keep it near the front")
+            Text("Select to switch · Close returns to video · Back opens Settings · Favourite the current source to keep it near the front")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(30)

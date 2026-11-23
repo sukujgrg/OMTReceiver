@@ -14,6 +14,10 @@ final class ReceiverInterfaceTests: XCTestCase {
         shot.name = "OMT source picker"
         shot.lifetime = .keepAlways
         add(shot)
+        XCUIRemote.shared.press(.menu)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 5)
+                      || app.state != .runningForeground,
+                      "Back at the source picker must leave the app.")
     }
 
     @MainActor
@@ -211,16 +215,28 @@ final class ReceiverInterfaceTests: XCTestCase {
         XCTAssertTrue(app.buttons["switcher-settings"].waitForExistence(timeout: 5), "Back must open the source strip from full screen.")
         XCTAssertFalse(app.buttons["disconnect"].exists, "Playback settings stay separate from source browsing.")
         remote.press(.menu)
-        XCTAssertTrue(fullscreen.waitForExistence(timeout: 5), "Back must return to full screen while playing.")
-        remote.press(.playPause)
-        XCTAssertTrue(app.buttons["switcher-settings"].waitForExistence(timeout: 5), "Play/Pause must also open the source strip.")
-        openSettingsFromSwitcher(app)
-        XCTAssertTrue(app.buttons["disconnect"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["disconnect"].waitForExistence(timeout: 5), "Back from the strip must open Settings (parent), not full screen.")
+        XCTAssertFalse(app.buttons["switcher-settings"].exists)
         XCTAssertTrue(app.staticTexts["receiver-statistics"].exists)
         let controls = XCTAttachment(screenshot: app.screenshot())
         controls.name = "Official OMT playback controls and statistics"
         controls.lifetime = .keepAlways
         add(controls)
+        // Play/Pause from Settings dismisses to full screen; again opens the strip.
+        remote.press(.playPause)
+        XCTAssertTrue(fullscreen.waitForExistence(timeout: 5), "Play/Pause from Settings returns to full screen.")
+        remote.press(.playPause)
+        XCTAssertTrue(app.buttons["switcher-settings"].waitForExistence(timeout: 5), "Play/Pause must also open the source strip.")
+        activateSwitcherControl("switcher-close", app: app)
+        XCTAssertTrue(fullscreen.waitForExistence(timeout: 5), "Close returns to full screen without walking up.")
+        remote.press(.menu)
+        XCTAssertTrue(app.buttons["switcher-settings"].waitForExistence(timeout: 5))
+        remote.press(.menu)
+        XCTAssertTrue(app.buttons["disconnect"].waitForExistence(timeout: 5))
+        remote.press(.menu)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 5)
+                      || app.state != .runningForeground,
+                      "Back from Settings must leave the app (system Home exit).")
     }
 
     /// Two isolated SDK sources; cycles can be increased for an unattended
@@ -268,14 +284,15 @@ final class ReceiverInterfaceTests: XCTestCase {
             XCTAssertTrue((current.value as? String)?.contains("Current source") == true,
                           "Moving focus must not select the browsed source.")
             guard target.hasFocus else { return }
-            // Cancel browsing once, then prove focus returns to the source
-            // actually playing and that re-selection needs no new connection.
+            // Cancel browsing once via Close (Back walks up to Settings).
+            // Prove focus returns to the playing source and re-selection needs
+            // no new connection.
             if cycle == 0 {
                 let shot = XCTAttachment(screenshot: app.screenshot())
                 shot.name = "Quick source strip while browsing"
                 shot.lifetime = .keepAlways
                 add(shot)
-                remote.press(.menu)
+                activateSwitcherControl("switcher-close", app: app)
                 XCTAssertTrue(fullscreen.waitForExistence(timeout: 3))
                 remote.press(.menu)
                 XCTAssertTrue(current.hasFocus)
@@ -295,15 +312,15 @@ final class ReceiverInterfaceTests: XCTestCase {
         let oldFavouriteLabel = favourite.label
         activateSwitcherControl("favourite-current-source", app: app)
         XCTAssertNotEqual(favourite.label, oldFavouriteLabel)
-        remote.press(.menu)
-        XCTAssertTrue(fullscreen.waitForExistence(timeout: 3))
+        activateSwitcherControl("switcher-close", app: app)
+        XCTAssertTrue(fullscreen.waitForExistence(timeout: 3), "Close returns to video after favouriting.")
         remote.press(.menu)
         let current = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", activeName)).firstMatch
         XCTAssertTrue(current.hasFocus, "Favouriting must preserve focus on the playing source when reopening.")
         activateSwitcherControl("favourite-current-source", app: app)
         XCTAssertEqual(favourite.label, oldFavouriteLabel, "Restore the original favourite preference after testing.")
-        openSettingsFromSwitcher(app)
-        XCTAssertTrue(app.buttons["disconnect"].waitForExistence(timeout: 5))
+        remote.press(.menu)
+        XCTAssertTrue(app.buttons["disconnect"].waitForExistence(timeout: 5), "Back from the strip opens Settings.")
     }
 
     @MainActor
