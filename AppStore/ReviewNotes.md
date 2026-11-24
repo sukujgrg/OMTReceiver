@@ -4,6 +4,7 @@ OMT Receiver is an independent receiver for the published Open Media Transport
 protocol. It requires an OMT source on a network reachable by the Apple TV. It
 has no accounts, subscriptions, purchase flow or supplied content. No sign-in
 credentials are needed, and all app controls work with the Siri Remote.
+Tested on Apple TV running tvOS 26.6.1 (23L781).
 
 ## Reproduce reception
 
