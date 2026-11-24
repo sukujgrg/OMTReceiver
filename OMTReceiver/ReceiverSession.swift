@@ -112,6 +112,12 @@ final class ReceiverSession: ObservableObject {
         message = nil
         statistics = ""
         retryCount = 0
+        // iOS often delivers interruption-began without a matching ended
+        // notification. A user source change must clear that latch or every
+        // later attempt stays suspended forever. Do not clear
+        // resumeAfterBackground here: a backgrounded connect still needs
+        // scene resume to restart after beginAttempt bails.
+        audioInterrupted = false
         overlay = .controls
         beginAttempt()
     }
@@ -131,6 +137,7 @@ final class ReceiverSession: ObservableObject {
         selectedSource = nil
         isInterlaced = false
         resumeAfterBackground = false
+        audioInterrupted = false
         stopAttempt()
         sourceName = ""
         message = nil
@@ -143,6 +150,8 @@ final class ReceiverSession: ObservableObject {
         guard selectedSource != nil else { return }
         stopAttempt()
         retryCount = 0
+        message = nil
+        audioInterrupted = false
         beginAttempt()
     }
 
@@ -184,7 +193,13 @@ final class ReceiverSession: ObservableObject {
 
     private func beginAttempt() {
         guard let source = selectedSource, connection == nil, activationTask == nil else { return }
-        guard isForeground, !audioInterrupted else { phase = .suspended; return }
+        guard isForeground, !audioInterrupted else {
+            // Preserve/restore auto-resume when a user reconnect or source
+            // change arrives while the scene is still backgrounded.
+            if !isForeground { resumeAfterBackground = true }
+            phase = .suspended
+            return
+        }
         let attempt = UUID()
         let lease = UUID()
         generation = attempt

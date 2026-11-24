@@ -183,6 +183,78 @@ final class ReceiverSessionTests: XCTestCase {
         await fulfillment(of: [resumed], timeout: 5)
     }
 
+    func testUserReconnectClearsAStuckAudioInterruptionLatch() async throws {
+        let server = try await makeServer()
+        defer { server.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources())
+        defer { session.disconnect() }
+        let source = try OMTSource.manual(address: "127.0.0.1:\(server.port)")
+        let connected = next(.waitingForVideo, session: session)
+        session.connect(to: source)
+        await fulfillment(of: [connected], timeout: 5)
+        session.audioInterruptionBegan()
+        XCTAssertEqual(session.phase, .suspended)
+        XCTAssertNotNil(session.message)
+        // No interruption-ended arrives. Reconnect must still revive playback.
+        let resumed = next(.waitingForVideo, session: session)
+        session.reconnect()
+        XCTAssertNil(session.message)
+        await fulfillment(of: [resumed], timeout: 5)
+        XCTAssertEqual(session.sourceName, source.name)
+    }
+
+    func testSelectingASourceClearsAStuckAudioInterruptionLatch() async throws {
+        let server = try await makeServer()
+        defer { server.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources())
+        defer { session.disconnect() }
+        let first = try OMTSource.manual(address: "127.0.0.1:\(server.port)")
+        let connected = next(.waitingForVideo, session: session)
+        session.connect(to: first)
+        await fulfillment(of: [connected], timeout: 5)
+        session.audioInterruptionBegan()
+        XCTAssertEqual(session.phase, .suspended)
+        let second = try OMTSource.manual(address: "127.0.0.1:\(server.port)")
+        let resumed = next(.waitingForVideo, session: session)
+        session.selectSource(second)
+        await fulfillment(of: [resumed], timeout: 5)
+        XCTAssertEqual(session.sourceName, second.name)
+    }
+
+    func testBackgroundReconnectStillResumesWhenForegroundReturns() async throws {
+        let server = try await makeServer()
+        defer { server.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources())
+        defer { session.disconnect() }
+        let connected = next(.waitingForVideo, session: session)
+        session.connect(to: try OMTSource.manual(address: "127.0.0.1:\(server.port)"))
+        await fulfillment(of: [connected], timeout: 5)
+        session.suspend()
+        XCTAssertEqual(session.phase, .suspended)
+        session.reconnect()
+        XCTAssertEqual(session.phase, .suspended)
+        let resumed = next(.waitingForVideo, session: session)
+        session.resume()
+        await fulfillment(of: [resumed], timeout: 5)
+    }
+
+    func testBackgroundReconnectAfterStuckInterruptionResumesWhenForegroundReturns() async throws {
+        let server = try await makeServer()
+        defer { server.stop() }
+        let session = ReceiverSession(applicationResources: ReceiverApplicationResources())
+        defer { session.disconnect() }
+        let connected = next(.waitingForVideo, session: session)
+        session.connect(to: try OMTSource.manual(address: "127.0.0.1:\(server.port)"))
+        await fulfillment(of: [connected], timeout: 5)
+        session.audioInterruptionBegan()
+        session.suspend()
+        session.reconnect()
+        XCTAssertEqual(session.phase, .suspended)
+        let resumed = next(.waitingForVideo, session: session)
+        session.resume()
+        await fulfillment(of: [resumed], timeout: 5)
+    }
+
     func testDisconnectDuringInterruptionPreventsResumeAndServiceResetRevival() async throws {
         let server = try await makeServer()
         defer { server.stop() }
